@@ -1,0 +1,49 @@
+* {
+    font-family: Cambria, Cochin, Georgia, Times, 'Times New Roman', serif;
+}
+
+.container {
+    height: 100dvh;
+    width: 100dvw;
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+    justify-content: center;
+    align-items: center;
+}
+
+.container .officerOfTheDayButton {
+    padding: 16px 32px;
+    font-size: 18px;
+    font-weight: bold;
+    background-color: #1976D2;
+    color: white;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    width: 250px;
+}
+
+.container .officerOfTheDayButton:hover {
+    background-color: #2196F3;
+    transition: 0.25s ease-in-out;
+    transform: scale(1.05);
+}
+
+.container .adminLoginButton {
+    padding: 16px 32px;
+    font-size: 18px;
+    font-weight: bold;
+    background-color: #388E3C;
+    color: white;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    width: 250px;
+}
+
+.container .adminLoginButton:hover {
+    background-color: #4CAF50;
+    transition: 0.25s ease-in-out;
+    transform: scale(1.05);
+}
