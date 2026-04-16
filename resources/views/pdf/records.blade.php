@@ -19,6 +19,9 @@
                 <th>ID</th>
                 <th>Encoder</th>
                 <th>Farmer Name</th>
+                <th>Province</th>
+                <th>Municipality</th>
+                <th>Barangay</th>
                 <th>Address</th>
                 <th>Program</th>
                 <th>Line</th>
@@ -34,6 +37,9 @@
                 <td>{{ $record->id }}</td>
                 <td>{{ $record->encoderName }}</td>
                 <td>{{ $record->farmerName }}</td>
+                <td>{{ $record->province ?? '—' }}</td>
+                <td>{{ $record->municipality ?? '—' }}</td>
+                <td>{{ $record->barangay ?? '—' }}</td>
                 <td>{{ $record->address }}</td>
                 <td>{{ $record->program }}</td>
                 <td>{{ $record->line }}</td>

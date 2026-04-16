@@ -1,5 +1,7 @@
 * {
     font-family: Cambria, Cochin, Georgia, Times, 'Times New Roman', serif;
+    margin: 0;
+    padding: 0;
 }
 
 .container {
@@ -46,4 +48,316 @@
     background-color: #4CAF50;
     transition: 0.25s ease-in-out;
     transform: scale(1.05);
+}
+
+
+/**OD LOGIN**/
+
+.odHeader {
+    top: 0;
+    height: fit-content;
+    width: 100dvw;
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    background-color: #036534;
+    color: white;
+    padding: 10px;
+    justify-content: space-between;
+}
+
+.odHeader section {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    margin-right: 20px;
+}
+
+.officerOfTheDayNames {
+    margin-top: 10px;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    width: fit-content;
+    height: fit-content;
+    padding: 5px-;
+}
+
+.logoutButton {
+    padding: 8px 16px;
+    font-size: 14px;
+    font-weight: bold;
+    background-color: #D32F2F;
+    color: white;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+}
+
+.officerOfTheDayNames select {
+    padding: 8px;
+    font-size: 16px;
+    border: 1px solid #ccc;
+    border-radius: 4px;
+}
+
+.contentContainer {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+    justify-content: center;
+    align-items: center;
+}
+
+.officerOfTheDayNames button {
+    padding: 8px 16px;
+    font-size: 16px;
+    font-weight: bold;
+    background-color: #1976D2;
+    color: white;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+}
+
+.officerOfTheDayNames button:hover {
+    background-color: #2196F3;
+    transition: 0.25s ease-in-out;
+    transform: scale(1.05);
+}
+
+.addRecordDialog {
+    border: none;
+    border-radius: 8px;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+    padding: 20px;
+    background-color: white;
+    width: fit-content;
+    height: fit-content;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    position: fixed;
+}
+
+.addRecordDialog form {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+.addRecordDialog form button[type="submit"],
+.addRecordButton {
+    padding: 8px 16px;
+    font-size: 14px;
+    font-weight: bold;
+    background-color: #1976D2;
+    color: white;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+}
+
+.addRecordDialog form button[type="submit"]:hover,
+.addRecordButton:hover {
+    background-color: #2196F3;
+    transition: 0.25s ease-in-out;
+    transform: scale(1.05);
+}
+
+.closeAddRecordModal {
+    padding: 8px 16px;
+    font-size: 14px;
+    font-weight: bold;
+    background-color: #F57C00;
+    color: white;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+}
+
+.closeAddRecordModal:hover {
+    background-color: #FF9800;
+    transition: 0.25s ease-in-out;
+    transform: scale(1.05);
+}
+
+.addRecordDialog form input,
+select {
+    padding: 8px;
+    font-size: 16px;
+    border: 1px solid #ccc;
+    border-radius: 4px;
+}
+
+table {
+    width: 100%;
+    max-width: 1200px;
+    border-collapse: collapse;
+    background-color: white;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08);
+    border-radius: 4px;
+    overflow: hidden;
+    margin: 20px 0;
+}
+
+table thead tr:first-child {
+    background: linear-gradient(135deg, #1565C0 0%, #1976D2 100%);
+}
+
+table th {
+    padding: 14px 16px;
+    text-align: left;
+    font-weight: 600;
+    font-size: 14px;
+    color: white;
+    letter-spacing: 0.3px;
+}
+
+table th a {
+    color: white;
+    text-decoration: none;
+    display: block;
+    transition: opacity 0.2s ease;
+    user-select: none;
+}
+
+table th a:hover {
+    opacity: 0.9;
+}
+
+table thead tr.filter-row {
+    background-color: #f9f9f9;
+    border-bottom: 1px solid #e0e0e0;
+}
+
+table thead tr.filter-row th {
+    padding: 8px 16px;
+    color: #424242;
+    font-weight: normal;
+    font-size: 13px;
+}
+
+table thead tr.filter-row input,
+table thead tr.filter-row select {
+    width: 100%;
+    padding: 6px 8px;
+    font-size: 12px;
+    border: 1px solid #d0d0d0;
+    border-radius: 3px;
+    box-sizing: border-box;
+}
+
+table tbody tr {
+    border-bottom: 1px solid #f0f0f0;
+    transition: background-color 0.2s ease;
+}
+
+table tbody tr:nth-child(odd) {
+    background-color: #ffffff;
+}
+
+table tbody tr:nth-child(even) {
+    background-color: #f8f9fa;
+}
+
+table tbody tr:hover {
+    background-color: #e3f2fd;
+}
+
+table tbody tr.pending {
+    background-color: #fffde7;
+}
+
+table tbody tr.pending:nth-child(even) {
+    background-color: #fffce0;
+}
+
+table tbody tr.pending:hover {
+    background-color: #ffffe0;
+}
+
+table td {
+    padding: 12px 16px;
+    font-size: 14px;
+    color: #616161;
+}
+
+table td:last-child {
+    color: #1976D2;
+}
+
+/* Action Buttons */
+
+.editButton,
+.deleteButton {
+    padding: 6px 12px;
+    font-size: 12px;
+    font-weight: 600;
+    border: 1px solid #ddd;
+    background-color: transparent;
+    border-radius: 3px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    text-transform: lowercase;
+}
+
+.editButton {
+    color: #1976D2;
+    border-color: #1976D2;
+}
+
+.editButton:hover {
+    background-color: #1976D2;
+    color: white;
+}
+
+.deleteButton {
+    color: #D32F2F;
+    border-color: #D32F2F;
+}
+
+.deleteButton:hover {
+    background-color: #D32F2F;
+    color: white;
+}
+
+table input[type="checkbox"] {
+    cursor: pointer;
+    width: 18px;
+    height: 18px;
+    accent-color: #1976D2;
+}
+
+table a {
+    color: #1976D2;
+    text-decoration: none;
+    font-weight: 500;
+    transition: color 0.2s ease;
+}
+
+table a:hover {
+    color: #0d47a1;
+    text-decoration: underline;
+}
+
+.page-break {
+    page-break-inside: avoid;
+}
+
+@media (max-width: 768px) {
+    table {
+        font-size: 12px;
+    }
+
+    table th,
+    table td {
+        padding: 10px 8px;
+    }
+
+    .editButton,
+    .deleteButton {
+        padding: 4px 8px;
+        font-size: 11px;
+    }
 }

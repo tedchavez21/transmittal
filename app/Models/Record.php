@@ -9,6 +9,9 @@ class Record extends Model
     protected $fillable = [
         'farmerName',
         'address',
+        'province',
+        'municipality',
+        'barangay',
         'line',
         'program',
         'causeOfDamage',

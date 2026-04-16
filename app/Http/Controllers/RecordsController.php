@@ -13,7 +13,9 @@ class RecordsController extends Controller
         // Validate the incoming request data
         $validatedData = $request->validate([
             'farmerName' => 'required|string|max:255',
-            'address' => 'required|string|max:255',
+            'province' => 'required|string|max:255',
+            'municipality' => 'required|string|max:255',
+            'barangay' => 'required|string|max:255',
             'line' => 'required|string|max:255',
             'program' => 'required|string|max:255',
             'causeOfDamage' => 'required|string|max:255',
@@ -27,7 +29,14 @@ class RecordsController extends Controller
             return redirect()->back()->with('error', 'Officer name is required before adding records.');
         }
 
+        $address = trim(implode(', ', array_filter([
+            $request->barangay,
+            $request->municipality,
+            $request->province,
+        ])));
+
         Record::create(array_merge($validatedData, [
+            'address' => $address,
             'encoderName' => $encoderName,
             'approved' => true,
             'approved_at' => now(),
@@ -45,7 +54,9 @@ class RecordsController extends Controller
         // Validate the incoming request data
         $validatedData = $request->validate([
             'farmerName' => 'required|string|max:255',
-            'address' => 'required|string|max:255',
+            'province' => 'required|string|max:255',
+            'municipality' => 'required|string|max:255',
+            'barangay' => 'required|string|max:255',
             'line' => 'required|string|max:255',
             'program' => 'required|string|max:255',
             'causeOfDamage' => 'required|string|max:255',
@@ -53,7 +64,13 @@ class RecordsController extends Controller
             'remarks' => 'nullable|string|max:255',
         ]);
 
-        $record->update($validatedData);
+        $address = trim(implode(', ', array_filter([
+            $request->barangay,
+            $request->municipality,
+            $request->province,
+        ])));
+
+        $record->update(array_merge($validatedData, ['address' => $address]));
 
         return redirect()->back()->with('success', 'Record updated successfully!');
     }

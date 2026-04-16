@@ -91,42 +91,10 @@
     </a>
 
     <form method="GET" action="{{ route('admin') }}" style="margin-bottom: 20px;">
-        <p>FILTER INFO:</p>
-        <label>Farmer Name: <input type="text" name="farmerName" value="{{ request('farmerName') }}"></label>
-        <label>Address: <input type="text" name="address" value="{{ request('address') }}"></label>
-        <label>Encoder Name: <input type="text" name="encoderName" value="{{ request('encoderName') }}"></label>
-        <label>Program:
-            <select name="program">
-                <option value="">All</option>
-                <option value="program1" {{ request('program') == 'program1' ? 'selected' : '' }}>RSBSA</option>
-                <option value="program2" {{ request('program') == 'program2' ? 'selected' : '' }}>LBP</option>
-                <option value="program3" {{ request('program') == 'program3' ? 'selected' : '' }}>Program 3</option>
-            </select>
-        </label>
-        <label>Line:
-            <select name="line">
-                <option value="">All</option>
-                <option value="rice" {{ request('line') == 'rice' ? 'selected' : '' }}>rice</option>
-                <option value="corn" {{ request('line') == 'corn' ? 'selected' : '' }}>corn</option>
-                <option value="high-value" {{ request('line') == 'high-value' ? 'selected' : '' }}>High-Value Crops</option>
-                <option value="clti" {{ request('line') == 'clti' ? 'selected' : '' }}>CLTI</option>
-                <option value="livestock" {{ request('line') == 'livestock' ? 'selected' : '' }}>Livestock</option>
-                <option value="non-crop" {{ request('line') == 'non-crop' ? 'selected' : '' }}>Non-Crop</option>
-                <option value="fisheries" {{ request('line') == 'fisheries' ? 'selected' : '' }}>Fisheries</option>
-            </select>
-        </label>
-        <label>Cause of Damage: <input type="text" name="causeOfDamage" value="{{ request('causeOfDamage') }}"></label>
-        <label>Mode of Payment:
-            <select name="modeOfPayment">
-                <option value="">All</option>
-                <option value="check" {{ request('modeOfPayment') == 'check' ? 'selected' : '' }}>Check</option>
-                <option value="palawan" {{ request('modeOfPayment') == 'palawan' ? 'selected' : '' }}>Palawan Pay</option>
-            </select>
-        </label>
-        <label>Remarks: <input type="text" name="remarks" value="{{ request('remarks') }}"></label>
+        <p>FILTER BY DATE:</p>
         <label>Date Added: <input type="date" name="date" value="{{ request('date') }}"></label>
-        <button type="submit">Filter</button>
-        <a href="{{ route('admin') }}">Clear Filters</a>
+        <button type="submit">Filter by Date</button>
+        <a href="{{ route('admin') }}">Clear All Filters</a>
     </form>
     <p>NL RECORDS:</p>
     <form id="bulk-form" method="POST" action="{{ route('admin.bulk-delete') }}">
@@ -138,7 +106,7 @@
             <a href="{{ route('admin.export-pdf', request()->query()) }}" target="_blank">Export to PDF</a>
         </div>
         <div class="print-table">
-            <x-table :records="$records" :showEncoder="true" />
+            <x-table :records="$records" :showEncoder="true" :showFilters="true" />
         </div>
     </form>
     <div class="received-by">Received By: ____________________</div>

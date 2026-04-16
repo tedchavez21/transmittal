@@ -126,7 +126,20 @@ class RoutesController extends Controller
             $query->whereDate('created_at', $request->date);
         }
 
-        $records = $query->orderBy('encoderName')->orderBy('created_at')->get();
+        // Handle sorting
+        $sortBy = $request->input('sort_by', 'created_at');
+        $sortOrder = $request->input('sort_order', 'asc');
+        
+        // Validate sort parameters to prevent injection
+        $allowedSortColumns = ['id', 'farmerName', 'province', 'municipality', 'barangay', 'program', 'line', 'causeOfDamage', 'remarks', 'encoderName', 'approved', 'created_at'];
+        if (!in_array($sortBy, $allowedSortColumns)) {
+            $sortBy = 'created_at';
+        }
+        if (!in_array($sortOrder, ['asc', 'desc'])) {
+            $sortOrder = 'asc';
+        }
+        
+        $records = $query->orderBy($sortBy, $sortOrder)->get();
 
         // Dashboard stats
         $totalRecords = Record::count();
