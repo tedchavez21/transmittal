@@ -17,6 +17,7 @@
         </button>
     </div>
     <dialog class="loginDialog">
+        <h3>ADMINISTRATOR</h3>
         <form action="{{ route('admin.login') }}" method="post">
             @csrf
                 <label for="username">Username:</label>
@@ -24,7 +25,8 @@
                 <label for="password">Password:</label>
                 <input type="password" id="password" name="password">
                 <button type="submit">Login</button>
+                <button type="button" class="closeModal">Close</button>
         </form>
-        <button class="closeModal">Close</button>
+
     </dialog>
 @endsection

@@ -62,9 +62,9 @@
             <p style="color: orange;">Your login is pending admin approval. You cannot add records until it is approved.</p>
         @endif
         <dialog class="addRecordDialog">
+            <h3>Add Record</h3>
             <form action="{{ route('records') }}" method="POST">
                 @csrf
-                <h3>Add Record</h3>
             <label for="farmerName">Farmer Name:</label>
             <input type="text" id="farmerName" name="farmerName" required>
             <label for="province">Province:</label>
@@ -175,8 +175,8 @@
             <label for="remarks">Remarks - Care of:</label>
             <input type="text" id="remarks" name="remarks">
             <button type="submit">Update Record</button>
+            <button type="button" class="closeEditRecordDialog">Close</button>
         </form>
-        <button class="closeEditRecordDialog">Close</button>
     </dialog>
     @endif
     </div>
