@@ -18,6 +18,7 @@
     </div>
     <dialog class="loginDialog">
         <h3>ADMINISTRATOR</h3>
+        <br>
         <form action="{{ route('admin.login') }}" method="post">
             @csrf
                 <label for="username">Username:</label>
