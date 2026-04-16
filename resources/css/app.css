@@ -87,11 +87,17 @@
     padding: 8px 16px;
     font-size: 14px;
     font-weight: bold;
-    background-color: #D32F2F;
+    background-color: #E64A19;
     color: white;
     border: none;
     border-radius: 4px;
     cursor: pointer;
+}
+
+.logoutButton:hover {
+    background-color: #FF5722;
+    transition: 0.25s ease-in-out;
+    transform: scale(1.05);
 }
 
 .officerOfTheDayNames select {

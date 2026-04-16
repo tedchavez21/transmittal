@@ -113,6 +113,15 @@ class RoutesController extends Controller
         if ($request->filled('line')) {
             $query->where('line', $request->line);
         }
+        if ($request->filled('province')) {
+            $query->where('province', 'like', '%' . $request->province . '%');
+        }
+        if ($request->filled('municipality')) {
+            $query->where('municipality', 'like', '%' . $request->municipality . '%');
+        }
+        if ($request->filled('barangay')) {
+            $query->where('barangay', 'like', '%' . $request->barangay . '%');
+        }
         if ($request->filled('causeOfDamage')) {
             $query->where('causeOfDamage', 'like', '%' . $request->causeOfDamage . '%');
         }
