@@ -169,14 +169,28 @@ class RoutesController extends Controller
             ->first();
 
         if ($admin) {
+            $request->session()->put('admin_logged_in', true);
+            $request->session()->put('admin_username', $admin->username);
             return redirect()->route('admin');
         }
 
         return redirect()->back()->with('error', 'Invalid credentials');
     }
 
+    public function logoutAdmin(Request $request)
+    {
+        $request->session()->forget('admin_logged_in');
+        $request->session()->forget('admin_username');
+        return redirect()->route('welcome');
+    }
+
     public function showAdmin(Request $request)
     {
+        // Check if admin is logged in
+        if (!$request->session()->has('admin_logged_in') || !$request->session()->get('admin_logged_in')) {
+            return redirect()->route('welcome');
+        }
+
         $query = Record::query();
 
         if ($request->filled('farmerName')) {
@@ -218,6 +232,12 @@ class RoutesController extends Controller
         if ($request->filled('transmittal_number')) {
             $query->where('transmittal_number', 'like', '%' . $request->transmittal_number . '%');
         }
+        if ($request->filled('admin_transmittal_number')) {
+            $query->where('admin_transmittal_number', 'like', '%' . $request->admin_transmittal_number . '%');
+        }
+        if ($request->filled('unassigned_only')) {
+            $query->whereNull('admin_transmittal_number');
+        }
         if ($request->filled('date')) {
             $query->whereDate('created_at', $request->date);
         }
@@ -227,7 +247,7 @@ class RoutesController extends Controller
         $sortOrder = $request->input('sort_order', 'asc');
         
         // Validate sort parameters to prevent injection
-        $allowedSortColumns = ['id', 'farmerName', 'province', 'municipality', 'barangay', 'program', 'line', 'causeOfDamage', 'remarks', 'source', 'transmittal_number', 'encoderName', 'approved', 'created_at'];
+        $allowedSortColumns = ['id', 'farmerName', 'province', 'municipality', 'barangay', 'program', 'line', 'causeOfDamage', 'remarks', 'source', 'transmittal_number', 'admin_transmittal_number', 'encoderName', 'approved', 'created_at'];
         if (!in_array($sortBy, $allowedSortColumns)) {
             $sortBy = 'created_at';
         }
@@ -298,47 +318,101 @@ class RoutesController extends Controller
 
     public function printPreview(Request $request)
     {
-        $query = Record::query();
-        $this->applyFilters($request, $query);
+        // Check if admin is logged in
+        if (!$request->session()->has('admin_logged_in') || !$request->session()->get('admin_logged_in')) {
+            return redirect()->route('welcome');
+        }
 
-        $records = $query->orderBy('created_at')->get();
+        $sessionRecordIds = $request->session()->get('admin_print_preview_record_ids', []);
+
+        if (!empty($sessionRecordIds)) {
+            $records = Record::whereIn('id', $sessionRecordIds)
+                ->orderBy('created_at')
+                ->get();
+        } else {
+            $query = Record::query();
+            $this->applyFilters($request, $query);
+            $records = $query->orderBy('created_at')->get();
+        }
 
         $encodedDate = $records->first()?->created_at?->format('Y-m-d') ?? now()->format('Y-m-d');
         if ($request->filled('date')) {
             $encodedDate = Carbon::parse($request->date)->format('Y-m-d');
         }
 
-        $transmittalNumber = null;
+        $adminTransmittalNumber = null;
         if ($records->isNotEmpty()) {
-            $uniqueNumbers = $records->pluck('transmittal_number')->filter()->unique();
-            if ($uniqueNumbers->count() === 1) {
-                $transmittalNumber = $uniqueNumbers->first();
+            $uniqueAdminNumbers = $records->pluck('admin_transmittal_number')->filter()->unique();
+            if ($uniqueAdminNumbers->count() === 1) {
+                $adminTransmittalNumber = $uniqueAdminNumbers->first();
             }
         }
 
         return view('admin-print-preview', [
             'records' => $records,
             'encodedDate' => $encodedDate,
-            'transmittalNumber' => $transmittalNumber,
+            'adminTransmittalNumber' => $adminTransmittalNumber,
             'query' => $request->query(),
         ]);
     }
 
-    public function assignTransmittals(Request $request)
+    public function addToPrintPreview(Request $request)
     {
         $query = Record::query();
-        $this->applyFilters($request, $query);
+        $queryParams = [];
 
-        $records = $query->orderBy('created_at')->get();
-
-        if ($records->isEmpty()) {
-            return redirect()->back()->with('error', 'No records found for assigning transmittal number.');
+        if ($request->filled('query')) {
+            parse_str(ltrim($request->input('query'), '?'), $queryParams);
         }
 
-        $maxExisting = Record::whereNotNull('transmittal_number')
+        $filterRequest = new Request($queryParams);
+        $this->applyFilters($filterRequest, $query);
+
+        // Check if any of the filtered records already have transmittal numbers
+        $totalFilteredRecords = $query->count();
+        $recordsWithTransmittal = $query->where(function($q) {
+            $q->whereNotNull('transmittal_number')->orWhereNotNull('admin_transmittal_number');
+        })->count();
+
+        if ($recordsWithTransmittal > 0) {
+            return redirect()->back()->with('error', 'Cannot add records to print preview. ' . $recordsWithTransmittal . ' of the ' . $totalFilteredRecords . ' filtered records already have transmittal numbers. Please use the "Show only records without admin transmittal numbers" filter to view eligible records.');
+        }
+
+        $recordIds = $query->pluck('id')->toArray();
+
+        // Clear existing preview and start fresh with current filtered records
+        $request->session()->put('admin_print_preview_record_ids', $recordIds);
+
+        return redirect()->back()->with('success', 'Added '.count($recordIds).' records to print preview.');
+    }
+
+    public function assignTransmittals(Request $request)
+    {
+        // Check if admin is logged in
+        if (!$request->session()->has('admin_logged_in') || !$request->session()->get('admin_logged_in')) {
+            return redirect()->route('welcome');
+        }
+
+        $sessionRecordIds = $request->session()->get('admin_print_preview_record_ids', []);
+
+        if (!empty($sessionRecordIds)) {
+            $records = Record::whereIn('id', $sessionRecordIds)
+                ->orderBy('created_at')
+                ->get();
+        } else {
+            $query = Record::query();
+            $this->applyFilters($request, $query);
+            $records = $query->orderBy('created_at')->get();
+        }
+
+        if ($records->isEmpty()) {
+            return redirect()->back()->with('error', 'No records found for assigning admin transmittal number.');
+        }
+
+        $maxExisting = Record::whereNotNull('admin_transmittal_number')
             ->get()
             ->map(function ($record) {
-                $transmittal = $record->transmittal_number;
+                $transmittal = $record->admin_transmittal_number;
                 preg_match('/(\d+)$/', $transmittal, $matches);
                 return isset($matches[1]) ? (int) $matches[1] : 0;
             })
@@ -348,10 +422,19 @@ class RoutesController extends Controller
         $formattedNumber = (string) $nextTransmittal;
 
         foreach ($records as $record) {
-            $record->update(['transmittal_number' => $formattedNumber]);
+            $record->update([
+                'admin_transmittal_number' => $formattedNumber,
+                'admin_transmittal_assigned_at' => now(),
+            ]);
         }
 
-        return redirect()->back()->with('success', 'Transmittal number assigned successfully.');
+        return redirect()->back()->with('success', 'Admin transmittal number assigned successfully to '.count($records).' records.');
+    }
+
+    public function clearPrintPreview(Request $request)
+    {
+        $request->session()->forget('admin_print_preview_record_ids');
+        return redirect()->back()->with('success', 'Print preview cleared.');
     }
 
     private function applyFilters(Request $request, $query)
@@ -395,6 +478,12 @@ class RoutesController extends Controller
         if ($request->filled('transmittal_number')) {
             $query->where('transmittal_number', 'like', '%' . $request->transmittal_number . '%');
         }
+        if ($request->filled('admin_transmittal_number')) {
+            $query->where('admin_transmittal_number', 'like', '%' . $request->admin_transmittal_number . '%');
+        }
+        if ($request->filled('unassigned_only')) {
+            $query->whereNull('admin_transmittal_number');
+        }
         if ($request->filled('date')) {
             $query->whereDate('created_at', $request->date);
         }
@@ -402,7 +491,12 @@ class RoutesController extends Controller
 
     public function bulkDelete(Request $request)
     {
-        $ids = $request->input('ids', []);
+        // Check if admin is logged in
+        if (!$request->session()->has('admin_logged_in') || !$request->session()->get('admin_logged_in')) {
+            return redirect()->route('welcome');
+        }
+
+        $ids = $request->input('record_ids', []);
         Record::whereIn('id', $ids)->delete();
         return redirect()->back()->with('success', 'Selected records deleted successfully!');
     }
@@ -431,6 +525,11 @@ class RoutesController extends Controller
 
     public function exportExcel(Request $request)
     {
+        // Check if admin is logged in
+        if (!$request->session()->has('admin_logged_in') || !$request->session()->get('admin_logged_in')) {
+            return redirect()->route('welcome');
+        }
+
         $query = Record::query();
 
         // Apply same filters as showAdmin
@@ -487,6 +586,11 @@ class RoutesController extends Controller
 
     public function exportPdf(Request $request)
     {
+        // Check if admin is logged in
+        if (!$request->session()->has('admin_logged_in') || !$request->session()->get('admin_logged_in')) {
+            return redirect()->route('welcome');
+        }
+
         $query = Record::query();
 
         // Apply same filters
@@ -568,5 +672,118 @@ class RoutesController extends Controller
         ]);
 
         return redirect()->back()->with('success', 'Admin user created successfully.');
+    }
+
+    public function submitTransmittal(Request $request)
+    {
+        $source = $request->input('source');
+        $conditions = ['source' => null, 'encoderName' => null];
+
+        if (!in_array($source, ['OD', 'Email', 'Facebook'], true)) {
+            $source = null;
+        }
+
+        if (!$source) {
+            if ($request->session()->has('officer_name')) {
+                $source = 'OD';
+                $conditions['source'] = 'OD';
+                $conditions['encoderName'] = $request->session()->get('officer_name');
+            } elseif ($request->session()->has('email_logged_in') && $request->session()->get('email_logged_in')) {
+                $source = 'Email';
+                $conditions['source'] = 'Email';
+            } elseif ($request->session()->has('facebook_logged_in') && $request->session()->get('facebook_logged_in')) {
+                $source = 'Facebook';
+                $conditions['source'] = 'Facebook';
+            }
+        } else {
+            $conditions['source'] = $source;
+        }
+
+        if ($source === 'OD' && !$request->session()->has('officer_name')) {
+            return redirect()->back()->with('error', 'Please log in as Officer of the Day first.');
+        }
+
+        if ($source === 'Email' && !$request->session()->has('email_logged_in')) {
+            return redirect()->back()->with('error', 'Please log in to Email handler first.');
+        }
+
+        if ($source === 'Facebook' && !$request->session()->has('facebook_logged_in')) {
+            return redirect()->back()->with('error', 'Please log in to Facebook handler first.');
+        }
+
+        if (!$source) {
+            return redirect()->back()->with('error', 'You must be logged in to submit a transmittal.');
+        }
+
+        if ($source === 'OD' && $request->session()->has('officer_name')) {
+            $conditions['encoderName'] = $request->session()->get('officer_name');
+        }
+
+        // Get records without transmittal_number
+        $query = Record::where('source', $conditions['source'])
+            ->whereNull('transmittal_number');
+
+        if ($source === 'OD' && $conditions['encoderName']) {
+            $query->where('encoderName', $conditions['encoderName']);
+        }
+
+        $recordsToSubmit = $query->get();
+
+        if ($recordsToSubmit->isEmpty()) {
+            return redirect()->back()->with('info', 'No pending records to submit.');
+        }
+
+        // Generate transmittal number: yyyy-mmdd-PNNN where P is prefix (F/E/none)
+        $today = now()->format('Y-md');
+        
+        // Determine prefix based on source
+        $prefix = '';
+        if ($source === 'Facebook') {
+            $prefix = 'F';
+        } elseif ($source === 'Email') {
+            $prefix = 'E';
+        }
+        // OD has no prefix
+        
+        // Find the latest transmittal for today and this source
+        $searchPattern = $today . '-' . ($prefix ? $prefix : '') . '%';
+        $latestTransmittal = Record::where('source', $source)
+            ->whereNotNull('transmittal_number')
+            ->where('transmittal_number', 'like', $searchPattern);
+
+        if ($source === 'OD') {
+            $latestTransmittal = $latestTransmittal->where('encoderName', $conditions['encoderName']);
+        }
+
+        $latestNumber = 0;
+        $latest = $latestTransmittal->first();
+
+        if ($latest) {
+            // Extract number from format like "2026-0420-001", "2026-0420-F001", or "2026-0420-E001"
+            $parts = explode('-', $latest->transmittal_number);
+            if (count($parts) === 3) {
+                $lastPart = $parts[2];
+                // Remove prefix if present and get the numeric part
+                if ($prefix && str_starts_with($lastPart, $prefix)) {
+                    $numericPart = substr($lastPart, 1);
+                } elseif (!$prefix) {
+                    $numericPart = $lastPart;
+                } else {
+                    $numericPart = '0';
+                }
+                $latestNumber = (int)$numericPart;
+            }
+        }
+
+        $nextNumber = str_pad($latestNumber + 1, 3, '0', STR_PAD_LEFT);
+        $transmittalNumber = $today . '-' . $prefix . $nextNumber;
+
+        // Update all records with the new transmittal number
+        Record::whereIn('id', $recordsToSubmit->pluck('id'))->update([
+            'transmittal_number' => $transmittalNumber,
+        ]);
+
+        $count = $recordsToSubmit->count();
+        return redirect()->back()->with('success', "Transmittal $transmittalNumber created successfully with $count records.");
     }
 }

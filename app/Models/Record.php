@@ -19,6 +19,8 @@ class Record extends Model
         'remarks',
         'source',
         'transmittal_number',
+        'admin_transmittal_number',
+        'admin_transmittal_assigned_at',
         'encoderName',
         'approved',
         'approved_at',

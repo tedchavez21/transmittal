@@ -1183,6 +1183,8 @@ Zarah,San Luis,Aurora`;
             const causeOfDamage = this.getAttribute('data-causeOfDamage');
             const modeOfPayment = this.getAttribute('data-modeOfPayment');
             const remarks = this.getAttribute('data-remarks');
+            const source = this.getAttribute('data-source');
+            const admin_transmittal_number = this.getAttribute('data-admin_transmittal_number');
 
             const editForm = document.querySelector('.editRecordform');
             if (editForm) {
@@ -1239,6 +1241,9 @@ Zarah,San Luis,Aurora`;
             const programSelect = document.querySelector('.editRecordform select[name="program"]');
             if (programSelect) programSelect.value = program;
 
+            const sourceSelect = document.querySelector('.editRecordform select[name="source"]');
+            if (sourceSelect) sourceSelect.value = source;
+
             const lineSelect = document.querySelector('.editRecordform select[name="line"]');
             if (lineSelect) lineSelect.value = line;
 
@@ -1250,6 +1255,9 @@ Zarah,San Luis,Aurora`;
 
             const remarksInput = document.querySelector('.editRecordform input[name="remarks"]');
             if (remarksInput) remarksInput.value = remarks;
+
+            const adminTransmittalInput = document.querySelector('.editRecordform input[name="admin_transmittal_number"]');
+            if (adminTransmittalInput) adminTransmittalInput.value = admin_transmittal_number || '';
 
             if (editRecordAddress) {
                 setHiddenAddress(editProvince, editMunicipality, editBarangay, editRecordAddress);

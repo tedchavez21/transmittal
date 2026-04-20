@@ -91,6 +91,15 @@
         </form>
     </dialog>
     <x-table :records="$records" :showDelete="false" :showCheckbox="false" :showSortableHeaders="false" />
+    @if($records->count() > 0)
+    <div style="margin-top: 20px;">
+        <form action="{{ route('records.submit-transmittal') }}" method="POST" style="display: inline;">
+            @csrf
+            <input type="hidden" name="source" value="Email">
+            <button type="submit" style="padding: 10px 20px; background-color: #4CAF50; color: white; border: none; border-radius: 4px; cursor: pointer; font-weight: bold;">Submit Transmittal</button>
+        </form>
+    </div>
+    @endif
     <dialog class="editRecordDialog">
         <form class="editRecordform" method="POST">
             @csrf

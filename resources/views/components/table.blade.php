@@ -1,4 +1,4 @@
-@props(['records', 'showDelete' => true, 'showEncoder' => false, 'showApproval' => false, 'showAction' => false, 'showCheckbox' => true, 'showFilters' => false, 'showSortableHeaders' => true, 'allPrograms' => [], 'allLines' => [], 'allSources' => [], 'allModes' => []])
+@props(['records', 'showDelete' => true, 'showEncoder' => false, 'showApproval' => false, 'showAction' => false, 'showCheckbox' => true, 'showFilters' => false, 'showSortableHeaders' => true, 'showAdminTransmittal' => false, 'allPrograms' => [], 'allLines' => [], 'allSources' => [], 'allModes' => []])
 
 @php
 $currentSort = request('sort_by', 'created_at');
@@ -104,11 +104,20 @@ function getSortIndicator($column, $currentSort, $currentOrder) {
             </th>
             <th>
                 @if($showSortableHeaders)
-                <a href="{{ getSortUrl('transmittal_number', $currentSort, $currentOrder, $oppositeOrder) }}" style="color: inherit; text-decoration: none; cursor: pointer;">Transmittal Number{{ getSortIndicator('transmittal_number', $currentSort, $currentOrder) }}</a>
+                <a href="{{ getSortUrl('transmittal_number', $currentSort, $currentOrder, $oppositeOrder) }}" style="color: inherit; text-decoration: none; cursor: pointer;">Control #{{ getSortIndicator('transmittal_number', $currentSort, $currentOrder) }}</a>
                 @else
-                Transmittal Number
+                Control Num
                 @endif
             </th>
+            @if($showAdminTransmittal)
+            <th>
+                @if($showSortableHeaders)
+                <a href="{{ getSortUrl('admin_transmittal_number', $currentSort, $currentOrder, $oppositeOrder) }}" style="color: inherit; text-decoration: none; cursor: pointer;">Transmittal Num{{ getSortIndicator('admin_transmittal_number', $currentSort, $currentOrder) }}</a>
+                @else
+                Transmittal Num
+                @endif
+            </th>
+            @endif
             @if($showApproval)
             <th>
                 @if($showSortableHeaders)
@@ -165,6 +174,9 @@ function getSortIndicator($column, $currentSort, $currentOrder) {
                 </select>
             </th>
             <th><input type="text" placeholder="Transmittal" name="transmittal_number" value="{{ request('transmittal_number') }}" style="width: calc(100% - 50px); box-sizing: border-box;"></th>
+            @if($showAdminTransmittal)
+            <th><input type="text" placeholder="Admin Transmittal" name="admin_transmittal_number" value="{{ request('admin_transmittal_number') }}" style="width: calc(100% - 50px); box-sizing: border-box;"></th>
+            @endif
             @if($showApproval)
             <th>
                 <select name="approved">
@@ -187,7 +199,7 @@ function getSortIndicator($column, $currentSort, $currentOrder) {
             <td class="no-print"><input type="checkbox" name="record_ids[]" value="{{ $record->id }}" class="record-checkbox" data-farmer-name="{{ $record->farmerName }}"></td>
             @endif
             <td class="no-print">
-                <button class="editButton"
+                <button type="button" class="editButton"
                 data-id="{{ $record->id }}"
                 data-farmerName="{{ $record->farmerName }}"
                 data-province="{{ $record->province }}"
@@ -199,6 +211,8 @@ function getSortIndicator($column, $currentSort, $currentOrder) {
                 data-causeOfDamage="{{ $record->causeOfDamage }}"
                 data-modeOfPayment="{{ $record->modeOfPayment }}"
                 data-remarks="{{ $record->remarks }}"
+                data-source="{{ $record->source }}"
+                data-admin_transmittal_number="{{ $record->admin_transmittal_number }}"
                 >edit</button>
             </td>
             @if($showDelete)
@@ -221,6 +235,9 @@ function getSortIndicator($column, $currentSort, $currentOrder) {
             <td>{{ $record->remarks }}</td>
             <td>{{ $record->source }}</td>
             <td>{{ $record->transmittal_number ?? '—' }}</td>
+            @if($showAdminTransmittal)
+            <td>{{ $record->admin_transmittal_number ?? '—' }}</td>
+            @endif
             @if($showApproval)
             <td>{{ $record->approved ? 'Approved' : 'Pending' }}</td>
             @endif
@@ -235,7 +252,7 @@ function getSortIndicator($column, $currentSort, $currentOrder) {
             @endif
         </tr>
         @if($loop->iteration % 40 == 0 && !$loop->last)
-        <tr class="page-break"><td colspan="{{ 11 + ($showCheckbox ? 1 : 0) + ($showDelete ? 1 : 0) + ($showEncoder ? 1 : 0) + ($showApproval ? 1 : 0) + ($showAction ? 1 : 0) }}" style="border: none; height: 50px;"></td></tr>
+        <tr class="page-break"><td colspan="{{ 11 + ($showCheckbox ? 1 : 0) + ($showDelete ? 1 : 0) + ($showEncoder ? 1 : 0) + ($showAdminTransmittal ? 1 : 0) + ($showApproval ? 1 : 0) + ($showAction ? 1 : 0) }}" style="border: none; height: 50px;"></td></tr>
         @endif
     @endforeach
     </tbody>

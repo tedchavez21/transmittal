@@ -84,9 +84,11 @@ class RecordsController extends Controller
             'barangay' => 'required|string|max:255',
             'line' => 'required|string|max:255',
             'program' => 'required|string|max:255',
+            'source' => 'required|string|max:255',
             'causeOfDamage' => 'required|string|max:255',
             'modeOfPayment' => 'required|string|max:255',
             'remarks' => 'nullable|string|max:255',
+            'admin_transmittal_number' => 'nullable|string|max:255',
         ]);
 
         $address = trim(implode(', ', array_filter([
@@ -95,7 +97,14 @@ class RecordsController extends Controller
             $request->province,
         ])));
 
-        $record->update(array_merge($validatedData, ['address' => $address]));
+        $updateData = array_merge($validatedData, ['address' => $address]);
+        
+        // If admin transmittal number is being assigned, set the timestamp
+        if ($request->filled('admin_transmittal_number')) {
+            $updateData['admin_transmittal_assigned_at'] = now();
+        }
+
+        $record->update($updateData);
 
         return redirect()->back()->with('success', 'Record updated successfully!');
     }

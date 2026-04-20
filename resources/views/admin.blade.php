@@ -19,6 +19,30 @@
     <h1>Admin Page</h1>
     <p>USHEL admin page</p>
 
+    @if(session('success'))
+        <div style="background-color: #d4edda; color: #155724; padding: 10px; margin-bottom: 20px; border: 1px solid #c3e6cb; border-radius: 4px;">
+            {{ session('success') }}
+        </div>
+    @endif
+
+    @if(session('error'))
+        <div style="background-color: #f8d7da; color: #721c24; padding: 10px; margin-bottom: 20px; border: 1px solid #f5c6cb; border-radius: 4px;">
+            {{ session('error') }}
+        </div>
+    @endif
+
+    @if(session('warning'))
+        <div style="background-color: #fff3cd; color: #856404; padding: 10px; margin-bottom: 20px; border: 1px solid #ffeaa7; border-radius: 4px;">
+            {{ session('warning') }}
+        </div>
+    @endif
+
+    @if(session('info'))
+        <div style="background-color: #d1ecf1; color: #0c5460; padding: 10px; margin-bottom: 20px; border: 1px solid #bee5eb; border-radius: 4px;">
+            {{ session('info') }}
+        </div>
+    @endif
+
     <!-- Dashboard Statistics -->
     <div class="no-print" style="margin-bottom: 20px; padding: 10px; border: 1px solid #ccc;">
         <h2>Dashboard</h2>
@@ -88,9 +112,10 @@
         @endif
     </div>
 
-    <a href="{{ route('welcome') }}">
-        <button>Go back</button>
-    </a>
+    <form action="{{ route('admin.logout') }}" method="POST" style="display: inline; margin-bottom: 20px;">
+        @csrf
+        <button type="submit" style="padding: 8px 16px; background-color: #6c757d; color: white; border: none; border-radius: 4px; cursor: pointer;">Go back</button>
+    </form>
 
     <form method="GET" action="{{ route('admin') }}" style="margin-bottom: 20px;">
         <p>FILTER BY DATE:</p>
@@ -98,6 +123,14 @@
         <button type="submit">Filter by Date</button>
         <a href="{{ route('admin') }}">Clear All Filters</a>
     </form>
+
+    <!-- Transmittal Management -->
+    <div class="no-print" style="margin-bottom: 20px; padding: 15px; border: 1px solid #ccc; background-color: #f9f9f9;">
+        <label>
+            <input type="checkbox" id="unassigned-toggle" {{ request('unassigned_only') ? 'checked' : '' }}>
+            Show only records without admin transmittal numbers
+        </label>
+    </div>
     <p>NL RECORDS:</p>
     <form id="bulk-form" method="POST" action="{{ route('admin.bulk-delete') }}">
         @csrf
@@ -107,21 +140,52 @@
             <a href="{{ route('admin.export-excel', request()->query()) }}" target="_blank">Export to CSV</a>
         </div>
                 <div style="overflow-x: auto; width: 100%; margin-bottom: 20px; border: 1px solid #ccc; position: relative;">
-                <x-table :records="$records" :showEncoder="true" :showFilters="true" :allPrograms="$allPrograms" :allLines="$allLines" :allSources="$allSources" :allModes="$allModes" />
+                <x-table :records="$records" :showEncoder="true" :showFilters="true" :showAdminTransmittal="true" :allPrograms="$allPrograms" :allLines="$allLines" :allSources="$allSources" :allModes="$allModes" />
             </div>
             <button type="button" class="table-search-btn" id="table-search-btn" style="position: fixed; bottom: 20px; right: 20px; padding: 8px 16px; background-color: #1976D2; color: white; border: none; border-radius: 3px; cursor: pointer; font-weight: 600; font-size: 14px; z-index: 100;">Apply Filters</button>
         </div>
     </form>
     <div class="received-by">Received By: ____________________</div>
+    @php $previewRecordIds = session('admin_print_preview_record_ids', []); @endphp
+    <form id="add-to-transmittal-form" method="POST" action="{{ route('admin.add-to-print-preview') }}" style="display: inline; margin-right: 10px;">
+        @csrf
+        <input type="hidden" name="query" id="add-to-transmittal-query" value="{{ request()->getQueryString() ? ('?' . request()->getQueryString()) : '' }}">
+        <button type="submit" style="padding: 8px 16px; background-color: #28a745; color: white; border: none; border-radius: 3px; cursor: pointer;">Add Current Records to Transmittal</button>
+    </form>
+    @if(count($previewRecordIds) > 0)
+    <form method="POST" action="{{ route('admin.clear-print-preview') }}" style="display: inline; margin-right: 10px;">
+        @csrf
+        <button type="submit" style="padding: 8px 16px; background-color: #dc3545; color: white; border: none; border-radius: 3px; cursor: pointer;">Clear Preview</button>
+    </form>
+    @endif
     <button type="button" id="open-print-preview">Print Table</button>
+    <span style="margin-left: 20px; font-weight: 600;">Preview bucket: {{ count($previewRecordIds) }} record{{ count($previewRecordIds) === 1 ? '' : 's' }}</span>
     <dialog class="editRecordDialog">
         <form class="editRecordform" method="POST">
             @csrf
             @method('PUT')
             <label for="farmerName">Farmer Name:</label>
             <input type="text" id="farmerName" name="farmerName">
-            <label for="address">Address:</label>
-            <input type="text" id="address" name="address">
+            
+            <label for="editProvince">Province:</label>
+            <select name="province" id="editProvince" required>
+                <option value="">Select Province</option>
+                <option value="Aurora">Aurora</option>
+                <option value="Nueva Ecija">Nueva Ecija</option>
+            </select>
+            
+            <label for="editMunicipality">Municipality:</label>
+            <select name="municipality" id="editMunicipality" required disabled>
+                <option value="">Select Municipality</option>
+            </select>
+            
+            <label for="editBarangay">Barangay:</label>
+            <select name="barangay" id="editBarangay" required disabled>
+                <option value="">Select Barangay</option>
+            </select>
+            
+            <input type="hidden" name="address" id="editRecordAddress">
+            
             <label for="line">Line:</label>
             <select name="line" id="line">
                 <option value="">Select Line</option>
@@ -133,23 +197,44 @@
                 <option value="non-crop">Non-Crop</option>
                 <option value="fisheries">Fisheries</option>
             </select>
+            
             <label for="program">Program:</label>
             <select name="program" id="program">
                 <option value="">Select Program</option>
-                <option value="program1">RSBSA</option>
-                <option value="program2">LBP</option>
-                <option value="program3">Program 3</option>
+                <option value="RSBSA">RSBSA</option>
+                <option value="AGRI-SENSO">AGRI-SENSO</option>
+                <option value="ACEF">ACEF</option>
+                <option value="ANYO">ANYO</option>
+                <option value="OTHER-LI LC">OTHER-LI LC</option>
+                <option value="OTHER-LBP ACP">OTHER-LBP ACP</option>
+                <option value="REGULAR">REGULAR</option>
+                <option value="SELF-FINANCED">SELF-FINANCED</option>
             </select>
+            
+            <label for="source">Source:</label>
+            <select name="source" id="source">
+                <option value="">Select Source</option>
+                <option value="OD">OD</option>
+                <option value="Email">Email</option>
+                <option value="Facebook">Facebook</option>
+            </select>
+            
             <label for="causeOfDamage">Cause of Damage:</label>
             <input type="text" id="causeOfDamage" name="causeOfDamage">
+            
             <label for="modeOfPayment">Mode of payment:</label>
             <select name="modeOfPayment" id="modeOfPayment">
                 <option value="">Select Mode of payment</option>
                 <option value="check">Check</option>
                 <option value="palawan">Palawan Pay</option>
             </select>
+            
             <label for="remarks">Remarks - Care of:</label>
             <input type="text" id="remarks" name="remarks">
+            
+            <label for="admin_transmittal_number">Admin Transmittal Number:</label>
+            <input type="text" id="admin_transmittal_number" name="admin_transmittal_number" placeholder="e.g., 001, 002, 003...">
+            
             <button type="submit">Update Record</button>
         </form>
         <button class="closeEditRecordDialog">Close</button>
@@ -205,7 +290,7 @@
     </dialog>
     <script>
         document.getElementById('open-print-preview').addEventListener('click', function() {
-            const url = new URL('{{ route('admin.print-preview') }}', window.location.origin);
+            const url = new URL("{{ route('admin.print-preview') }}", window.location.origin);
             const params = new URLSearchParams(window.location.search);
             params.forEach((value, key) => {
                 if (value) {
@@ -213,6 +298,24 @@
                 }
             });
             window.open(url.toString(), '_blank');
+        });
+
+        const addToTransmittalForm = document.getElementById('add-to-transmittal-form');
+        if (addToTransmittalForm) {
+            addToTransmittalForm.addEventListener('submit', function() {
+                document.getElementById('add-to-transmittal-query').value = window.location.search || '';
+            });
+        }
+
+        // Handle unassigned records toggle
+        document.getElementById('unassigned-toggle').addEventListener('change', function() {
+            const url = new URL(window.location);
+            if (this.checked) {
+                url.searchParams.set('unassigned_only', '1');
+            } else {
+                url.searchParams.delete('unassigned_only');
+            }
+            window.location.href = url.toString();
         });
     </script>
 @endsection

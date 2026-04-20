@@ -17,7 +17,7 @@ class RecordsExport
     {
         $records = $this->query ? $this->query->get() : Record::all();
 
-        $csv = "ID,Encoder,Farmer Name,Province,Municipality,Barangay,Address,Program,Line,Cause of Damage,Mode of Payment,Remarks,Source,Transmittal Number,Created At\n";
+        $csv = "ID,Encoder,Farmer Name,Province,Municipality,Barangay,Address,Program,Line,Cause of Damage,Mode of Payment,Remarks,Source,Transmittal Number,Admin Transmittal Number,Created At\n";
 
         foreach ($records as $record) {
             $csv .= $record->id . ',' .
@@ -34,6 +34,7 @@ class RecordsExport
                     '"' . str_replace('"', '""', $record->remarks) . '",' .
                     '"' . str_replace('"', '""', $record->source) . '",' .
                     '"' . str_replace('"', '""', $record->transmittal_number) . '",' .
+                    '"' . str_replace('"', '""', $record->admin_transmittal_number) . '",' .
                     $record->created_at . "\n";
         }
 
