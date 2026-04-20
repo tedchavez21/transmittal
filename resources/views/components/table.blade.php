@@ -1,4 +1,4 @@
-@props(['records', 'showDelete' => true, 'showEncoder' => false, 'showApproval' => false, 'showAction' => false, 'showCheckbox' => true, 'showFilters' => false, 'showSortableHeaders' => true])
+@props(['records', 'showDelete' => true, 'showEncoder' => false, 'showApproval' => false, 'showAction' => false, 'showCheckbox' => true, 'showFilters' => false, 'showSortableHeaders' => true, 'allPrograms' => [], 'allLines' => [], 'allSources' => [], 'allModes' => []])
 
 @php
 $currentSort = request('sort_by', 'created_at');
@@ -90,9 +90,23 @@ function getSortIndicator($column, $currentSort, $currentOrder) {
             </th>
             <th>
                 @if($showSortableHeaders)
-                <a href="{{ getSortUrl('remarks', $currentSort, $currentOrder, $oppositeOrder) }}" style="color: inherit; text-decoration: none; cursor: pointer;">Remarks - Care of{{ getSortIndicator('remarks', $currentSort, $currentOrder) }}</a>
+                <a href="{{ getSortUrl('remarks', $currentSort, $currentOrder, $oppositeOrder) }}" style="color: inherit; text-decoration: none; cursor: pointer;">Remarks{{ getSortIndicator('remarks', $currentSort, $currentOrder) }}</a>
                 @else
-                Remarks - Care of
+                Remarks
+                @endif
+            </th>
+            <th>
+                @if($showSortableHeaders)
+                <a href="{{ getSortUrl('source', $currentSort, $currentOrder, $oppositeOrder) }}" style="color: inherit; text-decoration: none; cursor: pointer;">Source{{ getSortIndicator('source', $currentSort, $currentOrder) }}</a>
+                @else
+                Source
+                @endif
+            </th>
+            <th>
+                @if($showSortableHeaders)
+                <a href="{{ getSortUrl('transmittal_number', $currentSort, $currentOrder, $oppositeOrder) }}" style="color: inherit; text-decoration: none; cursor: pointer;">Transmittal Number{{ getSortIndicator('transmittal_number', $currentSort, $currentOrder) }}</a>
+                @else
+                Transmittal Number
                 @endif
             </th>
             @if($showApproval)
@@ -107,7 +121,6 @@ function getSortIndicator($column, $currentSort, $currentOrder) {
             @if($showAction)
             <th class="no-print">Action</th>
             @endif
-            <th class="no-print"></th>
         </tr>
         @if($showFilters)
         <tr class="filter-row">
@@ -128,26 +141,30 @@ function getSortIndicator($column, $currentSort, $currentOrder) {
             <th>
                 <select name="program">
                     <option value="">All Programs</option>
-                    <option value="RSBSA" {{ request('program') == 'RSBSA' ? 'selected' : '' }}>RSBSA</option>
-                    <option value="AGRI-SENSO" {{ request('program') == 'AGRI-SENSO' ? 'selected' : '' }}>AGRI-SENSO</option>
-                    <option value="ACEF" {{ request('program') == 'ACEF' ? 'selected' : '' }}>ACEF</option>
-                    <option value="ANYO" {{ request('program') == 'ANYO' ? 'selected' : '' }}>ANYO</option>
+                    @foreach($allPrograms as $program)
+                    <option value="{{ $program }}" {{ request('program') == $program ? 'selected' : '' }}>{{ $program }}</option>
+                    @endforeach
                 </select>
             </th>
             <th>
                 <select name="line">
                     <option value="">All Lines</option>
-                    <option value="rice" {{ request('line') == 'rice' ? 'selected' : '' }}>Rice</option>
-                    <option value="corn" {{ request('line') == 'corn' ? 'selected' : '' }}>Corn</option>
-                    <option value="high-value" {{ request('line') == 'high-value' ? 'selected' : '' }}>High-Value</option>
-                    <option value="clti" {{ request('line') == 'clti' ? 'selected' : '' }}>CLTI</option>
-                    <option value="livestock" {{ request('line') == 'livestock' ? 'selected' : '' }}>Livestock</option>
-                    <option value="non-crop" {{ request('line') == 'non-crop' ? 'selected' : '' }}>Non-Crop</option>
-                    <option value="fisheries" {{ request('line') == 'fisheries' ? 'selected' : '' }}>Fisheries</option>
+                    @foreach($allLines as $line)
+                    <option value="{{ $line }}" {{ request('line') == $line ? 'selected' : '' }}>{{ $line }}</option>
+                    @endforeach
                 </select>
             </th>
             <th><input type="text" placeholder="Damage" name="causeOfDamage" value="{{ request('causeOfDamage') }}"></th>
             <th><input type="text" placeholder="Remarks" name="remarks" value="{{ request('remarks') }}"></th>
+            <th>
+                <select name="source">
+                    <option value="">All Sources</option>
+                    @foreach($allSources as $source)
+                    <option value="{{ $source }}" {{ request('source') == $source ? 'selected' : '' }}>{{ $source }}</option>
+                    @endforeach
+                </select>
+            </th>
+            <th><input type="text" placeholder="Transmittal" name="transmittal_number" value="{{ request('transmittal_number') }}" style="width: calc(100% - 50px); box-sizing: border-box;"></th>
             @if($showApproval)
             <th>
                 <select name="approved">
@@ -160,7 +177,6 @@ function getSortIndicator($column, $currentSort, $currentOrder) {
             @if($showAction)
             <th class="no-print"></th>
             @endif
-            <th class="no-print" style="text-align: center;"><button type="button" class="table-search-btn" id="table-search-btn" style="padding: 6px 12px; background-color: #1976D2; color: white; border: none; border-radius: 3px; cursor: pointer; font-weight: 600; font-size: 12px;">Search</button></th>
         </tr>
         @endif
     </thead>
@@ -203,6 +219,8 @@ function getSortIndicator($column, $currentSort, $currentOrder) {
             <td>{{ $record->line }}</td>
             <td>{{ $record->causeOfDamage }}</td>
             <td>{{ $record->remarks }}</td>
+            <td>{{ $record->source }}</td>
+            <td>{{ $record->transmittal_number ?? '—' }}</td>
             @if($showApproval)
             <td>{{ $record->approved ? 'Approved' : 'Pending' }}</td>
             @endif
@@ -217,7 +235,7 @@ function getSortIndicator($column, $currentSort, $currentOrder) {
             @endif
         </tr>
         @if($loop->iteration % 40 == 0 && !$loop->last)
-        <tr class="page-break"><td colspan="{{ 9 + ($showCheckbox ? 1 : 0) + ($showDelete ? 1 : 0) + ($showEncoder ? 1 : 0) + ($showApproval ? 1 : 0) + ($showAction ? 1 : 0) }}" style="border: none; height: 50px;"></td></tr>
+        <tr class="page-break"><td colspan="{{ 11 + ($showCheckbox ? 1 : 0) + ($showDelete ? 1 : 0) + ($showEncoder ? 1 : 0) + ($showApproval ? 1 : 0) + ($showAction ? 1 : 0) }}" style="border: none; height: 50px;"></td></tr>
         @endif
     @endforeach
     </tbody>

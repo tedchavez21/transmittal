@@ -28,6 +28,8 @@
                 <th>Cause of Damage</th>
                 <th>Mode of Payment</th>
                 <th>Remarks</th>
+                <th>Source</th>
+                <th>Transmittal Number</th>
                 <th>Created At</th>
             </tr>
         </thead>
@@ -46,6 +48,8 @@
                 <td>{{ $record->causeOfDamage }}</td>
                 <td>{{ $record->modeOfPayment }}</td>
                 <td>{{ $record->remarks }}</td>
+                <td>{{ $record->source }}</td>
+                <td>{{ $record->transmittal_number }}</td>
                 <td>{{ $record->created_at }}</td>
             </tr>
             @if($loop->iteration % 40 == 0 && !$loop->last)

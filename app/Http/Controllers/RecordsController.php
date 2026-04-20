@@ -21,12 +21,36 @@ class RecordsController extends Controller
             'causeOfDamage' => 'required|string|max:255',
             'modeOfPayment' => 'required|string|max:255',
             'remarks' => 'nullable|string|max:255',
+            'source' => 'nullable|string|in:OD,Email,Facebook',
         ]);
+
+        $source = $request->source ?? 'OD';
+
+        // Check authentication based on source
+        if ($source === 'OD') {
+            if (!$request->session()->has('officer_name')) {
+                return redirect()->back()->with('error', 'Please log in as Officer of the Day first.');
+            }
+        } elseif ($source === 'Email') {
+            if (!$request->session()->has('email_logged_in')) {
+                return redirect()->back()->with('error', 'Please log in to Email handler first.');
+            }
+        } elseif ($source === 'Facebook') {
+            if (!$request->session()->has('facebook_logged_in')) {
+                return redirect()->back()->with('error', 'Please log in to Facebook handler first.');
+            }
+        }
 
         $encoderName = $request->session()->get('officer_name');
 
         if (!$encoderName) {
-            return redirect()->back()->with('error', 'Officer name is required before adding records.');
+            if ($source === 'Email') {
+                $encoderName = 'Email';
+            } elseif ($source === 'Facebook') {
+                $encoderName = 'Facebook';
+            } else {
+                return redirect()->back()->with('error', 'Unauthorized access.');
+            }
         }
 
         $address = trim(implode(', ', array_filter([
@@ -38,6 +62,7 @@ class RecordsController extends Controller
         Record::create(array_merge($validatedData, [
             'address' => $address,
             'encoderName' => $encoderName,
+            'source' => $request->source ?? 'OD',
             'approved' => true,
             'approved_at' => now(),
         ]));

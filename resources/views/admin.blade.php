@@ -9,8 +9,10 @@
     <style media="print">
         @page { size: landscape; }
         h1, p, form, dialog, .no-print { display: none !important; }
-        .print-table { display: block !important; }
-        table, table * { display: table !important; }
+        table { display: table !important; width: 100%; border-collapse: collapse; }
+        tbody, thead, tr, td, th { display: table-cell !important; width: auto; height: auto; margin: 0; padding: 8px; border: 1px solid #000; }
+        thead, tbody { display: table-row-group !important; }
+        tr { display: table-row !important; page-break-inside: avoid; }
         .page-break { page-break-after: always; }
         .received-by { display: block; position: fixed; bottom: 20px; right: 20px; font-size: 14px; }
     </style>
@@ -103,14 +105,15 @@
         <div class="no-print">
             <button type="button" id="bulk-delete-btn">Delete Selected</button>
             <a href="{{ route('admin.export-excel', request()->query()) }}" target="_blank">Export to CSV</a>
-            <a href="{{ route('admin.export-pdf', request()->query()) }}" target="_blank">Export to PDF</a>
         </div>
-        <div class="print-table">
-            <x-table :records="$records" :showEncoder="true" :showFilters="true" />
+                <div style="overflow-x: auto; width: 100%; margin-bottom: 20px; border: 1px solid #ccc; position: relative;">
+                <x-table :records="$records" :showEncoder="true" :showFilters="true" :allPrograms="$allPrograms" :allLines="$allLines" :allSources="$allSources" :allModes="$allModes" />
+            </div>
+            <button type="button" class="table-search-btn" id="table-search-btn" style="position: fixed; bottom: 20px; right: 20px; padding: 8px 16px; background-color: #1976D2; color: white; border: none; border-radius: 3px; cursor: pointer; font-weight: 600; font-size: 14px; z-index: 100;">Apply Filters</button>
         </div>
     </form>
     <div class="received-by">Received By: ____________________</div>
-    <button onclick="window.print()">Print Table</button>
+    <button type="button" id="open-print-preview">Print Table</button>
     <dialog class="editRecordDialog">
         <form class="editRecordform" method="POST">
             @csrf
@@ -200,4 +203,16 @@
             <button type="button" class="closeAddAdminDialog">Cancel</button>
         </form>
     </dialog>
+    <script>
+        document.getElementById('open-print-preview').addEventListener('click', function() {
+            const url = new URL('{{ route('admin.print-preview') }}', window.location.origin);
+            const params = new URLSearchParams(window.location.search);
+            params.forEach((value, key) => {
+                if (value) {
+                    url.searchParams.set(key, value);
+                }
+            });
+            window.open(url.toString(), '_blank');
+        });
+    </script>
 @endsection

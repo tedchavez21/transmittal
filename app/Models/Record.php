@@ -17,6 +17,8 @@ class Record extends Model
         'causeOfDamage',
         'modeOfPayment',
         'remarks',
+        'source',
+        'transmittal_number',
         'encoderName',
         'approved',
         'approved_at',

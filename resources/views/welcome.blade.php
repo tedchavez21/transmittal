@@ -12,6 +12,16 @@
                 OFFICER OF THE DAY
             </button>
         </a>
+        <a href="{{ route('email-handler') }}">
+            <button class="emailHandlerButton">
+                EMAIL
+            </button>
+        </a>
+        <a href="{{ route('facebook-handler') }}">
+            <button class="facebookHandlerButton">
+                FACEBOOK
+            </button>
+        </a>
         <button class="adminLoginButton">
             ADMIN
         </button>
