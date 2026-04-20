@@ -20,10 +20,22 @@
         }
 
         body {
-            padding: 12mm;
+            padding: 5mm;
+        }
+
+        .page-section {
+            page-break-after: always;
+            min-height: 8.5in;
+        }
+
+        .page-section:last-child {
+            page-break-after: auto;
         }
 
         .header {
+            display: flex;
+            flex-direction: row;
+            justify-content: space-evenly;
             margin-bottom: 16px;
         }
 
@@ -74,6 +86,10 @@
             font-size: 13px;
         }
 
+        .pagination {
+            display: none;
+        }
+
         @media print {
             .assign-form,
             .no-data {
@@ -87,53 +103,64 @@
             table {
                 font-size: 10px;
             }
+
+            .page-section {
+                page-break-after: always;
+            }
         }
     </style>
 </head>
 <body>
-    <div class="header">
-        <h1>Transmittal Print Preview</h1>
-        <p><strong>Date Encoded:</strong> {{ $encodedDate }}</p>
-        <p><strong>Admin Transmittal #:</strong> {{ $adminTransmittalNumber ?? 'Not assigned' }}</p>
-        <p><strong>Records:</strong> {{ $records->count() }}</p>
-    </div>
-
     @if($records->isEmpty())
         <div class="no-data">No records found for this preview.</div>
     @else
-        <table>
-            <thead>
-                <tr>
-                    <th>Farmer Name</th>
-                    <th>Province</th>
-                    <th>Municipality</th>
-                    <th>Barangay</th>
-                    <th>Program</th>
-                    <th>Line</th>
-                    <th>Cause of Damage</th>
-                    <th>Remarks</th>
-                    <th>Source</th>
-                </tr>
-            </thead>
-            <tbody>
-                @foreach($records as $record)
-                    <tr>
-                        <td>{{ $record->farmerName }}</td>
-                        <td>{{ $record->province ?? '—' }}</td>
-                        <td>{{ $record->municipality ?? '—' }}</td>
-                        <td>{{ $record->barangay ?? '—' }}</td>
-                        <td>{{ $record->program }}</td>
-                        <td>{{ $record->line }}</td>
-                        <td>{{ $record->causeOfDamage }}</td>
-                        <td>{{ $record->remarks }}</td>
-                        <td>{{ $record->source }}</td>
-                    </tr>
-                @endforeach
-            </tbody>
-        </table>
-    @endif
+        @php
+            $chunks = $records->chunk($perPage);
+        @endphp
 
-    <div class="received-by">Received By: ____________________</div>
+        @foreach($chunks as $pageIndex => $pageRecords)
+            <div class="page-section">
+                <div class="header">
+                    <p><strong>Date Encoded:</strong> {{ $encodedDate }}</p>
+                    <p><strong>Transmittal Number:</strong> {{ $pageTransmittalNumbers[$pageIndex + 1] ?? 'Not assigned' }}</p>
+                    <p><strong>Records:</strong> {{ $pageRecords->count() }} of {{ $totalRecords }} (Page {{ $pageIndex + 1 }} of {{ $totalPages }})</p>
+                </div>
+
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Farmer Name</th>
+                            <th>Province</th>
+                            <th>Municipality</th>
+                            <th>Barangay</th>
+                            <th>Program</th>
+                            <th>Line</th>
+                            <th>Cause of Damage</th>
+                            <th>Remarks</th>
+                            <th>Source</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach($pageRecords as $record)
+                            <tr>
+                                <td>{{ $record->farmerName }}</td>
+                                <td>{{ $record->province ?? '—' }}</td>
+                                <td>{{ $record->municipality ?? '—' }}</td>
+                                <td>{{ $record->barangay ?? '—' }}</td>
+                                <td>{{ $record->program }}</td>
+                                <td>{{ $record->line }}</td>
+                                <td>{{ $record->causeOfDamage }}</td>
+                                <td>{{ $record->remarks }}</td>
+                                <td>{{ $record->source }}</td>
+                            </tr>
+                        @endforeach
+                    </tbody>
+                </table>
+
+                <div class="received-by">Received By: ____________________</div>
+            </div>
+        @endforeach
+    @endif
 
     <form class="assign-form" method="POST" action="{{ route('admin.assign-transmittals') }}">
         @csrf

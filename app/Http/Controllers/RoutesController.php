@@ -326,33 +326,52 @@ class RoutesController extends Controller
         $sessionRecordIds = $request->session()->get('admin_print_preview_record_ids', []);
 
         if (!empty($sessionRecordIds)) {
-            $records = Record::whereIn('id', $sessionRecordIds)
-                ->orderBy('id', 'asc')
-                ->get();
+            $recordsQuery = Record::whereIn('id', $sessionRecordIds)
+                ->orderBy('id', 'asc');
         } else {
             $query = Record::query();
             $this->applyFilters($request, $query);
-            $records = $query->orderBy('id', 'asc')->get();
+            $recordsQuery = $query->orderBy('id', 'asc');
         }
+
+        // Get all records (not paginated) - will be split in view
+        $records = $recordsQuery->get();
+        $totalRecords = $records->count();
+        $perPage = 40;
 
         $encodedDate = $records->first()?->created_at?->format('Y-m-d') ?? now()->format('Y-m-d');
         if ($request->filled('date')) {
             $encodedDate = Carbon::parse($request->date)->format('Y-m-d');
         }
 
-        $adminTransmittalNumber = null;
-        if ($records->isNotEmpty()) {
-            $uniqueAdminNumbers = $records->pluck('admin_transmittal_number')->filter()->unique();
-            if ($uniqueAdminNumbers->count() === 1) {
-                $adminTransmittalNumber = $uniqueAdminNumbers->first();
+        // Calculate page assignments for each record (for transmittal numbering)
+        $recordPageAssignments = [];
+        foreach ($records as $index => $record) {
+            $pageNumber = floor($index / $perPage) + 1;
+            $recordPageAssignments[$record->id] = $pageNumber;
+        }
+
+        // Calculate total pages needed
+        $totalPages = ceil($totalRecords / $perPage);
+
+        // Get existing transmittal numbers per page (if records already have them)
+        $pageTransmittalNumbers = [];
+        foreach ($records as $index => $record) {
+            $pageNum = floor($index / $perPage) + 1;
+            if ($record->admin_transmittal_number) {
+                $pageTransmittalNumbers[$pageNum] = $record->admin_transmittal_number;
             }
         }
 
         return view('admin-print-preview', [
             'records' => $records,
             'encodedDate' => $encodedDate,
-            'adminTransmittalNumber' => $adminTransmittalNumber,
             'query' => $request->query(),
+            'totalPages' => $totalPages,
+            'totalRecords' => $totalRecords,
+            'perPage' => $perPage,
+            'recordPageAssignments' => $recordPageAssignments,
+            'pageTransmittalNumbers' => $pageTransmittalNumbers,
         ]);
     }
 
@@ -394,21 +413,28 @@ class RoutesController extends Controller
         }
 
         $sessionRecordIds = $request->session()->get('admin_print_preview_record_ids', []);
+        $perPage = 40;
 
         if (!empty($sessionRecordIds)) {
-            $records = Record::whereIn('id', $sessionRecordIds)
-                ->orderBy('id', 'asc')
-                ->get();
+            $recordsQuery = Record::whereIn('id', $sessionRecordIds)
+                ->orderBy('id', 'asc');
         } else {
             $query = Record::query();
             $this->applyFilters($request, $query);
-            $records = $query->orderBy('id', 'asc')->get();
+            $recordsQuery = $query->orderBy('id', 'asc');
         }
 
-        if ($records->isEmpty()) {
+        $totalRecords = $recordsQuery->count();
+
+        if ($totalRecords === 0) {
             return redirect()->back()->with('error', 'No records found for assigning admin transmittal number.');
         }
 
+        // Get all records to process
+        $allRecords = $recordsQuery->get();
+        $totalPages = ceil($totalRecords / $perPage);
+
+        // Get the next starting transmittal number
         $maxExisting = Record::whereNotNull('admin_transmittal_number')
             ->get()
             ->map(function ($record) {
@@ -416,19 +442,27 @@ class RoutesController extends Controller
                 preg_match('/(\d+)$/', $transmittal, $matches);
                 return isset($matches[1]) ? (int) $matches[1] : 0;
             })
-            ->max();
+            ->max() ?? 0;
 
-        $nextTransmittal = $maxExisting + 1;
-        $formattedNumber = (string) $nextTransmittal;
+        $currentTransmittalNumber = $maxExisting + 1;
+        $totalAssigned = 0;
 
-        foreach ($records as $record) {
+        // Process records in batches of 40 - each batch gets a unique transmittal number
+        foreach ($allRecords as $index => $record) {
+            $pageNumber = floor($index / $perPage) + 1;
+            $transmittalNumber = $maxExisting + $pageNumber;
+
             $record->update([
-                'admin_transmittal_number' => $formattedNumber,
+                'admin_transmittal_number' => (string) $transmittalNumber,
                 'admin_transmittal_assigned_at' => now(),
             ]);
+            $totalAssigned++;
         }
 
-        return redirect()->back()->with('success', 'Admin transmittal number assigned successfully to '.count($records).' records.');
+        // Clear the print preview session after assigning
+        $request->session()->forget('admin_print_preview_record_ids');
+
+        return redirect()->back()->with('success', "Admin transmittal numbers assigned successfully to {$totalAssigned} records across {$totalPages} pages.");
     }
 
     public function clearPrintPreview(Request $request)
