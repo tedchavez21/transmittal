@@ -88,6 +88,7 @@ class RecordsController extends Controller
             'causeOfDamage' => 'required|string|max:255',
             'modeOfPayment' => 'required|string|max:255',
             'remarks' => 'nullable|string|max:255',
+            'transmittal_number' => 'nullable|string|max:255',
             'admin_transmittal_number' => 'nullable|string|max:255',
         ]);
 
@@ -98,10 +99,18 @@ class RecordsController extends Controller
         ])));
 
         $updateData = array_merge($validatedData, ['address' => $address]);
-        
-        // If admin transmittal number is being assigned, set the timestamp
-        if ($request->filled('admin_transmittal_number')) {
+
+        if (!$request->filled('transmittal_number')) {
+            unset($updateData['transmittal_number']);
+        }
+
+        if ($request->filled('clear_admin_transmittal_number')) {
+            $updateData['admin_transmittal_number'] = null;
+            $updateData['admin_transmittal_assigned_at'] = null;
+        } elseif ($request->filled('admin_transmittal_number')) {
             $updateData['admin_transmittal_assigned_at'] = now();
+        } else {
+            unset($updateData['admin_transmittal_number']);
         }
 
         $record->update($updateData);

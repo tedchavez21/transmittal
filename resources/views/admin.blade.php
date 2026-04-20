@@ -232,8 +232,16 @@
             <label for="remarks">Remarks - Care of:</label>
             <input type="text" id="remarks" name="remarks">
             
+            <label for="transmittal_number">Control Number:</label>
+            <input type="text" id="transmittal_number" name="transmittal_number" placeholder="e.g., 2026-0420-001...">
+            
             <label for="admin_transmittal_number">Admin Transmittal Number:</label>
             <input type="text" id="admin_transmittal_number" name="admin_transmittal_number" placeholder="e.g., 001, 002, 003...">
+
+            <label for="clear_admin_transmittal_number" style="display: block; margin-top: 8px;">
+                <input type="checkbox" id="clear_admin_transmittal_number" name="clear_admin_transmittal_number" value="1">
+                Clear Admin Transmittal Number
+            </label>
             
             <button type="submit">Update Record</button>
         </form>

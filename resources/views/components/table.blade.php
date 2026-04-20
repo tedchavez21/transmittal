@@ -24,14 +24,14 @@ function getSortIndicator($column, $currentSort, $currentOrder) {
     <thead>
         <tr>
             @if($showCheckbox)
-            <th class="no-print"><input type="checkbox" id="select-all"></th>
+            <th class="no-print col-checkbox"><input type="checkbox" id="select-all"></th>
             @endif
-            <th class="no-print">Edit</th>
+            <th class="no-print col-edit">Edit</th>
             @if($showDelete)
-            <th class="no-print">Delete</th>
+            <th class="no-print col-delete">Delete</th>
             @endif
             @if($showEncoder)
-            <th>
+            <th class="col-encoder">
                 @if($showSortableHeaders)
                 <a href="{{ getSortUrl('encoderName', $currentSort, $currentOrder, $oppositeOrder) }}" style="color: inherit; text-decoration: none; cursor: pointer;">Encoder{{ getSortIndicator('encoderName', $currentSort, $currentOrder) }}</a>
                 @else
@@ -39,70 +39,70 @@ function getSortIndicator($column, $currentSort, $currentOrder) {
                 @endif
             </th>
             @endif
-            <th>
+            <th class="col-farmer-name">
                 @if($showSortableHeaders)
                 <a href="{{ getSortUrl('farmerName', $currentSort, $currentOrder, $oppositeOrder) }}" style="color: inherit; text-decoration: none; cursor: pointer;">Farmer Name{{ getSortIndicator('farmerName', $currentSort, $currentOrder) }}</a>
                 @else
                 Farmer Name
                 @endif
             </th>
-            <th>
+            <th class="col-province" class="col-province">
                 @if($showSortableHeaders)
                 <a href="{{ getSortUrl('province', $currentSort, $currentOrder, $oppositeOrder) }}" style="color: inherit; text-decoration: none; cursor: pointer;">Province{{ getSortIndicator('province', $currentSort, $currentOrder) }}</a>
                 @else
                 Province
                 @endif
             </th>
-            <th>
+            <th class="col-municipality" class="col-municipality">
                 @if($showSortableHeaders)
                 <a href="{{ getSortUrl('municipality', $currentSort, $currentOrder, $oppositeOrder) }}" style="color: inherit; text-decoration: none; cursor: pointer;">Municipality{{ getSortIndicator('municipality', $currentSort, $currentOrder) }}</a>
                 @else
                 Municipality
                 @endif
             </th>
-            <th>
+            <th class="col-barangay" class="col-barangay">
                 @if($showSortableHeaders)
                 <a href="{{ getSortUrl('barangay', $currentSort, $currentOrder, $oppositeOrder) }}" style="color: inherit; text-decoration: none; cursor: pointer;">Barangay{{ getSortIndicator('barangay', $currentSort, $currentOrder) }}</a>
                 @else
                 Barangay
                 @endif
             </th>
-            <th>
+            <th class="col-program" class="col-program">
                 @if($showSortableHeaders)
                 <a href="{{ getSortUrl('program', $currentSort, $currentOrder, $oppositeOrder) }}" style="color: inherit; text-decoration: none; cursor: pointer;">Program{{ getSortIndicator('program', $currentSort, $currentOrder) }}</a>
                 @else
                 Program
                 @endif
             </th>
-            <th>
+            <th class="col-line" class="col-line">
                 @if($showSortableHeaders)
                 <a href="{{ getSortUrl('line', $currentSort, $currentOrder, $oppositeOrder) }}" style="color: inherit; text-decoration: none; cursor: pointer;">Line{{ getSortIndicator('line', $currentSort, $currentOrder) }}</a>
                 @else
                 Line
                 @endif
             </th>
-            <th>
+            <th class="col-causeOfDamage" class="col-causeOfDamage">
                 @if($showSortableHeaders)
                 <a href="{{ getSortUrl('causeOfDamage', $currentSort, $currentOrder, $oppositeOrder) }}" style="color: inherit; text-decoration: none; cursor: pointer;">Cause of Damage{{ getSortIndicator('causeOfDamage', $currentSort, $currentOrder) }}</a>
                 @else
                 Cause of Damage
                 @endif
             </th>
-            <th>
+            <th class="col-remarks" class="col-remarks">
                 @if($showSortableHeaders)
                 <a href="{{ getSortUrl('remarks', $currentSort, $currentOrder, $oppositeOrder) }}" style="color: inherit; text-decoration: none; cursor: pointer;">Remarks{{ getSortIndicator('remarks', $currentSort, $currentOrder) }}</a>
                 @else
                 Remarks
                 @endif
             </th>
-            <th>
+            <th class="col-source" class="col-source">
                 @if($showSortableHeaders)
                 <a href="{{ getSortUrl('source', $currentSort, $currentOrder, $oppositeOrder) }}" style="color: inherit; text-decoration: none; cursor: pointer;">Source{{ getSortIndicator('source', $currentSort, $currentOrder) }}</a>
                 @else
                 Source
                 @endif
             </th>
-            <th>
+            <th class="col-transmittal-number" class="col-transmittal-number">
                 @if($showSortableHeaders)
                 <a href="{{ getSortUrl('transmittal_number', $currentSort, $currentOrder, $oppositeOrder) }}" style="color: inherit; text-decoration: none; cursor: pointer;">Control #{{ getSortIndicator('transmittal_number', $currentSort, $currentOrder) }}</a>
                 @else
@@ -110,7 +110,7 @@ function getSortIndicator($column, $currentSort, $currentOrder) {
                 @endif
             </th>
             @if($showAdminTransmittal)
-            <th>
+            <th class="col-admin-transmittal-number">
                 @if($showSortableHeaders)
                 <a href="{{ getSortUrl('admin_transmittal_number', $currentSort, $currentOrder, $oppositeOrder) }}" style="color: inherit; text-decoration: none; cursor: pointer;">Transmittal Num{{ getSortIndicator('admin_transmittal_number', $currentSort, $currentOrder) }}</a>
                 @else
@@ -119,7 +119,7 @@ function getSortIndicator($column, $currentSort, $currentOrder) {
             </th>
             @endif
             @if($showApproval)
-            <th>
+            <th class="col-status">
                 @if($showSortableHeaders)
                 <a href="{{ getSortUrl('approved', $currentSort, $currentOrder, $oppositeOrder) }}" style="color: inherit; text-decoration: none; cursor: pointer;">Status{{ getSortIndicator('approved', $currentSort, $currentOrder) }}</a>
                 @else
@@ -196,50 +196,51 @@ function getSortIndicator($column, $currentSort, $currentOrder) {
     @foreach($records as $record)
         <tr class="{{ !$record->approved ? 'pending' : '' }}">
             @if($showCheckbox)
-            <td class="no-print"><input type="checkbox" name="record_ids[]" value="{{ $record->id }}" class="record-checkbox" data-farmer-name="{{ $record->farmerName }}"></td>
+            <td class="no-print col-checkbox"><input type="checkbox" name="record_ids[]" value="{{ $record->id }}" class="record-checkbox" data-farmer-name="{{ $record->farmerName }}"></td>
             @endif
-            <td class="no-print">
+            <td class="no-print col-edit">
                 <button type="button" class="editButton"
                 data-id="{{ $record->id }}"
-                data-farmerName="{{ $record->farmerName }}"
-                data-province="{{ $record->province }}"
-                data-municipality="{{ $record->municipality }}"
-                data-barangay="{{ $record->barangay }}"
-                data-address="{{ $record->address }}"
-                data-program="{{ $record->program }}"
-                data-line="{{ $record->line }}"
-                data-causeOfDamage="{{ $record->causeOfDamage }}"
-                data-modeOfPayment="{{ $record->modeOfPayment }}"
-                data-remarks="{{ $record->remarks }}"
-                data-source="{{ $record->source }}"
-                data-admin_transmittal_number="{{ $record->admin_transmittal_number }}"
+                data-farmerName="{{ e($record->farmerName) }}"
+                data-province="{{ e($record->province) }}"
+                data-municipality="{{ e($record->municipality) }}"
+                data-barangay="{{ e($record->barangay) }}"
+                data-address="{{ e($record->address) }}"
+                data-program="{{ e($record->program) }}"
+                data-line="{{ e($record->line) }}"
+                data-causeOfDamage="{{ e($record->causeOfDamage) }}"
+                data-modeOfPayment="{{ e($record->modeOfPayment) }}"
+                data-remarks="{{ e($record->remarks) }}"
+                data-source="{{ e($record->source) }}"
+                data-transmittal_number="{{ e($record->transmittal_number) }}"
+                data-admin_transmittal_number="{{ e($record->admin_transmittal_number) }}"
                 >edit</button>
             </td>
             @if($showDelete)
-            <td class="no-print">
+            <td class="no-print col-delete">
                 <button type="button" class="deleteButton" data-id="{{ $record->id }}" data-farmer-name="{{ $record->farmerName }}">
                     delete
                 </button>
             </td>
             @endif
             @if($showEncoder)
-            <td>{{ $record->encoderName ?? 'Unknown' }}</td>
+            <td class="col-encoder">{{ $record->encoderName ?? 'Unknown' }}</td>
             @endif
-            <td>{{ $record->farmerName }}</td>
-            <td>{{ $record->province ?? '—' }}</td>
-            <td>{{ $record->municipality ?? '—' }}</td>
-            <td>{{ $record->barangay ?? '—' }}</td>
-            <td>{{ $record->program }}</td>
-            <td>{{ $record->line }}</td>
-            <td>{{ $record->causeOfDamage }}</td>
-            <td>{{ $record->remarks }}</td>
-            <td>{{ $record->source }}</td>
-            <td>{{ $record->transmittal_number ?? '—' }}</td>
+            <td class="col-farmer-name">{{ $record->farmerName }}</td>
+            <td class="col-province">{{ $record->province ?? '—' }}</td>
+            <td class="col-municipality">{{ $record->municipality ?? '—' }}</td>
+            <td class="col-barangay">{{ $record->barangay ?? '—' }}</td>
+            <td class="col-program">{{ $record->program }}</td>
+            <td class="col-line">{{ $record->line }}</td>
+            <td class="col-causeOfDamage">{{ $record->causeOfDamage }}</td>
+            <td class="col-remarks">{{ $record->remarks }}</td>
+            <td class="col-source">{{ $record->source }}</td>
+            <td class="col-transmittal-number">{{ $record->transmittal_number ?? '—' }}</td>
             @if($showAdminTransmittal)
-            <td>{{ $record->admin_transmittal_number ?? '—' }}</td>
+            <td class="col-admin-transmittal-number">{{ $record->admin_transmittal_number ?? '—' }}</td>
             @endif
             @if($showApproval)
-            <td>{{ $record->approved ? 'Approved' : 'Pending' }}</td>
+            <td class="col-status">{{ $record->approved ? 'Approved' : 'Pending' }}</td>
             @endif
             @if($showAction)
             <td class="no-print">

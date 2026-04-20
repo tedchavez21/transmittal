@@ -1184,6 +1184,7 @@ Zarah,San Luis,Aurora`;
             const modeOfPayment = this.getAttribute('data-modeOfPayment');
             const remarks = this.getAttribute('data-remarks');
             const source = this.getAttribute('data-source');
+            const transmittal_number = this.getAttribute('data-transmittal_number');
             const admin_transmittal_number = this.getAttribute('data-admin_transmittal_number');
 
             const editForm = document.querySelector('.editRecordform');
@@ -1256,8 +1257,16 @@ Zarah,San Luis,Aurora`;
             const remarksInput = document.querySelector('.editRecordform input[name="remarks"]');
             if (remarksInput) remarksInput.value = remarks;
 
+            const transmittalInput = document.querySelector('.editRecordform input[name="transmittal_number"]');
+            if (transmittalInput) transmittalInput.value = transmittal_number || '';
+
             const adminTransmittalInput = document.querySelector('.editRecordform input[name="admin_transmittal_number"]');
             if (adminTransmittalInput) adminTransmittalInput.value = admin_transmittal_number || '';
+
+            const clearAdminTransmittalCheckbox = document.querySelector('.editRecordform input[name="clear_admin_transmittal_number"]');
+            if (clearAdminTransmittalCheckbox) {
+                clearAdminTransmittalCheckbox.checked = false;
+            }
 
             if (editRecordAddress) {
                 setHiddenAddress(editProvince, editMunicipality, editBarangay, editRecordAddress);

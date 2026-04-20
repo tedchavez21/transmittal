@@ -21,7 +21,7 @@ class RoutesController extends Controller
 
         if ($isLoggedIn) {
             $records = Record::where('source', 'Email')
-                ->orderBy('created_at', 'desc')
+                ->orderBy('id', 'asc')
                 ->get();
         }
 
@@ -61,7 +61,7 @@ class RoutesController extends Controller
 
         if ($isLoggedIn) {
             $records = Record::where('source', 'Facebook')
-                ->orderBy('created_at', 'desc')
+                ->orderBy('id', 'asc')
                 ->get();
         }
 
@@ -108,7 +108,7 @@ class RoutesController extends Controller
             $officerApproved = $officer->approved;
             $records = Record::where('encoderName', $officerName)
                 ->where('source', 'OD')
-                ->orderBy('created_at', 'desc')
+                ->orderBy('id', 'asc')
                 ->get();
         }
 
@@ -243,7 +243,7 @@ class RoutesController extends Controller
         }
 
         // Handle sorting
-        $sortBy = $request->input('sort_by', 'created_at');
+        $sortBy = $request->input('sort_by', 'id');
         $sortOrder = $request->input('sort_order', 'asc');
         
         // Validate sort parameters to prevent injection
@@ -327,12 +327,12 @@ class RoutesController extends Controller
 
         if (!empty($sessionRecordIds)) {
             $records = Record::whereIn('id', $sessionRecordIds)
-                ->orderBy('created_at')
+                ->orderBy('id', 'asc')
                 ->get();
         } else {
             $query = Record::query();
             $this->applyFilters($request, $query);
-            $records = $query->orderBy('created_at')->get();
+            $records = $query->orderBy('id', 'asc')->get();
         }
 
         $encodedDate = $records->first()?->created_at?->format('Y-m-d') ?? now()->format('Y-m-d');
@@ -397,12 +397,12 @@ class RoutesController extends Controller
 
         if (!empty($sessionRecordIds)) {
             $records = Record::whereIn('id', $sessionRecordIds)
-                ->orderBy('created_at')
+                ->orderBy('id', 'asc')
                 ->get();
         } else {
             $query = Record::query();
             $this->applyFilters($request, $query);
-            $records = $query->orderBy('created_at')->get();
+            $records = $query->orderBy('id', 'asc')->get();
         }
 
         if ($records->isEmpty()) {
@@ -576,7 +576,7 @@ class RoutesController extends Controller
             $query->whereDate('created_at', $request->date);
         }
 
-        $export = new \App\Exports\RecordsExport($query->orderBy('encoderName')->orderBy('created_at'));
+        $export = new \App\Exports\RecordsExport($query->orderBy('id', 'asc'));
         $csv = $export->toCsv();
 
         return response($csv)
@@ -637,7 +637,7 @@ class RoutesController extends Controller
             $query->whereDate('created_at', $request->date);
         }
 
-        $records = $query->orderBy('encoderName')->orderBy('created_at')->get();
+        $records = $query->orderBy('id', 'asc')->get();
         $pdf = app('dompdf.wrapper')->loadView('pdf.records', compact('records'));
         $pdf->setPaper('a4', 'landscape');
         return $pdf->download('records.pdf');
