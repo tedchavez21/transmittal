@@ -2,6 +2,9 @@
 
 @section('title', 'Officer of the day')
 
+@section('page-styles')
+@endsection
+
 @section('content')
     <div class="odHeader">
         <section>
@@ -61,6 +64,7 @@
         @else
             <p style="color: orange;">Your login is pending admin approval. You cannot add records until it is approved.</p>
         @endif
+        
         <dialog class="addRecordDialog">
             <h3>Add Record</h3>
             <form action="{{ route('records') }}" method="POST">

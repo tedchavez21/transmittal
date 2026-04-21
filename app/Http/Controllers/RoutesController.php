@@ -21,6 +21,7 @@ class RoutesController extends Controller
 
         if ($isLoggedIn) {
             $records = Record::where('source', 'Email')
+                ->whereDate('created_at', today())
                 ->orderBy('id', 'asc')
                 ->get();
         }
@@ -61,6 +62,7 @@ class RoutesController extends Controller
 
         if ($isLoggedIn) {
             $records = Record::where('source', 'Facebook')
+                ->whereDate('created_at', today())
                 ->orderBy('id', 'asc')
                 ->get();
         }
@@ -106,8 +108,10 @@ class RoutesController extends Controller
                 ['approved' => false]
             );
             $officerApproved = $officer->approved;
+            
             $records = Record::where('encoderName', $officerName)
                 ->where('source', 'OD')
+                ->whereDate('created_at', today())
                 ->orderBy('id', 'asc')
                 ->get();
         }
@@ -238,8 +242,23 @@ class RoutesController extends Controller
         if ($request->filled('unassigned_only')) {
             $query->whereNull('admin_transmittal_number');
         }
-        if ($request->filled('date')) {
-            $query->whereDate('created_at', $request->date);
+        if ($request->filled('date_encoded')) {
+            $query->whereDate('created_at', $request->date_encoded);
+        }
+        
+        // Date filters
+        if ($request->filled('date_single')) {
+            $query->whereDate('created_at', $request->date_single);
+        }
+        if ($request->filled('date_from')) {
+            $query->whereDate('created_at', '>=', $request->date_from);
+        }
+        if ($request->filled('date_to')) {
+            $query->whereDate('created_at', '<=', $request->date_to);
+        }
+        if ($request->filled('date_month')) {
+            $query->whereMonth('created_at', $request->date_month)
+                  ->whereYear('created_at', $request->filled('date_year') ? $request->date_year : now()->year);
         }
 
         // Handle sorting
@@ -257,10 +276,47 @@ class RoutesController extends Controller
         
         $records = $query->orderBy($sortBy, $sortOrder)->get();
 
-        // Dashboard stats
-        $totalRecords = Record::count();
-        $recordsByProgram = Record::selectRaw('program, count(*) as count')->groupBy('program')->pluck('count', 'program');
-        $recentRecords = Record::where('created_at', '>=', now()->subDays(7))->count();
+        // Dashboard stats - use ONLY dashboard filter parameters (dash_ prefix)
+        $statsQuery = Record::query();
+        
+        // Apply DASHBOARD ONLY filters (do NOT affect main records table)
+        if ($request->filled('dash_program')) {
+            $statsQuery->where('program', $request->dash_program);
+        }
+        if ($request->filled('dash_line')) {
+            $statsQuery->where('line', $request->dash_line);
+        }
+        if ($request->filled('dash_province')) {
+            $statsQuery->where('province', 'like', '%' . $request->dash_province . '%');
+        }
+        if ($request->filled('dash_municipality')) {
+            $statsQuery->where('municipality', 'like', '%' . $request->dash_municipality . '%');
+        }
+        if ($request->filled('dash_barangay')) {
+            $statsQuery->where('barangay', 'like', '%' . $request->dash_barangay . '%');
+        }
+        if ($request->filled('dash_source')) {
+            $statsQuery->where('source', $request->dash_source);
+        }
+        if ($request->filled('dash_date_single')) {
+            $statsQuery->whereDate('created_at', $request->dash_date_single);
+        }
+        if ($request->filled('dash_date_from')) {
+            $statsQuery->whereDate('created_at', '>=', $request->dash_date_from);
+        }
+        if ($request->filled('dash_date_to')) {
+            $statsQuery->whereDate('created_at', '<=', $request->dash_date_to);
+        }
+        if ($request->filled('dash_date_month')) {
+            $statsQuery->whereMonth('created_at', substr($request->dash_date_month, 5, 2))
+                  ->whereYear('created_at', substr($request->dash_date_month, 0, 4));
+        }
+
+        $totalRecords = $statsQuery->count();
+        $recordsByProgram = $statsQuery->selectRaw('program, count(*) as count')->groupBy('program')->pluck('count', 'program');
+        $recentRecords = (clone $statsQuery)->where('created_at', '>=', now()->subDays(7))->count();
+        
+        // Unfiltered stats for reference
         $pendingOfficers = Officer::where('approved', false)->where('active', true)->orderBy('created_at')->get();
         $activeOfficers = Officer::where('active', true)->orderBy('name')->get();
         $admins = Admin::all();
@@ -295,11 +351,21 @@ class RoutesController extends Controller
             'Facebook'
         ];
 
-        // All available modes of payment (collect from database or use defaults)
-        $allModes = Record::whereNotNull('modeOfPayment')->distinct()->pluck('modeOfPayment')->sort()->values();
-        if ($allModes->isEmpty()) {
-            $allModes = ['check', 'palawan'];
-        }
+        // All available provinces - Hardcoded to match modal options exactly
+        $allProvinces = [
+            'Aurora',
+            'Nueva Ecija'
+        ];
+
+        // All available provinces, municipalities, barangays
+        $allMunicipalities = Record::distinct()->pluck('municipality')->filter()->sort()->values();
+        $allBarangays = Record::distinct()->pluck('barangay')->filter()->sort()->values();
+
+        // All available modes of payment - Hardcoded to match modal options exactly
+        $allModes = [
+            'check',
+            'palawan'
+        ];
 
         return view('admin', [
             'records' => $records,
@@ -313,6 +379,9 @@ class RoutesController extends Controller
             'allLines' => $allLines,
             'allSources' => $allSources,
             'allModes' => $allModes,
+            'allProvinces' => $allProvinces,
+            'allMunicipalities' => $allMunicipalities,
+            'allBarangays' => $allBarangays,
         ]);
     }
 
@@ -377,29 +446,39 @@ class RoutesController extends Controller
 
     public function addToPrintPreview(Request $request)
     {
-        $query = Record::query();
-        $queryParams = [];
+        $recordIds = [];
+        
+        if ($request->filled('record_ids')) {
+            $recordIds = json_decode($request->input('record_ids'), true);
+        } else {
+            $query = Record::query();
+            $queryParams = [];
 
-        if ($request->filled('query')) {
-            parse_str(ltrim($request->input('query'), '?'), $queryParams);
+            if ($request->filled('query')) {
+                parse_str(ltrim($request->input('query'), '?'), $queryParams);
+            }
+
+            $filterRequest = new Request($queryParams);
+            $this->applyFilters($filterRequest, $query);
+
+            // Check if any of the filtered records already have transmittal numbers
+            $totalFilteredRecords = $query->count();
+            $recordsWithTransmittal = $query->where(function($q) {
+                $q->whereNotNull('transmittal_number')->orWhereNotNull('admin_transmittal_number');
+            })->count();
+
+            if ($recordsWithTransmittal > 0) {
+                return redirect()->back()->with('error', 'Cannot add records to print preview. ' . $recordsWithTransmittal . ' of the ' . $totalFilteredRecords . ' filtered records already have transmittal numbers. Please use the "Show only records without admin transmittal numbers" filter to view eligible records.');
+            }
+
+            $recordIds = $query->pluck('id')->toArray();
+        }
+        
+        if (!is_array($recordIds)) {
+            $recordIds = [];
         }
 
-        $filterRequest = new Request($queryParams);
-        $this->applyFilters($filterRequest, $query);
-
-        // Check if any of the filtered records already have transmittal numbers
-        $totalFilteredRecords = $query->count();
-        $recordsWithTransmittal = $query->where(function($q) {
-            $q->whereNotNull('transmittal_number')->orWhereNotNull('admin_transmittal_number');
-        })->count();
-
-        if ($recordsWithTransmittal > 0) {
-            return redirect()->back()->with('error', 'Cannot add records to print preview. ' . $recordsWithTransmittal . ' of the ' . $totalFilteredRecords . ' filtered records already have transmittal numbers. Please use the "Show only records without admin transmittal numbers" filter to view eligible records.');
-        }
-
-        $recordIds = $query->pluck('id')->toArray();
-
-        // Clear existing preview and start fresh with current filtered records
+        // Clear existing preview and start fresh with selected records
         $request->session()->put('admin_print_preview_record_ids', $recordIds);
 
         return redirect()->back()->with('success', 'Added '.count($recordIds).' records to print preview.');
@@ -518,6 +597,9 @@ class RoutesController extends Controller
         if ($request->filled('unassigned_only')) {
             $query->whereNull('admin_transmittal_number');
         }
+        if ($request->filled('date_encoded')) {
+            $query->whereDate('created_at', $request->date_encoded);
+        }
         if ($request->filled('date')) {
             $query->whereDate('created_at', $request->date);
         }
@@ -605,6 +687,9 @@ class RoutesController extends Controller
         }
         if ($request->filled('transmittal_number')) {
             $query->where('transmittal_number', 'like', '%' . $request->transmittal_number . '%');
+        }
+        if ($request->filled('date_encoded')) {
+            $query->whereDate('created_at', $request->date_encoded);
         }
         if ($request->filled('date')) {
             $query->whereDate('created_at', $request->date);

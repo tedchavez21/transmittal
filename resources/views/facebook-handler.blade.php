@@ -2,6 +2,14 @@
 
 @section('title', 'Facebook')
 
+@section('page-styles')
+<style>
+    html, body {
+        overflow-x: hidden;
+    }
+</style>
+@endsection
+
 @section('content')
     <div class="odHeader">
         <section>
@@ -31,6 +39,7 @@
     @else
         <br/>
         <button class="addRecordButton">Add Record</button>
+        
         <dialog class="addRecordDialog">
             <h3>Add Record</h3>
             <form action="{{ route('records') }}" method="POST">

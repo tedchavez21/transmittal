@@ -53,20 +53,18 @@
             width: 100%;
             border-collapse: collapse;
             margin-bottom: 20px;
-            table-layout: fixed;
+            table-layout: auto;
             font-size: 11px;
         }
 
         th, td {
-            border: 1px solid #000;
-            padding: 6px;
+            padding: 8px;
             text-align: left;
             vertical-align: top;
         }
 
         th {
-            background: #f2f2f2;
-            font-weight: 700;
+            font-weight: bold;
         }
 
         .address-cell {

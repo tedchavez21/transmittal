@@ -23,9 +23,7 @@ function getSortIndicator($column, $currentSort, $currentOrder) {
 <table>
     <thead>
         <tr>
-            @if($showCheckbox)
-            <th class="no-print col-checkbox"><input type="checkbox" id="select-all"></th>
-            @endif
+            <th class="no-print col-checkbox" style="display: none;"><input type="checkbox" id="select-all"></th>
             <th class="no-print col-edit">Edit</th>
             @if($showDelete)
             <th class="no-print col-delete">Delete</th>
@@ -74,6 +72,20 @@ function getSortIndicator($column, $currentSort, $currentOrder) {
                 Program
                 @endif
             </th>
+            <th class="col-source">
+                @if($showSortableHeaders)
+                <a href="{{ getSortUrl('source', $currentSort, $currentOrder, $oppositeOrder) }}" style="color: inherit; text-decoration: none; cursor: pointer;">Source{{ getSortIndicator('source', $currentSort, $currentOrder) }}</a>
+                @else
+                Source
+                @endif
+            </th>
+            <th class="col-control-number">
+                @if($showSortableHeaders)
+                <a href="{{ getSortUrl('transmittal_number', $currentSort, $currentOrder, $oppositeOrder) }}" style="color: inherit; text-decoration: none; cursor: pointer;">Control Number{{ getSortIndicator('transmittal_number', $currentSort, $currentOrder) }}</a>
+                @else
+                Control Number
+                @endif
+            </th>
             <th class="col-line" class="col-line">
                 @if($showSortableHeaders)
                 <a href="{{ getSortUrl('line', $currentSort, $currentOrder, $oppositeOrder) }}" style="color: inherit; text-decoration: none; cursor: pointer;">Line{{ getSortIndicator('line', $currentSort, $currentOrder) }}</a>
@@ -93,20 +105,6 @@ function getSortIndicator($column, $currentSort, $currentOrder) {
                 <a href="{{ getSortUrl('remarks', $currentSort, $currentOrder, $oppositeOrder) }}" style="color: inherit; text-decoration: none; cursor: pointer;">Remarks{{ getSortIndicator('remarks', $currentSort, $currentOrder) }}</a>
                 @else
                 Remarks
-                @endif
-            </th>
-            <th class="col-source" class="col-source">
-                @if($showSortableHeaders)
-                <a href="{{ getSortUrl('source', $currentSort, $currentOrder, $oppositeOrder) }}" style="color: inherit; text-decoration: none; cursor: pointer;">Source{{ getSortIndicator('source', $currentSort, $currentOrder) }}</a>
-                @else
-                Source
-                @endif
-            </th>
-            <th class="col-transmittal-number" class="col-transmittal-number">
-                @if($showSortableHeaders)
-                <a href="{{ getSortUrl('transmittal_number', $currentSort, $currentOrder, $oppositeOrder) }}" style="color: inherit; text-decoration: none; cursor: pointer;">Control #{{ getSortIndicator('transmittal_number', $currentSort, $currentOrder) }}</a>
-                @else
-                Control Num
                 @endif
             </th>
             @if($showAdminTransmittal)
@@ -165,15 +163,6 @@ function getSortIndicator($column, $currentSort, $currentOrder) {
             </th>
             <th><input type="text" placeholder="Damage" name="causeOfDamage" value="{{ request('causeOfDamage') }}"></th>
             <th><input type="text" placeholder="Remarks" name="remarks" value="{{ request('remarks') }}"></th>
-            <th>
-                <select name="source">
-                    <option value="">All Sources</option>
-                    @foreach($allSources as $source)
-                    <option value="{{ $source }}" {{ request('source') == $source ? 'selected' : '' }}>{{ $source }}</option>
-                    @endforeach
-                </select>
-            </th>
-            <th><input type="text" placeholder="Transmittal" name="transmittal_number" value="{{ request('transmittal_number') }}" style="width: calc(100% - 50px); box-sizing: border-box;"></th>
             @if($showAdminTransmittal)
             <th><input type="text" placeholder="Admin Transmittal" name="admin_transmittal_number" value="{{ request('admin_transmittal_number') }}" style="width: calc(100% - 50px); box-sizing: border-box;"></th>
             @endif
@@ -195,9 +184,9 @@ function getSortIndicator($column, $currentSort, $currentOrder) {
     <tbody>
     @foreach($records as $record)
         <tr class="{{ !$record->approved ? 'pending' : '' }}">
-            @if($showCheckbox)
-            <td class="no-print col-checkbox"><input type="checkbox" name="record_ids[]" value="{{ $record->id }}" class="record-checkbox" data-farmer-name="{{ $record->farmerName }}"></td>
-            @endif
+            <td class="no-print col-checkbox" style="display: none;">
+                <input type="checkbox" name="record_ids[]" value="{{ $record->id }}" class="record-checkbox">
+            </td>
             <td class="no-print col-edit">
                 <button type="button" class="editButton"
                 data-id="{{ $record->id }}"
@@ -231,11 +220,11 @@ function getSortIndicator($column, $currentSort, $currentOrder) {
             <td class="col-municipality">{{ $record->municipality ?? '—' }}</td>
             <td class="col-barangay">{{ $record->barangay ?? '—' }}</td>
             <td class="col-program">{{ $record->program }}</td>
+            <td class="col-source">{{ $record->source ?? '—' }}</td>
+            <td class="col-control-number">{{ $record->transmittal_number ?? '—' }}</td>
             <td class="col-line">{{ $record->line }}</td>
             <td class="col-causeOfDamage">{{ $record->causeOfDamage }}</td>
             <td class="col-remarks">{{ $record->remarks }}</td>
-            <td class="col-source">{{ $record->source }}</td>
-            <td class="col-transmittal-number">{{ $record->transmittal_number ?? '—' }}</td>
             @if($showAdminTransmittal)
             <td class="col-admin-transmittal-number">{{ $record->admin_transmittal_number ?? '—' }}</td>
             @endif
@@ -253,7 +242,7 @@ function getSortIndicator($column, $currentSort, $currentOrder) {
             @endif
         </tr>
         @if($loop->iteration % 40 == 0 && !$loop->last)
-        <tr class="page-break"><td colspan="{{ 11 + ($showCheckbox ? 1 : 0) + ($showDelete ? 1 : 0) + ($showEncoder ? 1 : 0) + ($showAdminTransmittal ? 1 : 0) + ($showApproval ? 1 : 0) + ($showAction ? 1 : 0) }}" style="border: none; height: 50px;"></td></tr>
+        <tr class="page-break"><td colspan="{{ 8 + ($showCheckbox ? 1 : 0) + ($showDelete ? 1 : 0) + ($showEncoder ? 1 : 0) + ($showAdminTransmittal ? 1 : 0) + ($showApproval ? 1 : 0) + ($showAction ? 1 : 0) }}" style="border: none; height: 50px;"></td></tr>
         @endif
     @endforeach
     </tbody>
