@@ -447,8 +447,8 @@
         @method('DELETE')
         <input type="hidden" name="record_ids" id="selected-record-ids">
         <div class="no-print" style="margin-bottom: 15px; display: flex; gap: 10px; flex-wrap: wrap;">
-            <button type="button" id="delete-multiple-btn" style="padding: 8px 16px; background-color: #ffc107; color: #212529; border: none; border-radius: 4px; cursor: pointer; font-weight: bold;">Delete multiple</button>
-            <button type="button" id="delete-selected-btn" style="padding: 8px 16px; background-color: #6c757d; color: white; border: none; border-radius: 4px; cursor: not-allowed; font-weight: bold;" disabled>Delete Selected</button>
+            <button id="delete-multiple" class="btn btn-danger">Delete Multiple</button>
+            <button id="delete-selected" class="btn btn-warning" disabled>Delete Selected</button>
             <button type="button" id="select-transmit-btn" style="padding: 8px 16px; background-color: #007bff; color: white; border: none; border-radius: 4px; cursor: pointer; font-weight: bold;">Select Records for transmit</button>
             <button type="button" id="transmit-selected-btn" style="padding: 8px 16px; background-color: #6c757d; color: white; border: none; border-radius: 4px; cursor: not-allowed; font-weight: bold;" disabled>Transmit Selected Records</button>
             <a href="{{ route('admin.export-excel', request()->query()) }}" target="_blank" style="padding: 8px 16px; background-color: #28a745; color: white; border: none; border-radius: 4px; cursor: pointer; font-weight: bold; text-decoration: none;">Export to CSV</a>
@@ -610,68 +610,67 @@
         </form>
     </dialog>
 <script>
-        document.addEventListener('DOMContentLoaded', function() {
-            // 1. Select all potential elements
-            const openPendingODModal = document.getElementById('openPendingODModal');
-            const openAdminUsersModal = document.getElementById('openAdminUsersModal');
-            const pendingODModal = document.getElementById('pendingODModal');
-            const adminUsersModal = document.getElementById('adminUsersModal');
-            const deleteSelectedBtn = document.getElementById('delete-selected');
-            const transmitSelectedBtn = document.getElementById('transmit-selected');
-            const bulkDeleteDialog = document.querySelector('.bulkDeleteDialog');
+    document.addEventListener('DOMContentLoaded', function() {
+        const deleteMultipleBtn = document.getElementById('delete-multiple'); 
+        const deleteSelectedBtn = document.getElementById('delete-selected');
+        const bulkDeleteDialog = document.querySelector('.bulkDeleteDialog');
+        const checkboxElements = document.querySelectorAll('.col-checkbox'); // Columns in the table
+        const recordCheckboxes = document.querySelectorAll('.record-checkbox'); // Individual checkboxes
+        const selectAllBox = document.getElementById('select-all');
 
-            // 2. Modal Open Logic
-            openPendingODModal?.addEventListener('click', () => pendingODModal?.showModal());
-            openAdminUsersModal?.addEventListener('click', () => adminUsersModal?.showModal());
-
-            // 3. Modal Close Logic
-            document.querySelectorAll('.closePendingODModal').forEach(btn => {
-                btn.addEventListener('click', () => pendingODModal?.close());
-            });
-            document.querySelectorAll('.closeAdminUsersModal').forEach(btn => {
-                btn.addEventListener('click', () => adminUsersModal?.close());
+        // 1. Toggle "Delete Multiple" Mode
+        deleteMultipleBtn?.addEventListener('click', function() {
+            // Check if checkboxes are currently hidden
+            const isHidden = checkboxElements[0].style.display === 'none';
+            
+            // Toggle visibility for all checkbox column cells (TH and TD)
+            checkboxElements.forEach(el => {
+                el.style.display = isHidden ? 'table-cell' : 'none';
             });
 
-            // 4. Bulk Delete Logic
-            deleteSelectedBtn?.addEventListener('click', function() {
-                if (!this.disabled) bulkDeleteDialog?.showModal();
-            });
-
-            document.getElementById('confirmBulkDelete')?.addEventListener('click', () => {
-                document.getElementById('bulk-form')?.submit();
-            });
-
-            document.querySelector('.cancelBulkDelete')?.addEventListener('click', () => {
-                bulkDeleteDialog?.close();
-            });
-
-            // 5. Transmit Selected Records
-            transmitSelectedBtn?.addEventListener('click', function() {
-                if (this.disabled) return;
+            // Update button text and style for feedback
+            if (isHidden) {
+                this.textContent = 'Cancel Selection';
+                this.style.backgroundColor = '#6c757d'; // Gray out
+            } else {
+                this.textContent = 'Delete Multiple';
+                this.style.backgroundColor = ''; // Reset color
                 
-                const selectedIds = Array.from(document.querySelectorAll('.record-checkbox:checked')).map(cb => cb.value);
-                if (selectedIds.length === 0) return;
-
-                const form = document.createElement('form');
-                form.method = 'POST';
-                form.action = "{{ route('admin.add-to-print-preview') }}";
-                
-                const csrfInput = document.createElement('input');
-                csrfInput.type = 'hidden';
-                csrfInput.name = '_token';
-                csrfInput.value = "{{ csrf_token() }}";
-                form.appendChild(csrfInput);
-                
-                const idsInput = document.createElement('input');
-                idsInput.type = 'hidden';
-                idsInput.name = 'record_ids';
-                idsInput.value = JSON.stringify(selectedIds);
-                form.appendChild(idsInput);
-                
-                document.body.appendChild(form);
-                form.submit();
-            });
+                // Reset state when canceling
+                recordCheckboxes.forEach(cb => cb.checked = false);
+                if(selectAllBox) selectAllBox.checked = false;
+                if(deleteSelectedBtn) deleteSelectedBtn.disabled = true;
+            }
         });
-    </script>
 
+        // 2. Enable/Disable "Delete Selected" based on checkmarks
+        const updateDeleteButtonState = () => {
+            const anyChecked = Array.from(recordCheckboxes).some(cb => cb.checked);
+            if (deleteSelectedBtn) deleteSelectedBtn.disabled = !anyChecked;
+        };
+
+        recordCheckboxes.forEach(cb => {
+            cb.addEventListener('change', updateDeleteButtonState);
+        });
+
+        // 3. Select All Logic
+        selectAllBox?.addEventListener('change', function() {
+            recordCheckboxes.forEach(cb => cb.checked = this.checked);
+            updateDeleteButtonState();
+        });
+
+        // 4. Verification Prompt (Your existing dialog logic)
+        deleteSelectedBtn?.addEventListener('click', function() {
+            if (!this.disabled) bulkDeleteDialog?.showModal();
+        });
+
+        document.getElementById('confirmBulkDelete')?.addEventListener('click', () => {
+            document.getElementById('bulk-form')?.submit();
+        });
+
+        document.querySelector('.cancelBulkDelete')?.addEventListener('click', () => {
+            bulkDeleteDialog?.close();
+        });
+    });
+</script>
 @endsection
