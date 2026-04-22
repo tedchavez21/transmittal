@@ -7,6 +7,7 @@ use App\Models\Admin;
 use App\Models\Record;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Hash;
 
 class RoutesController extends Controller
 {
@@ -168,9 +169,23 @@ class RoutesController extends Controller
             'password' => 'required|string',
         ]);
 
-        $admin = Admin::where('username', $request->username)
-            ->where('password', $request->password)
-            ->first();
+        $admin = Admin::where('username', $request->username)->first();
+        
+        if ($admin && !Hash::needsRehash($admin->password)) {
+            // Modern hashed password
+            if (!Hash::check($request->password, $admin->password)) {
+                $admin = null;
+            }
+        } elseif ($admin) {
+            // Legacy plain text password - automatically upgrade to hash
+            if ($admin->password === $request->password) {
+                $admin->update([
+                    'password' => Hash::make($request->password)
+                ]);
+            } else {
+                $admin = null;
+            }
+        }
 
         if ($admin) {
             $request->session()->put('admin_logged_in', true);
@@ -274,7 +289,7 @@ class RoutesController extends Controller
             $sortOrder = 'asc';
         }
         
-        $records = $query->orderBy($sortBy, $sortOrder)->get();
+        $records = $query->orderBy($sortBy, $sortOrder)->paginate(50)->withQueryString();
 
         // Dashboard stats - use ONLY dashboard filter parameters (dash_ prefix)
         $statsQuery = Record::query();
@@ -322,6 +337,7 @@ class RoutesController extends Controller
 
         $totalRecords = $statsQuery->count();
         $recordsByProgram = $statsQuery->selectRaw('program, count(*) as count')->groupBy('program')->pluck('count', 'program');
+        $recordsByLine = $statsQuery->selectRaw('line, count(*) as count')->groupBy('line')->pluck('count', 'line');
         $recentRecords = (clone $statsQuery)->where('created_at', '>=', now()->subDays(7))->count();
         
         // Unfiltered stats for reference
@@ -379,6 +395,7 @@ class RoutesController extends Controller
             'records' => $records,
             'totalRecords' => $totalRecords,
             'recordsByProgram' => $recordsByProgram,
+            'recordsByLine' => $recordsByLine,
             'recentRecords' => $recentRecords,
             'pendingOfficers' => $pendingOfficers,
             'activeOfficers' => $activeOfficers,
@@ -401,6 +418,15 @@ class RoutesController extends Controller
         }
 
         $sessionRecordIds = $request->session()->get('admin_print_preview_record_ids', []);
+
+        // ALSO support ids from URL query parameter
+        if ($request->filled('ids')) {
+            $urlIds = explode(',', $request->input('ids'));
+            $urlIds = array_filter(array_map('intval', $urlIds));
+            if (!empty($urlIds)) {
+                $sessionRecordIds = $urlIds;
+            }
+        }
 
         if (!empty($sessionRecordIds)) {
             $recordsQuery = Record::whereIn('id', $sessionRecordIds)
@@ -620,9 +646,15 @@ class RoutesController extends Controller
             return redirect()->route('welcome');
         }
 
+        $request->validate([
+            'record_ids' => 'required|array|max:100',
+            'record_ids.*' => 'integer|exists:records,id'
+        ]);
+
         $ids = $request->input('record_ids', []);
-        Record::whereIn('id', $ids)->delete();
-        return redirect()->back()->with('success', 'Selected records deleted successfully!');
+        $count = Record::whereIn('id', $ids)->delete();
+        
+        return redirect()->back()->with('success', "{$count} records deleted successfully!");
     }
 
     public function approveRecord($id)
@@ -655,54 +687,7 @@ class RoutesController extends Controller
         }
 
         $query = Record::query();
-
-        // Apply same filters as showAdmin
-        if ($request->filled('farmerName')) {
-            $query->where('farmerName', 'like', '%' . $request->farmerName . '%');
-        }
-        if ($request->filled('address')) {
-            $query->where('address', 'like', '%' . $request->address . '%');
-        }
-        if ($request->filled('encoderName')) {
-            $query->where('encoderName', 'like', '%' . $request->encoderName . '%');
-        }
-        if ($request->filled('program')) {
-            $query->where('program', $request->program);
-        }
-        if ($request->filled('line')) {
-            $query->where('line', $request->line);
-        }
-        if ($request->filled('province')) {
-            $query->where('province', 'like', '%' . $request->province . '%');
-        }
-        if ($request->filled('municipality')) {
-            $query->where('municipality', 'like', '%' . $request->municipality . '%');
-        }
-        if ($request->filled('barangay')) {
-            $query->where('barangay', 'like', '%' . $request->barangay . '%');
-        }
-        if ($request->filled('causeOfDamage')) {
-            $query->where('causeOfDamage', 'like', '%' . $request->causeOfDamage . '%');
-        }
-        if ($request->filled('modeOfPayment')) {
-            $query->where('modeOfPayment', $request->modeOfPayment);
-        }
-        if ($request->filled('remarks')) {
-            $query->where('remarks', 'like', '%' . $request->remarks . '%');
-        }
-        if ($request->filled('source')) {
-            $query->where('source', $request->source);
-        }
-        if ($request->filled('transmittal_number')) {
-            $query->where('transmittal_number', 'like', '%' . $request->transmittal_number . '%');
-        }
-        if ($request->filled('date_encoded')) {
-            $query->whereDate('created_at', $request->date_encoded);
-        }
-        if ($request->filled('date')) {
-            $query->whereDate('created_at', $request->date);
-        }
-
+        $this->applyFilters($request, $query);
         $export = new \App\Exports\RecordsExport($query->orderBy('id', 'asc'));
         $csv = $export->toCsv();
 
@@ -719,51 +704,7 @@ class RoutesController extends Controller
         }
 
         $query = Record::query();
-
-        // Apply same filters
-        if ($request->filled('farmerName')) {
-            $query->where('farmerName', 'like', '%' . $request->farmerName . '%');
-        }
-        if ($request->filled('address')) {
-            $query->where('address', 'like', '%' . $request->address . '%');
-        }
-        if ($request->filled('encoderName')) {
-            $query->where('encoderName', 'like', '%' . $request->encoderName . '%');
-        }
-        if ($request->filled('program')) {
-            $query->where('program', $request->program);
-        }
-        if ($request->filled('line')) {
-            $query->where('line', $request->line);
-        }
-        if ($request->filled('province')) {
-            $query->where('province', 'like', '%' . $request->province . '%');
-        }
-        if ($request->filled('municipality')) {
-            $query->where('municipality', 'like', '%' . $request->municipality . '%');
-        }
-        if ($request->filled('barangay')) {
-            $query->where('barangay', 'like', '%' . $request->barangay . '%');
-        }
-        if ($request->filled('causeOfDamage')) {
-            $query->where('causeOfDamage', 'like', '%' . $request->causeOfDamage . '%');
-        }
-        if ($request->filled('modeOfPayment')) {
-            $query->where('modeOfPayment', $request->modeOfPayment);
-        }
-        if ($request->filled('remarks')) {
-            $query->where('remarks', 'like', '%' . $request->remarks . '%');
-        }
-        if ($request->filled('source')) {
-            $query->where('source', $request->source);
-        }
-        if ($request->filled('transmittal_number')) {
-            $query->where('transmittal_number', 'like', '%' . $request->transmittal_number . '%');
-        }
-        if ($request->filled('date')) {
-            $query->whereDate('created_at', $request->date);
-        }
-
+        $this->applyFilters($request, $query);
         $records = $query->orderBy('id', 'asc')->get();
         $pdf = app('dompdf.wrapper')->loadView('pdf.records', compact('records'));
         $pdf->setPaper('a4', 'landscape');
@@ -780,7 +721,7 @@ class RoutesController extends Controller
         $admin = Admin::findOrFail($id);
         $admin->update([
             'username' => $request->username,
-            'password' => $request->password,
+            'password' => Hash::make($request->password),
         ]);
 
         return redirect()->back()->with('success', 'Admin credentials updated successfully.');
@@ -795,7 +736,7 @@ class RoutesController extends Controller
 
         Admin::create([
             'username' => $request->username,
-            'password' => $request->password,
+            'password' => Hash::make($request->password),
         ]);
 
         return redirect()->back()->with('success', 'Admin user created successfully.');
@@ -872,37 +813,43 @@ class RoutesController extends Controller
         }
         // OD has no prefix
         
-        // Find the latest transmittal for today and this source
-        $searchPattern = $today . '-' . ($prefix ? $prefix : '') . '%';
-        $latestTransmittal = Record::where('source', $source)
-            ->whereNotNull('transmittal_number')
-            ->where('transmittal_number', 'like', $searchPattern);
+        // Check for custom suffix from request (Officer of the Day only)
+        if ($source === 'OD' && $request->filled('custom_transmittal_suffix')) {
+            $nextNumber = $request->input('custom_transmittal_suffix');
+            $nextNumber = str_pad(substr($nextNumber, 0, 3), 3, '0', STR_PAD_LEFT);
+        } else {
+            // Find the latest transmittal for today and this source
+            $searchPattern = $today . '-' . ($prefix ? $prefix : '') . '%';
+            $latestTransmittal = Record::where('source', $source)
+                ->whereNotNull('transmittal_number')
+                ->where('transmittal_number', 'like', $searchPattern);
 
-        if ($source === 'OD') {
-            $latestTransmittal = $latestTransmittal->where('encoderName', $conditions['encoderName']);
-        }
-
-        $latestNumber = 0;
-        $latest = $latestTransmittal->first();
-
-        if ($latest) {
-            // Extract number from format like "2026-0420-001", "2026-0420-F001", or "2026-0420-E001"
-            $parts = explode('-', $latest->transmittal_number);
-            if (count($parts) === 3) {
-                $lastPart = $parts[2];
-                // Remove prefix if present and get the numeric part
-                if ($prefix && str_starts_with($lastPart, $prefix)) {
-                    $numericPart = substr($lastPart, 1);
-                } elseif (!$prefix) {
-                    $numericPart = $lastPart;
-                } else {
-                    $numericPart = '0';
-                }
-                $latestNumber = (int)$numericPart;
+            if ($source === 'OD') {
+                $latestTransmittal = $latestTransmittal->where('encoderName', $conditions['encoderName']);
             }
-        }
 
-        $nextNumber = str_pad($latestNumber + 1, 3, '0', STR_PAD_LEFT);
+            $latestNumber = 0;
+            $latest = $latestTransmittal->first();
+
+            if ($latest) {
+                // Extract number from format like "2026-0420-001", "2026-0420-F001", or "2026-0420-E001"
+                $parts = explode('-', $latest->transmittal_number);
+                if (count($parts) === 3) {
+                    $lastPart = $parts[2];
+                    // Remove prefix if present and get the numeric part
+                    if ($prefix && str_starts_with($lastPart, $prefix)) {
+                        $numericPart = substr($lastPart, 1);
+                    } elseif (!$prefix) {
+                        $numericPart = $lastPart;
+                    } else {
+                        $numericPart = '0';
+                    }
+                    $latestNumber = (int)$numericPart;
+                }
+            }
+
+            $nextNumber = str_pad($latestNumber + 1, 3, '0', STR_PAD_LEFT);
+        }
         $transmittalNumber = $today . '-' . $prefix . $nextNumber;
 
         // Update all records with the new transmittal number

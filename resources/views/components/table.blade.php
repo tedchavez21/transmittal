@@ -234,7 +234,7 @@ function getSortIndicator($column, $currentSort, $currentOrder) {
             <td class="col-causeOfDamage">{{ $record->causeOfDamage }}</td>
             <td class="col-remarks">{{ $record->remarks }}</td>
             @if($showAdminTransmittal)
-            <td class="col-admin-transmittal-number">{{ $record->admin_transmittal_number ?? '—' }}</td>
+            <td class="col-admin-transmittal-number">{{ empty($record->admin_transmittal_number) ? '—' : $record->admin_transmittal_number }}</td>
             @endif
             @if($showApproval)
             <td class="col-status">{{ $record->approved ? 'Approved' : 'Pending' }}</td>

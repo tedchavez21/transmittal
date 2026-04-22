@@ -108,6 +108,7 @@ class RecordsController extends Controller
             $updateData['admin_transmittal_number'] = null;
             $updateData['admin_transmittal_assigned_at'] = null;
         } elseif ($request->filled('admin_transmittal_number')) {
+            $updateData['admin_transmittal_number'] = $request->input('admin_transmittal_number');
             $updateData['admin_transmittal_assigned_at'] = now();
         } else {
             unset($updateData['admin_transmittal_number']);

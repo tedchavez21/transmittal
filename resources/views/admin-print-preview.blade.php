@@ -26,10 +26,16 @@
         .page-section {
             page-break-after: always;
             min-height: 8.5in;
+            width: 100%;
+            margin-bottom: 30px;
+            padding-bottom: 20px;
+            border-bottom: 2px dashed #ccc;
         }
 
         .page-section:last-child {
             page-break-after: auto;
+            border-bottom: none;
+            margin-bottom: 0;
         }
 
         .header {

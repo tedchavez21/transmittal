@@ -127,13 +127,77 @@
     <x-table :records="$records" :showDelete="false" :showCheckbox="false" :showSortableHeaders="false" />
     @if($officerApproved && $records->count() > 0)
     <div style="margin-top: 20px;">
-        <form action="{{ route('records.submit-transmittal') }}" method="POST" style="display: inline;">
+        <form id="submitTransmittalForm" action="{{ route('records.submit-transmittal') }}" method="POST" style="display: inline;">
             @csrf
             <input type="hidden" name="source" value="OD">
-            <button type="submit" style="padding: 10px 20px; background-color: #4CAF50; color: white; border: none; border-radius: 4px; cursor: pointer; font-weight: bold;">Submit Transmittal</button>
+            <input type="hidden" name="custom_transmittal_suffix" id="customTransmittalSuffix">
+            <button type="button" id="submitTransmittalBtn" style="padding: 10px 20px; background-color: #4CAF50; color: white; border: none; border-radius: 4px; cursor: pointer; font-weight: bold;">Submit Transmittal</button>
         </form>
     </div>
     @endif
+
+    <dialog id="transmittalDialog">
+        <h3>Submit Transmittal</h3>
+        <p style="margin-bottom: 16px;">Enter transmittal number suffix:</p>
+        <div style="display: flex; gap: 8px; align-items: center; margin-bottom: 20px;">
+            <input type="text" id="transmittalPrefix" readonly style="width: 120px; padding: 8px; background: #f0f0f0; border: 1px solid #ccc; text-align: center; font-weight: bold;">
+            <span style="font-size: 18px;">-</span>
+            <input type="number" id="transmittalSuffix" min="1" max="999" maxlength="3" style="width: 80px; padding: 8px; border: 1px solid #ccc; text-align: center; font-weight: bold;">
+        </div>
+        <div style="display: flex; gap: 10px; justify-content: flex-end;">
+            <button type="button" id="cancelTransmittalBtn" style="padding: 8px 16px;">Cancel</button>
+            <button type="button" id="confirmTransmittalBtn" style="padding: 8px 16px; background-color: #4CAF50; color: white; border: none; border-radius: 4px;">Submit</button>
+        </div>
+    </dialog>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const submitBtn = document.getElementById('submitTransmittalBtn');
+            const dialog = document.getElementById('transmittalDialog');
+            const prefixInput = document.getElementById('transmittalPrefix');
+            const suffixInput = document.getElementById('transmittalSuffix');
+            const cancelBtn = document.getElementById('cancelTransmittalBtn');
+            const confirmBtn = document.getElementById('confirmTransmittalBtn');
+            const form = document.getElementById('submitTransmittalForm');
+            const suffixHidden = document.getElementById('customTransmittalSuffix');
+
+            submitBtn.addEventListener('click', function() {
+                const today = new Date();
+                const year = today.getFullYear();
+                const month = String(today.getMonth() + 1).padStart(2, '0');
+                const day = String(today.getDate()).padStart(2, '0');
+                prefixInput.value = `${year}-${month}-${day}`;
+                
+                suffixInput.value = '';
+                suffixInput.focus();
+                dialog.showModal();
+            });
+
+            cancelBtn.addEventListener('click', function() {
+                dialog.close();
+            });
+
+            confirmBtn.addEventListener('click', function() {
+                const suffix = suffixInput.value.trim();
+                
+                if (!suffix || suffix.length < 1 || suffix.length > 3 || isNaN(suffix)) {
+                    alert('Please enter a valid number between 1 and 999');
+                    suffixInput.focus();
+                    return;
+                }
+
+                suffixHidden.value = suffix.padStart(3, '0');
+                dialog.close();
+                form.submit();
+            });
+
+            suffixInput.addEventListener('keypress', function(e) {
+                if (e.key === 'Enter') {
+                    confirmBtn.click();
+                }
+            });
+        });
+    </script>
     <dialog class="editRecordDialog">
         <form class="editRecordform" method="POST">
             @csrf

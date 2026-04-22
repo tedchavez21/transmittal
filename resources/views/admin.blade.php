@@ -665,6 +665,27 @@
             });
         }
 
+        // Transmit Selected Records - open print preview in new tab
+        const transmitSelectedButton = document.getElementById('transmit-selected-records');
+        if (transmitSelectedButton) {
+            transmitSelectedButton.addEventListener('click', function(e) {
+                // Prevent default form submission
+                e.preventDefault();
+                e.stopImmediatePropagation();
+                
+                // Get actually selected transmit checkboxes
+                const selectedIds = Array.from(document.querySelectorAll('.record-checkbox-transmit:checked'))
+                                        .map(cb => cb.value);
+                
+                if (selectedIds.length > 0) {
+                    // Open admin print preview page in new tab with selected records
+                    window.open('{{ route("admin.print-preview") }}?ids=' + encodeURIComponent(selectedIds.join(',')), '_blank');
+                }
+                
+                return false;
+            });
+        }
+
         // Cascading Dropdowns for Dashboard Filters
         const dashProvince = document.querySelector('select[name="dash_province"]');
         const dashMunicipality = document.querySelector('select[name="dash_municipality"]');
@@ -1880,44 +1901,35 @@ Zabali,San Luis,Aurora`;
             updateTransmitButtonState();
         });
 
-        // 4. Handle Submission to Print Preview
-        transmitActionBtn?.addEventListener('click', function() {
+        // 4. Handle Submission to Print Preview - OPEN IN NEW TAB
+        transmitActionBtn?.addEventListener('click', function(e) {
+            e.preventDefault();
+            e.stopImmediatePropagation();
+            
             const selectedIds = Array.from(document.querySelectorAll('.record-checkbox-transmit:checked'))
                                     .map(cb => cb.value);
             
-            const form = document.createElement('form');
-            form.method = 'POST';
-            form.action = "{{ route('admin.add-to-print-preview') }}";
-            
-            const csrfInput = document.createElement('input');
-            csrfInput.type = 'hidden';
-            csrfInput.name = '_token';
-            csrfInput.value = "{{ csrf_token() }}";
-            form.appendChild(csrfInput);
-            
-            const idsInput = document.createElement('input');
-            idsInput.type = 'hidden';
-            idsInput.name = 'record_ids';
-            idsInput.value = JSON.stringify(selectedIds);
-            form.appendChild(idsInput);
-            
-            document.body.appendChild(form);
-            form.submit();
-        });
-
-        // 1. Toggle "Delete Multiple" Mode
-        deleteMultipleBtn?.addEventListener('click', function() {
-            // Check if checkboxes are currently hidden
-            let isHidden = checkboxElements[0].style.display === 'none';
-            
-            // Toggle visibility for all checkbox column cells (TH and TD)
-            checkboxElements.forEach(el => {
-                el.style.display = isHidden ? 'table-cell' : 'none';
-            });
-
-            // Update button text and style
-            if (isHidden) {
-                this.textContent = 'Cancel Selection';
+            if (selectedIds.length > 0) {
+                // First send to addToPrintPreview to store in session
+                const form = document.createElement('form');
+                form.method = 'POST';
+                form.action = "{{ route('admin.add-to-print-preview') }}";
+                form.target = '_blank';
+                
+                const csrfInput = document.createElement('input');
+                csrfInput.type = 'hidden';
+                csrfInput.name = '_token';
+                csrfInput.value = "{{ csrf_token() }}";
+                form.appendChild(csrfInput);
+                
+                const idsInput = document.createElement('input');
+                idsInput.type = 'hidden';
+                idsInput.name = 'record_ids';
+                idsInput.value = JSON.stringify(selectedIds);
+                form.appendChild(idsInput);
+                
+                document.body.appendChild(form);
+                form.submit();
                 this.style.backgroundColor = '#6c757d'; // Gray out
             } else {
                 this.textContent = 'Delete Multiple';
