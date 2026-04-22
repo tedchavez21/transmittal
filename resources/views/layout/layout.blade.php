@@ -51,6 +51,8 @@
         .col-program { min-width: 80px; white-space: nowrap; }
         .col-line { min-width: 70px; white-space: nowrap; }
         .col-causeOfDamage { min-width: 100px; }
+        .col-modeOfPayment { min-width: 120px; white-space: nowrap; }
+        .col-accounts { min-width: 160px; }
         .col-remarks { min-width: 100px; }
         .col-source { min-width: 70px; white-space: nowrap; }
         .col-transmittal-number { min-width: 100px; white-space: nowrap; }

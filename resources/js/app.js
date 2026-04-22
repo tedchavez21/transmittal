@@ -1207,6 +1207,8 @@ Zarah,San Luis,Aurora`;
             const line = this.getAttribute('data-line');
             const causeOfDamage = this.getAttribute('data-causeOfDamage');
             const modeOfPayment = this.getAttribute('data-modeOfPayment');
+            const accounts = this.getAttribute('data-accounts');
+            const date_occurrence = this.getAttribute('data-date_occurrence');
             const remarks = this.getAttribute('data-remarks');
             const source = this.getAttribute('data-source');
             const transmittal_number = this.getAttribute('data-transmittal_number');
@@ -1281,6 +1283,12 @@ Zarah,San Luis,Aurora`;
 
             const remarksInput = document.querySelector('.editRecordform input[name="remarks"]');
             if (remarksInput) remarksInput.value = remarks;
+
+            const accountsInput = document.querySelector('.editRecordform input[name="accounts"]');
+            if (accountsInput) accountsInput.value = accounts || '';
+
+            const dateOccurrenceInput = document.querySelector('.editRecordform input[name="date_occurrence"]');
+            if (dateOccurrenceInput) dateOccurrenceInput.value = date_occurrence || '';
 
             const transmittalInput = document.querySelector('.editRecordform input[name="transmittal_number"]');
             if (transmittalInput) transmittalInput.value = transmittal_number || '';

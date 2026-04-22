@@ -16,6 +16,8 @@ class Record extends Model
         'program',
         'causeOfDamage',
         'modeOfPayment',
+        'accounts',
+        'date_occurrence',
         'remarks',
         'source',
         'transmittal_number',

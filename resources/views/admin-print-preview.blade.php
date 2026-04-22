@@ -134,28 +134,22 @@
                     <thead>
                         <tr>
                             <th>Farmer Name</th>
-                            <th>Province</th>
-                            <th>Municipality</th>
-                            <th>Barangay</th>
+                            <th>Address</th>
                             <th>Program</th>
                             <th>Line</th>
                             <th>Cause of Damage</th>
-                            <th>Remarks</th>
-                            <th>Source</th>
                         </tr>
                     </thead>
                     <tbody>
                         @foreach($pageRecords as $record)
                             <tr>
                                 <td>{{ $record->farmerName }}</td>
-                                <td>{{ $record->province ?? '—' }}</td>
-                                <td>{{ $record->municipality ?? '—' }}</td>
-                                <td>{{ $record->barangay ?? '—' }}</td>
+                                <td class="address-cell">
+                                    {{ trim(implode(', ', array_filter([$record->barangay, $record->municipality]))) ?: '—' }}
+                                </td>
                                 <td>{{ $record->program }}</td>
                                 <td>{{ $record->line }}</td>
                                 <td>{{ $record->causeOfDamage }}</td>
-                                <td>{{ $record->remarks }}</td>
-                                <td>{{ $record->source }}</td>
                             </tr>
                         @endforeach
                     </tbody>

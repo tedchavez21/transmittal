@@ -92,7 +92,12 @@
                 <option value="">Select Mode of payment</option>
                 <option value="check">Check</option>
                 <option value="palawan">Palawan Pay</option>
+                <option value="not_indicated">Not indicated</option>
             </select>
+            <label for="accounts">Account (sender email/username):</label>
+            <input type="text" id="accounts" name="accounts" placeholder="Email address or username">
+            <label for="date_occurrence">Date occurrence:</label>
+            <input type="date" id="date_occurrence" name="date_occurrence">
             <label for="remarks">Remarks - Care of:</label>
             <input type="text" id="remarks" name="remarks">
             <button type="submit">Add Record</button>
@@ -160,7 +165,12 @@
                 <option value="">Select Mode of payment</option>
                 <option value="check">Check</option>
                 <option value="palawan">Palawan Pay</option>
+                <option value="not_indicated">Not indicated</option>
             </select>
+            <label for="accounts">Account (sender email/username):</label>
+            <input type="text" id="accounts" name="accounts">
+            <label for="date_occurrence">Date occurrence:</label>
+            <input type="date" id="date_occurrence" name="date_occurrence">
             <label for="remarks">Remarks - Care of:</label>
             <input type="text" id="remarks" name="remarks">
             <button type="submit">Update Record</button>

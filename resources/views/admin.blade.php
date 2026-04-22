@@ -245,6 +245,7 @@
         
         <!-- Filters -->
         <form method="GET" action="{{ route('admin') }}" style="margin: 15px 0; padding: 15px; background: #f5f5f5; border-radius: 4px;">
+            <input type="hidden" name="tab" value="dashboard">
             <p style="font-weight: bold; margin-bottom: 10px;">DASHBOARD FILTERS:</p>
             <div style="display: flex; flex-wrap: wrap; gap: 10px; align-items: end;">
                 <div style="display: flex; flex-direction: column; gap: 4px;">
@@ -462,10 +463,11 @@
         </label>
     </div>
 
-    <!-- TABLE FILTERS (SEPARATE FROM DASHBOARD FILTERS) -->
+    <!-- TABLE FILTERS -->
     <div class="no-print" style="margin-bottom: 20px; padding: 15px; border: 1px solid #ccc; background: #fff;">
         <h3 style="margin-top: 0; margin-bottom: 15px;">TABLE FILTERS</h3>
         <form method="GET" action="{{ route('admin') }}" style="margin: 0;">
+            <input type="hidden" name="tab" value="nl-records">
             <div style="display: flex; flex-wrap: wrap; gap: 10px; align-items: end;">
                 <div style="display: flex; flex-direction: column; gap: 4px;">
                     <label style="font-size: 12px; font-weight: bold;">Search Farmer</label>
@@ -523,6 +525,19 @@
                     </select>
                 </div>
                 <div style="display: flex; flex-direction: column; gap: 4px;">
+                    <label style="font-size: 12px; font-weight: bold;">Mode of Payment</label>
+                    <select name="modeOfPayment" style="padding: 6px; font-size: 12px; border: 1px solid #ccc; border-radius: 3px;">
+                        <option value="">All Modes</option>
+                        @foreach($allModes as $mode)
+                        <option value="{{ $mode }}" {{ request('modeOfPayment') == $mode ? 'selected' : '' }}>{{ $mode }}</option>
+                        @endforeach
+                    </select>
+                </div>
+                <div style="display: flex; flex-direction: column; gap: 4px;">
+                    <label style="font-size: 12px; font-weight: bold;">Account</label>
+                    <input type="text" name="accounts" value="{{ request('accounts') }}" style="padding: 6px; font-size: 12px; border: 1px solid #ccc; border-radius: 3px;" placeholder="Email / username">
+                </div>
+                <div style="display: flex; flex-direction: column; gap: 4px;">
                     <label style="font-size: 12px; font-weight: bold;">Control #</label>
                     <input type="text" name="transmittal_number" value="{{ request('transmittal_number') }}" style="padding: 6px; font-size: 12px; border: 1px solid #ccc; border-radius: 3px;">
                 </div>
@@ -542,6 +557,14 @@
                     <label style="font-size: 12px; font-weight: bold;">Remarks</label>
                     <input type="text" name="remarks" value="{{ request('remarks') }}" style="padding: 6px; font-size: 12px; border: 1px solid #ccc; border-radius: 3px;">
                 </div>
+                <div style="display: flex; flex-direction: column; gap: 4px;">
+                    <label style="font-size: 12px; font-weight: bold;">Rows per page</label>
+                    <select name="per_page" style="padding: 6px; font-size: 12px; border: 1px solid #ccc; border-radius: 3px;">
+                        <option value="25" {{ request('per_page') == '25' ? 'selected' : '' }}>25</option>
+                        <option value="50" {{ request('per_page', '50') == '50' ? 'selected' : '' }}>50</option>
+                        <option value="100" {{ request('per_page') == '100' ? 'selected' : '' }}>100</option>
+                    </select>
+                </div>
                 <button type="submit" style="padding: 8px 16px; background-color: #28a745; color: white; border: none; border-radius: 4px; cursor: pointer; font-weight: bold;">Filter Table</button>
                 <a href="{{ route('admin') }}" style="padding: 8px 16px; background-color: #6c757d; color: white; text-decoration: none; border-radius: 4px; font-weight: bold; display: inline-block; line-height: 20px;">Clear</a>
             </div>
@@ -555,6 +578,7 @@
     <button id="delete-selected" class="btn btn-warning" disabled>
         Delete Selected
     </button>
+    <span id="bulk-selected-count" style="margin-left: 10px; color: #555; font-size: 13px;"></span>
     <button type="button" id="select-records-transmit" class="btn btn-info">
         Select Records for Transmit
     </button>
@@ -568,8 +592,17 @@
         <div class="no-print" style="margin-bottom: 15px; display: flex; gap: 10px; flex-wrap: wrap;">
             <a href="{{ route('admin.export-excel', request()->query()) }}" target="_blank" style="padding: 8px 16px; background-color: #28a745; color: white; border: none; border-radius: 4px; cursor: pointer; font-weight: bold; text-decoration: none;">Export to CSV</a>
         </div>
+        <div id="table-loading-indicator" style="display: none; margin-bottom: 10px; color: #1565C0; font-weight: 600;">Loading records...</div>
         <div style="overflow-x: auto; width: 100%; margin-bottom: 20px; border: 1px solid #ccc; position: relative;">
             <x-table :records="$records" :showEncoder="true" :showFilters="false" :showAdminTransmittal="true" :allPrograms="$allPrograms" :allLines="$allLines" :allSources="$allSources" :allModes="$allModes" :showCheckbox="false" />
+        </div>
+        @if($records->isEmpty())
+            <div style="padding: 16px; margin-bottom: 12px; border: 1px solid #e0e0e0; background: #fafafa; color: #555;">
+                No records found for the current filters.
+            </div>
+        @endif
+        <div class="no-print" style="margin: 10px 0;">
+            {{ $records->links() }}
         </div>
     </form>
     <div class="received-by">Received By: ____________________</div>
@@ -640,7 +673,12 @@
                 <option value="">Select Mode of payment</option>
                 <option value="check">Check</option>
                 <option value="palawan">Palawan Pay</option>
+                <option value="not_indicated">Not indicated</option>
             </select>
+            <label for="accounts">Account (sender email/username):</label>
+            <input type="text" id="accounts" name="accounts">
+            <label for="date_occurrence">Date occurrence:</label>
+            <input type="date" id="date_occurrence" name="date_occurrence">
             
             <label for="remarks">Remarks - Care of:</label>
             <input type="text" id="remarks" name="remarks">
@@ -732,6 +770,14 @@
         const dashboardSection = document.getElementById('dashboard-section');
         const nlRecordsSection = document.getElementById('nl-records-section');
         const adminActiveTabKey = 'admin_active_tab';
+        const tableLoadingIndicator = document.getElementById('table-loading-indicator');
+
+        function setTabInUrl(tabValue) {
+            const params = new URLSearchParams(window.location.search);
+            params.set('tab', tabValue);
+            const nextUrl = `${window.location.pathname}?${params.toString()}`;
+            window.history.replaceState({}, '', nextUrl);
+        }
 
         function showDashboard() {
             dashboardSection.style.display = 'block';
@@ -739,6 +785,7 @@
             btnDashboard.classList.add('active');
             btnNlRecords.classList.remove('active');
             localStorage.setItem(adminActiveTabKey, 'dashboard');
+            setTabInUrl('dashboard');
         }
 
         function showNlRecords() {
@@ -747,6 +794,7 @@
             btnDashboard.classList.remove('active');
             btnNlRecords.classList.add('active');
             localStorage.setItem(adminActiveTabKey, 'nl-records');
+            setTabInUrl('nl-records');
         }
 
         if (btnDashboard && btnNlRecords && dashboardSection && nlRecordsSection) {
@@ -760,8 +808,10 @@
                 showNlRecords();
             });
 
+            const tabFromUrl = new URLSearchParams(window.location.search).get('tab');
             const savedTab = localStorage.getItem(adminActiveTabKey);
-            if (savedTab === 'nl-records') {
+            const defaultTab = tabFromUrl || savedTab;
+            if (defaultTab === 'nl-records') {
                 showNlRecords();
             } else {
                 showDashboard();
@@ -2005,6 +2055,13 @@ Zabali,San Luis,Aurora`;
         const transmitCheckboxes = document.querySelectorAll('.record-checkbox-transmit');
         const transmitCheckboxElements = document.querySelectorAll('.col-checkbox-transmit');
         const selectedRecordIdsInput = document.getElementById('selected-record-ids');
+        const bulkSelectedCount = document.getElementById('bulk-selected-count');
+
+        function showLoadingIndicator() {
+            if (tableLoadingIndicator) {
+                tableLoadingIndicator.style.display = 'block';
+            }
+        }
 
         // Auto-apply unassigned filter toggle and preserve current query filters
         unassignedToggle?.addEventListener('change', function () {
@@ -2014,6 +2071,8 @@ Zabali,San Luis,Aurora`;
             } else {
                 params.delete('unassigned_only');
             }
+            params.set('tab', 'nl-records');
+            showLoadingIndicator();
             window.location.href = `${window.location.pathname}?${params.toString()}`;
         });
 
@@ -2120,6 +2179,10 @@ Zabali,San Luis,Aurora`;
         const updateDeleteButtonState = () => {
             let anyChecked = Array.from(recordCheckboxes).some(cb => cb.checked);
             if (deleteSelectedBtn) deleteSelectedBtn.disabled = !anyChecked;
+            if (bulkSelectedCount) {
+                const selectedCount = Array.from(recordCheckboxes).filter(cb => cb.checked).length;
+                bulkSelectedCount.textContent = selectedCount > 0 ? `${selectedCount} selected` : '';
+            }
         };
 
         recordCheckboxes.forEach(cb => {
@@ -2147,6 +2210,27 @@ Zabali,San Luis,Aurora`;
 
         document.querySelector('.cancelBulkDelete')?.addEventListener('click', () => {
             bulkDeleteDialog?.close();
+        });
+
+        // Show inline loading state for table-related submit actions
+        document.querySelectorAll('form[action="{{ route('admin') }}"], #bulk-form').forEach(formEl => {
+            formEl.addEventListener('submit', showLoadingIndicator);
+        });
+
+        // Quality-of-life shortcuts: D (dashboard), N (NL), / (focus farmer search)
+        document.addEventListener('keydown', function (event) {
+            if (event.target && ['INPUT', 'TEXTAREA', 'SELECT'].includes(event.target.tagName)) {
+                return;
+            }
+            if (event.key.toLowerCase() === 'd') {
+                showDashboard();
+            } else if (event.key.toLowerCase() === 'n') {
+                showNlRecords();
+            } else if (event.key === '/') {
+                event.preventDefault();
+                showNlRecords();
+                document.querySelector('input[name="farmerName"]')?.focus();
+            }
         });
         
     });

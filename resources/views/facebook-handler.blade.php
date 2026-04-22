@@ -92,7 +92,15 @@
                 <option value="">Select Mode of payment</option>
                 <option value="check">Check</option>
                 <option value="palawan">Palawan Pay</option>
+                <option value="not_indicated">Not indicated</option>
             </select>
+            <label for="accounts">Account (sender email/username):</label>
+            <input type="text" id="accounts" name="accounts" placeholder="Paste FB profile link or type name">
+            <p style="margin: 4px 0 10px 0; font-size: 12px; color: #666;">
+                Tip: paste a Facebook profile link to auto-fill the name (best-effort).
+            </p>
+            <label for="date_occurrence">Date occurrence:</label>
+            <input type="date" id="date_occurrence" name="date_occurrence">
             <label for="remarks">Remarks - Care of:</label>
             <input type="text" id="remarks" name="remarks">
             <button type="submit">Add Record</button>
@@ -160,7 +168,12 @@
                 <option value="">Select Mode of payment</option>
                 <option value="check">Check</option>
                 <option value="palawan">Palawan Pay</option>
+                <option value="not_indicated">Not indicated</option>
             </select>
+            <label for="accounts">Account (sender email/username):</label>
+            <input type="text" id="accounts" name="accounts">
+            <label for="date_occurrence">Date occurrence:</label>
+            <input type="date" id="date_occurrence" name="date_occurrence">
             <label for="remarks">Remarks - Care of:</label>
             <input type="text" id="remarks" name="remarks">
             <button type="submit">Update Record</button>
@@ -169,4 +182,74 @@
     </dialog>
     @endif
     </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function () {
+            const csrfToken = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') || "{{ csrf_token() }}";
+            const inputs = document.querySelectorAll('input[name="accounts"]');
+
+            function extractFacebookSlug(url) {
+                try {
+                    const u = new URL(url);
+                    const host = u.hostname.replace(/^www\./, '');
+                    if (!host.includes('facebook.com')) return null;
+
+                    const idParam = u.searchParams.get('id');
+                    if (idParam) return idParam;
+
+                    const parts = u.pathname.split('/').filter(Boolean);
+                    if (parts.length === 0) return null;
+                    if (parts[0] === 'profile.php') return idParam;
+                    return parts[0];
+                } catch {
+                    return null;
+                }
+            }
+
+            async function resolveNameFromUrl(url) {
+                const response = await fetch("{{ route('facebook.resolve-name') }}", {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-CSRF-TOKEN': csrfToken,
+                        'Accept': 'application/json'
+                    },
+                    body: JSON.stringify({ url })
+                });
+
+                if (!response.ok) {
+                    return null;
+                }
+
+                const data = await response.json();
+                return data?.name || null;
+            }
+
+            inputs.forEach(input => {
+                input.addEventListener('blur', async function () {
+                    const raw = (this.value || '').trim();
+                    if (!raw) return;
+                    if (!raw.includes('facebook.com')) return;
+
+                    this.disabled = true;
+                    const original = raw;
+
+                    try {
+                        const resolved = await resolveNameFromUrl(original);
+                        if (resolved) {
+                            this.value = resolved;
+                            return;
+                        }
+
+                        const slug = extractFacebookSlug(original);
+                        if (slug) {
+                            this.value = slug;
+                        }
+                    } finally {
+                        this.disabled = false;
+                    }
+                });
+            });
+        });
+    </script>
 @endsection

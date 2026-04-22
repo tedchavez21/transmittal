@@ -105,6 +105,20 @@ function getSortIndicator($column, $currentSort, $currentOrder) {
                 Cause of Damage
                 @endif
             </th>
+            <th class="col-modeOfPayment">
+                @if($showSortableHeaders)
+                <a href="{{ getSortUrl('modeOfPayment', $currentSort, $currentOrder, $oppositeOrder) }}" style="color: inherit; text-decoration: none; cursor: pointer;">Mode of Payment{{ getSortIndicator('modeOfPayment', $currentSort, $currentOrder) }}</a>
+                @else
+                Mode of Payment
+                @endif
+            </th>
+            <th class="col-accounts">
+                @if($showSortableHeaders)
+                <a href="{{ getSortUrl('accounts', $currentSort, $currentOrder, $oppositeOrder) }}" style="color: inherit; text-decoration: none; cursor: pointer;">Account{{ getSortIndicator('accounts', $currentSort, $currentOrder) }}</a>
+                @else
+                Account
+                @endif
+            </th>
             <th class="col-remarks" class="col-remarks">
                 @if($showSortableHeaders)
                 <a href="{{ getSortUrl('remarks', $currentSort, $currentOrder, $oppositeOrder) }}" style="color: inherit; text-decoration: none; cursor: pointer;">Remarks{{ getSortIndicator('remarks', $currentSort, $currentOrder) }}</a>
@@ -167,6 +181,15 @@ function getSortIndicator($column, $currentSort, $currentOrder) {
                 </select>
             </th>
             <th><input type="text" placeholder="Damage" name="causeOfDamage" value="{{ request('causeOfDamage') }}"></th>
+            <th>
+                <select name="modeOfPayment">
+                    <option value="">All Modes</option>
+                    @foreach($allModes as $mode)
+                    <option value="{{ $mode }}" {{ request('modeOfPayment') == $mode ? 'selected' : '' }}>{{ $mode }}</option>
+                    @endforeach
+                </select>
+            </th>
+            <th><input type="text" placeholder="Account" name="accounts" value="{{ request('accounts') }}"></th>
             <th><input type="text" placeholder="Remarks" name="remarks" value="{{ request('remarks') }}"></th>
             @if($showAdminTransmittal)
             <th><input type="text" placeholder="Admin Transmittal" name="admin_transmittal_number" value="{{ request('admin_transmittal_number') }}" style="width: calc(100% - 50px); box-sizing: border-box;"></th>
@@ -207,6 +230,8 @@ function getSortIndicator($column, $currentSort, $currentOrder) {
                 data-line="{{ e($record->line) }}"
                 data-causeOfDamage="{{ e($record->causeOfDamage) }}"
                 data-modeOfPayment="{{ e($record->modeOfPayment) }}"
+                data-accounts="{{ e($record->accounts) }}"
+                data-date_occurrence="{{ e(optional($record->date_occurrence)->format('Y-m-d')) }}"
                 data-remarks="{{ e($record->remarks) }}"
                 data-source="{{ e($record->source) }}"
                 data-transmittal_number="{{ e($record->transmittal_number) }}"
@@ -232,6 +257,8 @@ function getSortIndicator($column, $currentSort, $currentOrder) {
             <td class="col-control-number">{{ $record->transmittal_number ?? '—' }}</td>
             <td class="col-line">{{ $record->line }}</td>
             <td class="col-causeOfDamage">{{ $record->causeOfDamage }}</td>
+            <td class="col-modeOfPayment">{{ $record->modeOfPayment ?: '—' }}</td>
+            <td class="col-accounts">{{ $record->accounts ?: '—' }}</td>
             <td class="col-remarks">{{ $record->remarks }}</td>
             @if($showAdminTransmittal)
             <td class="col-admin-transmittal-number">{{ empty($record->admin_transmittal_number) ? '—' : $record->admin_transmittal_number }}</td>
@@ -250,7 +277,7 @@ function getSortIndicator($column, $currentSort, $currentOrder) {
             @endif
         </tr>
         @if($loop->iteration % 40 == 0 && !$loop->last)
-        <tr class="page-break"><td colspan="{{ 8 + ($showCheckbox ? 1 : 0) + ($showDelete ? 1 : 0) + ($showEncoder ? 1 : 0) + ($showAdminTransmittal ? 1 : 0) + ($showApproval ? 1 : 0) + ($showAction ? 1 : 0) }}" style="border: none; height: 50px;"></td></tr>
+        <tr class="page-break"><td colspan="{{ 10 + ($showCheckbox ? 1 : 0) + ($showDelete ? 1 : 0) + ($showEncoder ? 1 : 0) + ($showAdminTransmittal ? 1 : 0) + ($showApproval ? 1 : 0) + ($showAction ? 1 : 0) }}" style="border: none; height: 50px;"></td></tr>
         @endif
     @endforeach
     </tbody>

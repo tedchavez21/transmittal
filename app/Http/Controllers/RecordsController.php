@@ -20,6 +20,8 @@ class RecordsController extends Controller
             'program' => 'required|string|max:255',
             'causeOfDamage' => 'required|string|max:255',
             'modeOfPayment' => 'required|string|max:255',
+            'accounts' => 'nullable|string|max:255',
+            'date_occurrence' => 'nullable|date',
             'remarks' => 'nullable|string|max:255',
             'source' => 'nullable|string|in:OD,Email,Facebook',
         ]);
@@ -87,6 +89,8 @@ class RecordsController extends Controller
             'source' => 'required|string|max:255',
             'causeOfDamage' => 'required|string|max:255',
             'modeOfPayment' => 'required|string|max:255',
+            'accounts' => 'nullable|string|max:255',
+            'date_occurrence' => 'nullable|date',
             'remarks' => 'nullable|string|max:255',
             'transmittal_number' => 'nullable|string|max:255',
             'admin_transmittal_number' => 'nullable|string|max:255',

@@ -8,6 +8,7 @@ use App\Models\Record;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\Http;
 
 class RoutesController extends Controller
 {
@@ -95,6 +96,76 @@ class RoutesController extends Controller
     {
         $request->session()->forget('facebook_logged_in');
         return redirect()->route('welcome');
+    }
+
+    public function resolveFacebookName(Request $request)
+    {
+        if (!$request->session()->get('facebook_logged_in', false)) {
+            return response()->json(['name' => null], 401);
+        }
+
+        $data = $request->validate([
+            'url' => 'required|string|max:2000',
+        ]);
+
+        $url = trim($data['url']);
+
+        // Only allow facebook.com links
+        $host = parse_url($url, PHP_URL_HOST) ?? '';
+        $host = preg_replace('/^www\./', '', strtolower($host));
+        if (!str_contains($host, 'facebook.com')) {
+            return response()->json(['name' => null], 422);
+        }
+
+        try {
+            // Facebook sometimes blocks/changes markup on www. Using mbasic improves the odds of getting a stable title.
+            $normalizedUrl = preg_replace('~^https?://(www\.)?facebook\.com~i', 'https://mbasic.facebook.com', $url) ?? $url;
+
+            $response = Http::withHeaders([
+                'User-Agent' => 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/123 Safari/537.36',
+                'Accept-Language' => 'en-US,en;q=0.9',
+                'Accept' => 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8',
+            ])->timeout(10)->get($normalizedUrl);
+
+            if (!$response->ok()) {
+                return response()->json(['name' => null]);
+            }
+
+            $html = $response->body();
+
+            $candidates = [];
+            if (preg_match('/<meta\s+property="og:title"\s+content="([^"]+)"/i', $html, $matches)) {
+                $candidates[] = $matches[1];
+            }
+            if (preg_match('/<title[^>]*>(.*?)<\/title>/is', $html, $matches)) {
+                $candidates[] = $matches[1];
+            }
+
+            foreach ($candidates as $candidate) {
+                $name = html_entity_decode(strip_tags($candidate), ENT_QUOTES | ENT_HTML5, 'UTF-8');
+                $name = preg_replace('/\s+/', ' ', trim($name));
+                $name = preg_replace('/\s*\|\s*Facebook\s*$/i', '', $name);
+                $name = preg_replace('/\s*-\s*Facebook\s*$/i', '', $name);
+                $name = trim($name);
+
+                if ($name === '') {
+                    continue;
+                }
+
+                // Bail out if Facebook returned a generic/login/home title.
+                if (preg_match('/\b(log in|login|sign up|home|facebook)\b/i', $name) && !preg_match('/,/', $name)) {
+                    continue;
+                }
+
+                if (mb_strlen($name) >= 2 && mb_strlen($name) <= 120) {
+                    return response()->json(['name' => $name]);
+                }
+            }
+        } catch (\Throwable $e) {
+            // Ignore fetch failures; client will fall back to URL parsing
+        }
+
+        return response()->json(['name' => null]);
     }
 
     public function showOfficerOfTheDay(Request $request)
@@ -245,6 +316,9 @@ class RoutesController extends Controller
         if ($request->filled('remarks')) {
             $query->where('remarks', 'like', '%' . $request->remarks . '%');
         }
+        if ($request->filled('accounts')) {
+            $query->where('accounts', 'like', '%' . $request->accounts . '%');
+        }
         if ($request->filled('source')) {
             $query->where('source', $request->source);
         }
@@ -279,9 +353,13 @@ class RoutesController extends Controller
         // Handle sorting
         $sortBy = $request->input('sort_by', 'id');
         $sortOrder = $request->input('sort_order', 'asc');
+        $perPage = (int) $request->input('per_page', 50);
+        if (!in_array($perPage, [25, 50, 100], true)) {
+            $perPage = 50;
+        }
         
         // Validate sort parameters to prevent injection
-        $allowedSortColumns = ['id', 'farmerName', 'province', 'municipality', 'barangay', 'program', 'line', 'causeOfDamage', 'remarks', 'source', 'transmittal_number', 'admin_transmittal_number', 'encoderName', 'approved', 'created_at'];
+        $allowedSortColumns = ['id', 'farmerName', 'province', 'municipality', 'barangay', 'program', 'line', 'causeOfDamage', 'modeOfPayment', 'remarks', 'accounts', 'source', 'transmittal_number', 'admin_transmittal_number', 'encoderName', 'approved', 'created_at'];
         if (!in_array($sortBy, $allowedSortColumns)) {
             $sortBy = 'created_at';
         }
@@ -289,7 +367,7 @@ class RoutesController extends Controller
             $sortOrder = 'asc';
         }
         
-        $records = $query->orderBy($sortBy, $sortOrder)->paginate(50)->withQueryString();
+        $records = $query->orderBy($sortBy, $sortOrder)->paginate($perPage)->withQueryString();
 
         // Dashboard stats - use ONLY dashboard filter parameters (dash_ prefix)
         $statsQuery = Record::query();
@@ -388,7 +466,8 @@ class RoutesController extends Controller
         // All available modes of payment - Hardcoded to match modal options exactly
         $allModes = [
             'check',
-            'palawan'
+            'palawan',
+            'not_indicated'
         ];
 
         return view('admin', [
@@ -619,6 +698,9 @@ class RoutesController extends Controller
         if ($request->filled('remarks')) {
             $query->where('remarks', 'like', '%' . $request->remarks . '%');
         }
+        if ($request->filled('accounts')) {
+            $query->where('accounts', 'like', '%' . $request->accounts . '%');
+        }
         if ($request->filled('source')) {
             $query->where('source', $request->source);
         }
@@ -646,12 +728,17 @@ class RoutesController extends Controller
             return redirect()->route('welcome');
         }
 
+        $recordIdsInput = $request->input('record_ids', []);
+        $ids = is_array($recordIdsInput)
+            ? $recordIdsInput
+            : array_filter(array_map('intval', explode(',', (string) $recordIdsInput)));
+
+        $request->merge(['record_ids' => $ids]);
         $request->validate([
             'record_ids' => 'required|array|max:100',
             'record_ids.*' => 'integer|exists:records,id'
         ]);
 
-        $ids = $request->input('record_ids', []);
         $count = Record::whereIn('id', $ids)->delete();
         
         return redirect()->back()->with('success', "{$count} records deleted successfully!");

@@ -11,6 +11,7 @@ Route::post('/email/logout', [RoutesController::class, 'logoutEmail'])->name('em
 Route::get('/facebook-handler', [RoutesController::class, 'showFacebookHandler'])->name('facebook-handler');
 Route::post('/facebook/login', [RoutesController::class, 'loginFacebook'])->name('facebook.login');
 Route::post('/facebook/logout', [RoutesController::class, 'logoutFacebook'])->name('facebook.logout');
+Route::post('/facebook/resolve-name', [RoutesController::class, 'resolveFacebookName'])->name('facebook.resolve-name');
 Route::get('/officer-of-the-day', [RoutesController::class, 'showOfficerOfTheDay'])->name('officer-of-the-day');
 Route::post('/officer/login', [RoutesController::class, 'loginOfficer'])->name('officer.login');
 Route::post('/officer/logout', [RoutesController::class, 'logoutOfficer'])->name('officer.logout');
