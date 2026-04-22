@@ -442,12 +442,12 @@
     </div>
 
     <p>NL RECORDS:</p>
+    <button id="delete-multiple" class="btn btn-danger">Delete Multiple</button>
     <form id="bulk-form" method="POST" action="{{ route('admin.bulk-delete') }}">
         @csrf
         @method('DELETE')
         <input type="hidden" name="record_ids" id="selected-record-ids">
         <div class="no-print" style="margin-bottom: 15px; display: flex; gap: 10px; flex-wrap: wrap;">
-            <button id="delete-multiple" class="btn btn-danger">Delete Multiple</button>
             <button id="delete-selected" class="btn btn-warning" disabled>Delete Selected</button>
             <button type="button" id="select-transmit-btn" style="padding: 8px 16px; background-color: #007bff; color: white; border: none; border-radius: 4px; cursor: pointer; font-weight: bold;">Select Records for transmit</button>
             <button type="button" id="transmit-selected-btn" style="padding: 8px 16px; background-color: #6c757d; color: white; border: none; border-radius: 4px; cursor: not-allowed; font-weight: bold;" disabled>Transmit Selected Records</button>
@@ -611,6 +611,41 @@
     </dialog>
 <script>
     document.addEventListener('DOMContentLoaded', function() {
+        // OD Approval Modal
+        const openPendingODModal = document.getElementById('openPendingODModal');
+        const pendingODModal = document.getElementById('pendingODModal');
+        const closePendingODModal = document.querySelector('.closePendingODModal');
+
+        if (openPendingODModal && pendingODModal) {
+            openPendingODModal.addEventListener('click', function() {
+                pendingODModal.showModal();
+            });
+        }
+
+        if (closePendingODModal && pendingODModal) {
+            closePendingODModal.addEventListener('click', function() {
+                pendingODModal.close();
+            });
+        }
+
+        // Admin Users Modal
+        const openAdminUsersModal = document.getElementById('openAdminUsersModal');
+        const adminUsersModal = document.getElementById('adminUsersModal');
+        const closeAdminUsersModal = document.querySelector('.closeAdminUsersModal');
+
+        if (openAdminUsersModal && adminUsersModal) {
+            openAdminUsersModal.addEventListener('click', function() {
+                adminUsersModal.showModal();
+            });
+        }
+
+        if (closeAdminUsersModal && adminUsersModal) {
+            closeAdminUsersModal.addEventListener('click', function() {
+                adminUsersModal.close();
+            });
+        }
+
+        // Bulk Delete - Delete Multiple Mode
         const deleteMultipleBtn = document.getElementById('delete-multiple'); 
         const deleteSelectedBtn = document.getElementById('delete-selected');
         const bulkDeleteDialog = document.querySelector('.bulkDeleteDialog');

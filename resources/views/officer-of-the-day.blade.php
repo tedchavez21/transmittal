@@ -108,6 +108,7 @@
                 <option value="OTHER-LBP ACP">OTHER-LBP ACP</option>
                 <option value="REGULAR">REGULAR</option>
                 <option value="SELF-FINANCED">SELF-FINANCED</option>
+                <option value="CFITF-CIP">CFITF-CIP</option>
             </select>
             <label for="causeOfDamage">Cause of Damage:</label>
             <input type="text" id="causeOfDamage" name="causeOfDamage" required>
