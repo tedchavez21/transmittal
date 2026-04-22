@@ -296,20 +296,28 @@ class RoutesController extends Controller
             $statsQuery->where('barangay', 'like', '%' . $request->dash_barangay . '%');
         }
         if ($request->filled('dash_source')) {
-            $statsQuery->where('source', $request->dash_source);
+            $sources = $request->input('dash_source');
+            if (is_array($sources) && count($sources) > 0) {
+                $statsQuery->whereIn('source', $sources);
+            } elseif (is_string($sources) && !empty($sources)) {
+                $statsQuery->where('source', $sources);
+            }
         }
-        if ($request->filled('dash_date_single')) {
-            $statsQuery->whereDate('created_at', $request->dash_date_single);
-        }
-        if ($request->filled('dash_date_from')) {
-            $statsQuery->whereDate('created_at', '>=', $request->dash_date_from);
-        }
-        if ($request->filled('dash_date_to')) {
-            $statsQuery->whereDate('created_at', '<=', $request->dash_date_to);
-        }
-        if ($request->filled('dash_date_month')) {
-            $statsQuery->whereMonth('created_at', substr($request->dash_date_month, 5, 2))
-                  ->whereYear('created_at', substr($request->dash_date_month, 0, 4));
+        if ($request->filled('dash_date_type')) {
+            $dateType = $request->dash_date_type;
+            if ($dateType === 'single' && $request->filled('dash_date_single')) {
+                $statsQuery->whereDate('created_at', $request->dash_date_single);
+            } elseif ($dateType === 'range') {
+                if ($request->filled('dash_date_from')) {
+                    $statsQuery->whereDate('created_at', '>=', $request->dash_date_from);
+                }
+                if ($request->filled('dash_date_to')) {
+                    $statsQuery->whereDate('created_at', '<=', $request->dash_date_to);
+                }
+            } elseif ($dateType === 'month' && $request->filled('dash_date_month')) {
+                $statsQuery->whereMonth('created_at', substr($request->dash_date_month, 5, 2))
+                      ->whereYear('created_at', substr($request->dash_date_month, 0, 4));
+            }
         }
 
         $totalRecords = $statsQuery->count();
