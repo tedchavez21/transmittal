@@ -1,8 +1,33 @@
 document.addEventListener('DOMContentLoaded', function () {
+    // Sidebar Navigation Toggle
+    const btnDashboard = document.getElementById('btn-dashboard');
+    const btnNlRecords = document.getElementById('btn-nl-records');
+    const dashboardSection = document.getElementById('dashboard-section');
+    const nlRecordsSection = document.getElementById('nl-records-section');
+
+    function showDashboard() {
+        dashboardSection.style.display = 'block';
+        nlRecordsSection.style.display = 'none';
+        btnDashboard.classList.add('active');
+        btnNlRecords.classList.remove('active');
+    }
+
+    function showNlRecords() {
+        dashboardSection.style.display = 'none';
+        nlRecordsSection.style.display = 'block';
+        btnDashboard.classList.remove('active');
+        btnNlRecords.classList.add('active');
+    }
+
+    if (btnDashboard && btnNlRecords && dashboardSection && nlRecordsSection) {
+        btnDashboard.addEventListener('click', showDashboard);
+        btnNlRecords.addEventListener('click', showNlRecords);
+    }
+
+    // Admin Login functionality
     const adminButton = document.querySelector('.adminLoginButton');
     const loginDialog = document.querySelector('.loginDialog');
     const closeModal = document.querySelector('.closeModal');
-
     if (adminButton && loginDialog) {
         adminButton.addEventListener('click', function () {
             loginDialog.showModal();

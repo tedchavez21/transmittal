@@ -13,7 +13,95 @@
 @section('content')
     <style>
         .received-by { display: none; }
+        
+        /* Left Sidebar Panel - Collapsible on Hover */
+        .sidebar-panel {
+            position: fixed;
+            left: 0;
+            top: 0;
+            width: 60px;
+            height: 100vh;
+            background-color: #2c3e50;
+            padding-top: 60px;
+            z-index: 1000;
+            box-shadow: 2px 0 5px rgba(0,0,0,0.1);
+            transition: all 0.35s cubic-bezier(0.4, 0, 0.2, 1);
+            overflow: hidden;
+        }
+
+        .sidebar-panel:hover {
+            width: 200px;
+        }
+        
+        .sidebar-button {
+            display: flex;
+            align-items: center;
+            width: 200px;
+            padding: 16px 18px;
+            color: white;
+            background-color: transparent;
+            border: none;
+            text-align: left;
+            font-size: 15px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            border-left: 4px solid transparent;
+            white-space: nowrap;
+        }
+        
+        .sidebar-button:hover {
+            background-color: #34495e;
+            border-left-color: #3498db;
+        }
+        
+        .sidebar-button.active {
+            background-color: #3498db;
+            border-left-color: #fff;
+        }
+        
+        .sidebar-button span:first-child {
+            font-size: 20px;
+            min-width: 24px;
+            text-align: center;
+            margin-right: 16px;
+            transition: margin 0.3s ease;
+        }
+
+        .sidebar-button span:last-child {
+            opacity: 0;
+            transition: opacity 0.2s ease 0.1s;
+        }
+
+        .sidebar-panel:hover .sidebar-button span:last-child {
+            opacity: 1;
+        }
+        
+        /* Main content offset */
+        .main-content {
+            margin-left: 60px;
+            padding: 20px;
+            transition: margin-left 0.35s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        body:hover .main-content {
+            margin-left: 60px;
+        }
     </style>
+
+    <!-- Left Side Panel -->
+    <div class="sidebar-panel">
+        <button type="button" class="sidebar-button active" id="btn-dashboard">
+            <span>📊</span>
+            <span>Dashboard</span>
+        </button>
+        <button type="button" class="sidebar-button" id="btn-nl-records">
+            <span>📋</span>
+            <span>NL Records</span>
+        </button>
+    </div>
+
+    <div class="main-content">
     <style media="print">
         @page { size: landscape; }
         h1, p, form, .no-print { display: none !important; }
@@ -51,6 +139,106 @@
         </div>
     @endif
 
+    <!-- Global Action Buttons -->
+    <div style="position: fixed; bottom: 5px; right: 5px; display: flex; flex-direction: column; gap: 5px; z-index: 999;">
+        <button type="button" class="fab-main-button" id="openPendingODModal" style="
+            min-width: 140px;
+            height: 30px;
+            border-radius: 10px;
+            padding: 5px 10px;
+            text-align: center;
+            border: none;
+            background-color: #2E7D32;
+            color: white;
+            font-size: 15px;
+            cursor: pointer;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+            transition: all 0.25s ease;
+        " title="Pending OD Approvals">
+            👤 OD APPROVAL
+        </button>
+        
+        <button type="button" class="fab-main-button" id="openAdminUsersModal" style="
+            min-width: 140px;
+            height: 30px;
+            border-radius: 10px;
+            padding: 5px 10px;
+            text-align: center;
+            border-radius: 10px;
+            border: none;
+            background-color: #1565C0;
+            color: white;
+            font-size: 15px;
+            cursor: pointer;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+            transition: all 0.25s ease;
+        " title="Admin Users">
+            ⚙️ ADMINS
+        </button>
+    </div>
+
+    <!-- Pending OD Approvals Modal -->
+    <dialog class="largeModal" id="pendingODModal">
+        <h3 style="margin-bottom: 20px;">Pending OD Approvals</h3>
+        @if($pendingOfficers->isEmpty())
+            <p style="text-align: center; padding: 30px; color: #757575;">No pending officer approvals.</p>
+        @else
+            <ul style="max-height: 400px; overflow-y: auto;">
+                @foreach($pendingOfficers as $officer)
+                    <li style="padding: 12px 0; display: flex; align-items: center; justify-content: space-between; border-bottom: 1px solid #eee;">
+                        {{ $officer->name }}
+                        <form action="{{ route('admin.officers.approve', $officer->id) }}" method="POST" style="display: inline;">
+                            @csrf
+                            <button type="submit" class="fab-button fab-approve">
+                                Approve
+                            </button>
+                        </form>
+                    </li>
+                @endforeach
+            </ul>
+        @endif
+        <div class="dialog-actions" style="margin-top: 20px;">
+            <button type="button" class="cancel-btn closePendingODModal">Close</button>
+        </div>
+    </dialog>
+
+    <!-- Admin Users Modal -->
+    <dialog class="largeModal" id="adminUsersModal">
+        <h3 style="margin-bottom: 20px;">Admin Users</h3>
+        <div style="margin-bottom: 15px; text-align: right;">
+            <button type="button" class="fab-button fab-approve addAdminButton">Add New Admin</button>
+        </div>
+        @if($admins->isEmpty())
+            <p style="text-align: center; padding: 30px; color: #757575;">No admin users found.</p>
+        @else
+            <table style="width: 100%; border-collapse: collapse; max-height: 350px; overflow-y: auto; display: block;">
+                <thead>
+                    <tr style="border-bottom: 1px solid #ccc;">
+                        <th style="text-align: left; padding: 8px; width: 40%;">Username</th>
+                        <th style="text-align: left; padding: 8px; width: 30%;">Password</th>
+                        <th style="text-align: left; padding: 8px; width: 30%;">Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach($admins as $admin)
+                        <tr style="border-bottom: 1px solid #ddd;">
+                            <td style="padding: 8px;">{{ $admin->username }}</td>
+                            <td style="padding: 8px;">••••••••</td>
+                            <td style="padding: 8px;">
+                                <button type="button" class="fab-button fab-edit editAdminButton" data-id="{{ $admin->id }}" data-username="{{ $admin->username }}">Edit</button>
+                            </td>
+                        </tr>
+                    @endforeach
+                </tbody>
+            </table>
+        @endif
+        <div class="dialog-actions" style="margin-top: 20px;">
+            <button type="button" class="cancel-btn closeAdminUsersModal">Close</button>
+        </div>
+    </dialog>
+
+    <!-- Dashboard Section -->
+    <div id="dashboard-section">
     <!-- DashboardDD -->
     <div class="no-print" style="margin-bottom: 20px; padding: 15px; border: 1px solid #ccc;">
         <h2>Dashboard</h2>
@@ -256,103 +444,10 @@
         @endif
     </div>
 
-    <!-- button ofr ad -->
-    <div style="position: fixed; bottom: 5px; right: 5px; display: flex; flex-direction: column; gap: 5px; z-index: 999;">
-        <button type="button" class="fab-main-button" id="openPendingODModal" style="
-            min-width: 140px;
-            height: 30px;
-            border-radius: 10px;
-            padding: 5px 10px;
-            text-align: center;
-            border: none;
-            background-color: #2E7D32;
-            color: white;
-            font-size: 15px;
-            cursor: pointer;
-            box-shadow: 0 4px 12px rgba(0,0,0,0.3);
-            transition: all 0.25s ease;
-        " title="Pending OD Approvals">
-            👤 OD APPROVAL
-        </button>
-        
-        <button type="button" class="fab-main-button" id="openAdminUsersModal" style="
-            min-width: 140px;
-            height: 30px;
-            border-radius: 10px;
-            padding: 5px 10px;
-            text-align: center;
-            border-radius: 10px;
-            border: none;
-            background-color: #1565C0;
-            color: white;
-            font-size: 15px;
-            cursor: pointer;
-            box-shadow: 0 4px 12px rgba(0,0,0,0.3);
-            transition: all 0.25s ease;
-        " title="Admin Users">
-            ⚙️ ADMINS
-        </button>
-    </div>
+    </div> <!-- END Dashboard Section -->
 
-    <!-- Pending OD Approvals Modal -->
-    <dialog class="largeModal" id="pendingODModal">
-        <h3 style="margin-bottom: 20px;">Pending OD Approvals</h3>
-        @if($pendingOfficers->isEmpty())
-            <p style="text-align: center; padding: 30px; color: #757575;">No pending officer approvals.</p>
-        @else
-            <ul style="max-height: 400px; overflow-y: auto;">
-                @foreach($pendingOfficers as $officer)
-                    <li style="padding: 12px 0; display: flex; align-items: center; justify-content: space-between; border-bottom: 1px solid #eee;">
-                        {{ $officer->name }}
-                        <form action="{{ route('admin.officers.approve', $officer->id) }}" method="POST" style="display: inline;">
-                            @csrf
-                            <button type="submit" class="fab-button fab-approve">
-                                Approve
-                            </button>
-                        </form>
-                    </li>
-                @endforeach
-            </ul>
-        @endif
-        <div class="dialog-actions" style="margin-top: 20px;">
-            <button type="button" class="cancel-btn closePendingODModal">Close</button>
-        </div>
-    </dialog>
-
-    <!-- Admin Users Modal -->
-    <dialog class="largeModal" id="adminUsersModal">
-        <h3 style="margin-bottom: 20px;">Admin Users</h3>
-        <div style="margin-bottom: 15px; text-align: right;">
-            <button type="button" class="fab-button fab-approve addAdminButton">Add New Admin</button>
-        </div>
-        @if($admins->isEmpty())
-            <p style="text-align: center; padding: 30px; color: #757575;">No admin users found.</p>
-        @else
-            <table style="width: 100%; border-collapse: collapse; max-height: 350px; overflow-y: auto; display: block;">
-                <thead>
-                    <tr style="border-bottom: 1px solid #ccc;">
-                        <th style="text-align: left; padding: 8px; width: 40%;">Username</th>
-                        <th style="text-align: left; padding: 8px; width: 30%;">Password</th>
-                        <th style="text-align: left; padding: 8px; width: 30%;">Actions</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    @foreach($admins as $admin)
-                        <tr style="border-bottom: 1px solid #ddd;">
-                            <td style="padding: 8px;">{{ $admin->username }}</td>
-                            <td style="padding: 8px;">••••••••</td>
-                            <td style="padding: 8px;">
-                                <button type="button" class="fab-button fab-edit editAdminButton" data-id="{{ $admin->id }}" data-username="{{ $admin->username }}">Edit</button>
-                            </td>
-                        </tr>
-                    @endforeach
-                </tbody>
-            </table>
-        @endif
-        <div class="dialog-actions" style="margin-top: 20px;">
-            <button type="button" class="cancel-btn closeAdminUsersModal">Close</button>
-        </div>
-    </dialog>
+    <!-- NL Records Section -->
+    <div id="nl-records-section" style="display: none;">
 
     <form action="{{ route('admin.logout') }}" method="POST" style="display: inline; margin-bottom: 20px;">
         @csrf
@@ -629,8 +724,50 @@
             </div>
         </form>
     </dialog>
-<script>
+    <script>
     document.addEventListener('DOMContentLoaded', function() {
+        // Sidebar Navigation Toggle
+        const btnDashboard = document.getElementById('btn-dashboard');
+        const btnNlRecords = document.getElementById('btn-nl-records');
+        const dashboardSection = document.getElementById('dashboard-section');
+        const nlRecordsSection = document.getElementById('nl-records-section');
+        const adminActiveTabKey = 'admin_active_tab';
+
+        function showDashboard() {
+            dashboardSection.style.display = 'block';
+            nlRecordsSection.style.display = 'none';
+            btnDashboard.classList.add('active');
+            btnNlRecords.classList.remove('active');
+            localStorage.setItem(adminActiveTabKey, 'dashboard');
+        }
+
+        function showNlRecords() {
+            dashboardSection.style.display = 'none';
+            nlRecordsSection.style.display = 'block';
+            btnDashboard.classList.remove('active');
+            btnNlRecords.classList.add('active');
+            localStorage.setItem(adminActiveTabKey, 'nl-records');
+        }
+
+        if (btnDashboard && btnNlRecords && dashboardSection && nlRecordsSection) {
+            btnDashboard.addEventListener('click', function (event) {
+                event.preventDefault();
+                showDashboard();
+            });
+
+            btnNlRecords.addEventListener('click', function (event) {
+                event.preventDefault();
+                showNlRecords();
+            });
+
+            const savedTab = localStorage.getItem(adminActiveTabKey);
+            if (savedTab === 'nl-records') {
+                showNlRecords();
+            } else {
+                showDashboard();
+            }
+        }
+
         // OD Approval Modal
         const openPendingODModal = document.getElementById('openPendingODModal');
         const pendingODModal = document.getElementById('pendingODModal');
@@ -1863,9 +2000,46 @@ Zabali,San Luis,Aurora`;
         const checkboxElements = document.querySelectorAll('.col-checkbox');
         const recordCheckboxes = document.querySelectorAll('.record-checkbox');
         const selectAllBox = document.getElementById('select-all');
+        const unassignedToggle = document.getElementById('unassigned-toggle');
         const transmitAllBox = document.getElementById('select-all-transmit');
         const transmitCheckboxes = document.querySelectorAll('.record-checkbox-transmit');
         const transmitCheckboxElements = document.querySelectorAll('.col-checkbox-transmit');
+        const selectedRecordIdsInput = document.getElementById('selected-record-ids');
+
+        // Auto-apply unassigned filter toggle and preserve current query filters
+        unassignedToggle?.addEventListener('change', function () {
+            const params = new URLSearchParams(window.location.search);
+            if (this.checked) {
+                params.set('unassigned_only', '1');
+            } else {
+                params.delete('unassigned_only');
+            }
+            window.location.href = `${window.location.pathname}?${params.toString()}`;
+        });
+
+        // Toggle checkbox visibility for bulk delete
+        deleteMultipleBtn?.addEventListener('click', function() {
+            const firstCheckboxCell = checkboxElements[0];
+            if (!firstCheckboxCell) return;
+
+            const isHidden = firstCheckboxCell.style.display === 'none';
+
+            checkboxElements.forEach(el => {
+                el.style.display = isHidden ? 'table-cell' : 'none';
+            });
+
+            if (isHidden) {
+                this.textContent = 'Cancel Delete Multiple';
+                this.style.backgroundColor = '#6c757d';
+            } else {
+                this.textContent = 'Delete Multiple';
+                this.style.backgroundColor = '';
+                recordCheckboxes.forEach(cb => cb.checked = false);
+                if (selectAllBox) selectAllBox.checked = false;
+                if (deleteSelectedBtn) deleteSelectedBtn.disabled = true;
+                if (selectedRecordIdsInput) selectedRecordIdsInput.value = '';
+            }
+        });
 
         // toggle checkbox for transmitting records
         transmitToggleBtn?.addEventListener('click', function() {
@@ -1963,7 +2137,11 @@ Zabali,San Luis,Aurora`;
             if (!this.disabled) bulkDeleteDialog?.showModal();
         });
 
-        document.getElementById('confirmBulkDelete')?.addEventListener('click', () => {
+        document.getElementById('confirm-bulk-delete')?.addEventListener('click', () => {
+            const selectedIds = Array.from(document.querySelectorAll('.record-checkbox:checked')).map(cb => cb.value);
+            if (selectedRecordIdsInput) {
+                selectedRecordIdsInput.value = selectedIds.join(',');
+            }
             document.getElementById('bulk-form')?.submit();
         });
 
@@ -1972,5 +2150,10 @@ Zabali,San Luis,Aurora`;
         });
         
     });
-</script>
+    </script>
+    
+    </div> <!-- END NL Records Section -->
+    
+    </div> <!-- END main-content -->
+
 @endsection
