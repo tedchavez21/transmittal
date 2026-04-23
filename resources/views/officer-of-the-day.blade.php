@@ -137,7 +137,7 @@
             <button type="button" class="closeAddRecordModal">Close</button>
         </form>
     </dialog>
-    <x-table :records="$records" :showDelete="false" :showCheckbox="false" :showSortableHeaders="false" :hideAccountsColumn="true" :hideSourceColumn="true" :hideProvinceColumn="true" />
+    <x-table :records="$records" :showDelete="false" :showCheckbox="false" :showSortableHeaders="false" :hideAccountsColumn="true" :hideSourceColumn="true" :hideProvinceColumn="true" :showFilters="true" />
     @if($officerApproved && $records->count() > 0)
     <div style="margin-top: 20px;">
         <form id="submitTransmittalForm" action="{{ route('records.submit-transmittal') }}" method="POST" style="display: inline;">

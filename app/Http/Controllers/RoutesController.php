@@ -718,9 +718,35 @@ class RoutesController extends Controller
         if ($request->filled('remarks')) {
             $query->where('remarks', 'like', '%' . $request->remarks . '%');
         }
-        if ($request->filled('date_occurrence')) {
-            $query->where('date_occurrence', 'like', '%' . $request->date_occurrence . '%');
+        
+        // Date occurrence filtering
+        if ($request->filled('date_occurrence_filter_type') && $request->date_occurrence_filter_type === 'single') {
+            if ($request->filled('date_occurrence')) {
+                $query->where('date_occurrence', $request->date_occurrence);
+            }
+        } elseif ($request->filled('date_occurrence_filter_type') && $request->date_occurrence_filter_type === 'range') {
+            if ($request->filled('date_occurrence_from')) {
+                $query->where('date_occurrence', '>=', $request->date_occurrence_from);
+            }
+            if ($request->filled('date_occurrence_to')) {
+                $query->where('date_occurrence', '<=', $request->date_occurrence_to);
+            }
         }
+        
+        // Date received filtering
+        if ($request->filled('date_received_filter_type') && $request->date_received_filter_type === 'single') {
+            if ($request->filled('date_received')) {
+                $query->where('date_received', $request->date_received);
+            }
+        } elseif ($request->filled('date_received_filter_type') && $request->date_received_filter_type === 'range') {
+            if ($request->filled('date_received_from')) {
+                $query->where('date_received', '>=', $request->date_received_from);
+            }
+            if ($request->filled('date_received_to')) {
+                $query->where('date_received', '<=', $request->date_received_to);
+            }
+        }
+        
         if ($request->filled('accounts')) {
             $query->where('accounts', 'like', '%' . $request->accounts . '%');
         }
