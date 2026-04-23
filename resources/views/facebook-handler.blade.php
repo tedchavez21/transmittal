@@ -27,14 +27,23 @@
     </div>
     <div class="contentContainer">
     @if(!$isLoggedIn)
+        <div class="app-card" style="max-width: 560px;">
+            <div class="app-card-header" style="padding: 18px 18px 14px 18px;">
+                <div>
+                    <h1 class="app-card-title" style="font-size: 18px;">Facebook entry</h1>
+                    <p class="app-card-subtitle" style="margin-top: 6px;">Enter the access password to continue.</p>
+                </div>
+            </div>
+            <div class="app-card-body" style="padding: 16px 18px 18px 18px;">
         <form action="{{ route('facebook.login') }}" method="POST" class="officerOfTheDayNames">
             @csrf
-            <label for="password">Password:</label>
-            <input type="password" id="password" name="password" required>
+            <input type="password" id="password" name="password" required placeholder="Password" aria-label="Password">
             <button type="submit">Enter</button>
         </form>
+            </div>
+        </div>
         @if(session('error'))
-            <p style="color: red;">{{ session('error') }}</p>
+            <div class="app-alert app-alert--error" style="max-width: 560px;">{{ session('error') }}</div>
         @endif
     @else
         <br/>
@@ -94,13 +103,12 @@
                 <option value="palawan">Palawan Pay</option>
                 <option value="not_indicated">Not indicated</option>
             </select>
-            <label for="accounts">Account (sender email/username):</label>
-            <input type="text" id="accounts" name="accounts" placeholder="Paste FB profile link or type name">
-            <p style="margin: 4px 0 10px 0; font-size: 12px; color: #666;">
-                Tip: paste a Facebook profile link to auto-fill the name (best-effort).
-            </p>
-            <label for="date_occurrence">Date occurrence:</label>
-            <input type="date" id="date_occurrence" name="date_occurrence">
+            <label for="accounts">Account / page name (sender):</label>
+            <input type="text" id="accounts" name="accounts" required placeholder="Name of the Facebook page or account">
+            <label for="facebook_page_url">Facebook page link:</label>
+            <input type="url" id="facebook_page_url" name="facebook_page_url" required placeholder="https://www.facebook.com/...">
+            <label for="date_occurrence">Date occurrence (free text):</label>
+            <input type="text" id="date_occurrence" name="date_occurrence" placeholder="e.g. early April, last week">
             <label for="remarks">Remarks - Care of:</label>
             <input type="text" id="remarks" name="remarks">
             <button type="submit">Add Record</button>
@@ -108,19 +116,11 @@
         </form>
     </dialog>
     <x-table :records="$records" :showDelete="false" :showCheckbox="false" :showSortableHeaders="false" />
-    @if($records->count() > 0)
-    <div style="margin-top: 20px;">
-        <form action="{{ route('records.submit-transmittal') }}" method="POST" style="display: inline;">
-            @csrf
-            <input type="hidden" name="source" value="Facebook">
-            <button type="submit" style="padding: 10px 20px; background-color: #4CAF50; color: white; border: none; border-radius: 4px; cursor: pointer; font-weight: bold;">Submit Transmittal</button>
-        </form>
-    </div>
-    @endif
-    <dialog class="editRecordDialog">
-        <form class="editRecordform" method="POST">
+    <dialog class="editRecordDialog" id="recordEditDialog">
+        <form class="editRecordform" id="recordEditForm" method="POST">
             @csrf
             @method('PUT')
+            <input type="hidden" name="source" value="Facebook" id="editRecordSourceFacebook">
             <label for="farmerName">Farmer Name:</label>
             <input type="text" id="farmerName" name="farmerName">
             <label for="province">Province:</label>
@@ -170,12 +170,18 @@
                 <option value="palawan">Palawan Pay</option>
                 <option value="not_indicated">Not indicated</option>
             </select>
-            <label for="accounts">Account (sender email/username):</label>
+            <label for="accounts">Account / page name (sender):</label>
             <input type="text" id="accounts" name="accounts">
-            <label for="date_occurrence">Date occurrence:</label>
-            <input type="date" id="date_occurrence" name="date_occurrence">
+            <label for="facebook_page_url">Facebook page link:</label>
+            <input type="url" id="facebook_page_url" name="facebook_page_url" placeholder="https://www.facebook.com/...">
+            <label for="date_occurrence">Date occurrence (free text):</label>
+            <input type="text" id="date_occurrence" name="date_occurrence">
             <label for="remarks">Remarks - Care of:</label>
             <input type="text" id="remarks" name="remarks">
+            <label for="transmittal_number">Control number:</label>
+            <input type="text" id="transmittal_number" name="transmittal_number" readonly style="background:#f5f5f5;">
+            <label for="admin_transmittal_number">Admin transmittal # (read-only):</label>
+            <input type="text" id="admin_transmittal_number" name="admin_transmittal_number" readonly style="background:#f5f5f5;">
             <button type="submit">Update Record</button>
             <button type="button" class="closeEditRecordDialog">Close</button>
         </form>
@@ -183,73 +189,4 @@
     @endif
     </div>
 
-    <script>
-        document.addEventListener('DOMContentLoaded', function () {
-            const csrfToken = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') || "{{ csrf_token() }}";
-            const inputs = document.querySelectorAll('input[name="accounts"]');
-
-            function extractFacebookSlug(url) {
-                try {
-                    const u = new URL(url);
-                    const host = u.hostname.replace(/^www\./, '');
-                    if (!host.includes('facebook.com')) return null;
-
-                    const idParam = u.searchParams.get('id');
-                    if (idParam) return idParam;
-
-                    const parts = u.pathname.split('/').filter(Boolean);
-                    if (parts.length === 0) return null;
-                    if (parts[0] === 'profile.php') return idParam;
-                    return parts[0];
-                } catch {
-                    return null;
-                }
-            }
-
-            async function resolveNameFromUrl(url) {
-                const response = await fetch("{{ route('facebook.resolve-name') }}", {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                        'X-CSRF-TOKEN': csrfToken,
-                        'Accept': 'application/json'
-                    },
-                    body: JSON.stringify({ url })
-                });
-
-                if (!response.ok) {
-                    return null;
-                }
-
-                const data = await response.json();
-                return data?.name || null;
-            }
-
-            inputs.forEach(input => {
-                input.addEventListener('blur', async function () {
-                    const raw = (this.value || '').trim();
-                    if (!raw) return;
-                    if (!raw.includes('facebook.com')) return;
-
-                    this.disabled = true;
-                    const original = raw;
-
-                    try {
-                        const resolved = await resolveNameFromUrl(original);
-                        if (resolved) {
-                            this.value = resolved;
-                            return;
-                        }
-
-                        const slug = extractFacebookSlug(original);
-                        if (slug) {
-                            this.value = slug;
-                        }
-                    } finally {
-                        this.disabled = false;
-                    }
-                });
-            });
-        });
-    </script>
 @endsection

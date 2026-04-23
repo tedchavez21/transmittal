@@ -3,202 +3,104 @@
 @section('title', 'Admin')
 
 @section('page-styles')
-<style>
-    html, body {
-        max-width: 100%;
-    }
-</style>
+{{-- Admin styles live in app.css --}}
 @endsection
 
 @section('content')
-    <style>
-        .received-by { display: none; }
-        
-        /* Left Sidebar Panel - Collapsible on Hover */
-        .sidebar-panel {
-            position: fixed;
-            left: 0;
-            top: 0;
-            width: 60px;
-            height: 100vh;
-            background-color: #2c3e50;
-            padding-top: 60px;
-            z-index: 1000;
-            box-shadow: 2px 0 5px rgba(0,0,0,0.1);
-            transition: all 0.35s cubic-bezier(0.4, 0, 0.2, 1);
-            overflow: hidden;
-        }
+    <div class="admin-shell">
+        <aside class="admin-sidebar no-print">
+            <nav class="admin-nav" aria-label="Admin navigation">
+                <button type="button" class="active" id="btn-dashboard">
+                    <span class="icon">📊</span>
+                    <span>Dashboard</span>
+                </button>
+                <button type="button" id="btn-nl-records">
+                    <span class="icon">📋</span>
+                    <span>NL Records</span>
+                </button>
+            </nav>
 
-        .sidebar-panel:hover {
-            width: 200px;
-        }
-        
-        .sidebar-button {
-            display: flex;
-            align-items: center;
-            width: 200px;
-            padding: 16px 18px;
-            color: white;
-            background-color: transparent;
-            border: none;
-            text-align: left;
-            font-size: 15px;
-            font-weight: 500;
-            cursor: pointer;
-            transition: all 0.3s ease;
-            border-left: 4px solid transparent;
-            white-space: nowrap;
-        }
-        
-        .sidebar-button:hover {
-            background-color: #34495e;
-            border-left-color: #3498db;
-        }
-        
-        .sidebar-button.active {
-            background-color: #3498db;
-            border-left-color: #fff;
-        }
-        
-        .sidebar-button span:first-child {
-            font-size: 20px;
-            min-width: 24px;
-            text-align: center;
-            margin-right: 16px;
-            transition: margin 0.3s ease;
-        }
+            <div style="margin-top: 14px; padding: 10px;">
+                <button type="button" class="btn btn-success" id="openUserApprovalsModal" style="width:100%;" title="Pending user approvals (Email and OD)">
+                    👤 User approvals
+                </button>
+                <div style="height: 8px;"></div>
+                <button type="button" class="btn btn-primary" id="openAdminUsersModal" style="width:100%;" title="Admin Users">
+                    ⚙️ Admin users
+                </button>
+            </div>
+        </aside>
 
-        .sidebar-button span:last-child {
-            opacity: 0;
-            transition: opacity 0.2s ease 0.1s;
-        }
-
-        .sidebar-panel:hover .sidebar-button span:last-child {
-            opacity: 1;
-        }
-        
-        /* Main content offset */
-        .main-content {
-            margin-left: 60px;
-            padding: 20px;
-            transition: margin-left 0.35s cubic-bezier(0.4, 0, 0.2, 1);
-        }
-
-        body:hover .main-content {
-            margin-left: 60px;
-        }
-    </style>
-
-    <!-- Left Side Panel -->
-    <div class="sidebar-panel">
-        <button type="button" class="sidebar-button active" id="btn-dashboard">
-            <span>📊</span>
-            <span>Dashboard</span>
-        </button>
-        <button type="button" class="sidebar-button" id="btn-nl-records">
-            <span>📋</span>
-            <span>NL Records</span>
-        </button>
-    </div>
-
-    <div class="main-content">
-    <style media="print">
-        @page { size: landscape; }
-        h1, p, form, .no-print { display: none !important; }
-        table { display: table !important; width: 100%; border-collapse: collapse; }
-        tbody, thead, tr, td, th { display: table-cell !important; width: auto; height: auto; margin: 0; padding: 8px; border: 1px solid #000; }
-        thead, tbody { display: table-row-group !important; }
-        tr { display: table-row !important; page-break-inside: avoid; }
-        .page-break { page-break-after: always; }
-        .received-by { display: block; position: fixed; bottom: 20px; right: 20px; font-size: 14px; }
-    </style>
-    <h1>Admin Page</h1>
-    <p>USHEL admin page</p>
+        <main class="admin-main">
+            <div class="admin-topbar no-print">
+                <div class="heading">
+                    <h1>Admin Dashboard</h1>
+                    <p>Monitoring • approvals • transmittals</p>
+                </div>
+                <div class="actions">
+                    <form action="{{ route('admin.logout') }}" method="POST" style="margin:0;">
+                        @csrf
+                        <button type="submit" class="btn btn-outline btn-sm" title="Logout">Logout</button>
+                    </form>
+                </div>
+            </div>
 
     @if(session('success'))
-        <div style="background-color: #d4edda; color: #155724; padding: 10px; margin-bottom: 20px; border: 1px solid #c3e6cb; border-radius: 4px;">
-            {{ session('success') }}
-        </div>
+        <div class="app-alert app-alert--success">{{ session('success') }}</div>
     @endif
 
     @if(session('error'))
-        <div style="background-color: #f8d7da; color: #721c24; padding: 10px; margin-bottom: 20px; border: 1px solid #f5c6cb; border-radius: 4px;">
-            {{ session('error') }}
-        </div>
+        <div class="app-alert app-alert--error">{{ session('error') }}</div>
     @endif
 
     @if(session('warning'))
-        <div style="background-color: #fff3cd; color: #856404; padding: 10px; margin-bottom: 20px; border: 1px solid #ffeaa7; border-radius: 4px;">
-            {{ session('warning') }}
-        </div>
+        <div class="app-alert app-alert--warning">{{ session('warning') }}</div>
     @endif
 
     @if(session('info'))
-        <div style="background-color: #d1ecf1; color: #0c5460; padding: 10px; margin-bottom: 20px; border: 1px solid #bee5eb; border-radius: 4px;">
-            {{ session('info') }}
-        </div>
+        <div class="app-alert app-alert--info">{{ session('info') }}</div>
     @endif
 
-    <!-- Global Action Buttons -->
-    <div style="position: fixed; bottom: 5px; right: 5px; display: flex; flex-direction: column; gap: 5px; z-index: 999;">
-        <button type="button" class="fab-main-button" id="openPendingODModal" style="
-            min-width: 140px;
-            height: 30px;
-            border-radius: 10px;
-            padding: 5px 10px;
-            text-align: center;
-            border: none;
-            background-color: #2E7D32;
-            color: white;
-            font-size: 15px;
-            cursor: pointer;
-            box-shadow: 0 4px 12px rgba(0,0,0,0.3);
-            transition: all 0.25s ease;
-        " title="Pending OD Approvals">
-            👤 OD APPROVAL
-        </button>
-        
-        <button type="button" class="fab-main-button" id="openAdminUsersModal" style="
-            min-width: 140px;
-            height: 30px;
-            border-radius: 10px;
-            padding: 5px 10px;
-            text-align: center;
-            border-radius: 10px;
-            border: none;
-            background-color: #1565C0;
-            color: white;
-            font-size: 15px;
-            cursor: pointer;
-            box-shadow: 0 4px 12px rgba(0,0,0,0.3);
-            transition: all 0.25s ease;
-        " title="Admin Users">
-            ⚙️ ADMINS
-        </button>
-    </div>
+    <!-- User approvals: Email handlers + Officers of the Day -->
+    <dialog class="largeModal" id="userApprovalsModal">
+        <h3 style="margin-bottom: 16px;">Pending user approvals</h3>
 
-    <!-- Pending OD Approvals Modal -->
-    <dialog class="largeModal" id="pendingODModal">
-        <h3 style="margin-bottom: 20px;">Pending OD Approvals</h3>
-        @if($pendingOfficers->isEmpty())
-            <p style="text-align: center; padding: 30px; color: #757575;">No pending officer approvals.</p>
+        <h4 style="margin: 20px 0 10px 0; border-bottom: 1px solid #ccc; padding-bottom: 6px;">Email (NL entry)</h4>
+        @if($pendingEmailHandlers->isEmpty())
+            <p style="text-align: center; padding: 16px; color: #757575;">No pending email handler approvals.</p>
         @else
-            <ul style="max-height: 400px; overflow-y: auto;">
-                @foreach($pendingOfficers as $officer)
-                    <li style="padding: 12px 0; display: flex; align-items: center; justify-content: space-between; border-bottom: 1px solid #eee;">
-                        {{ $officer->name }}
-                        <form action="{{ route('admin.officers.approve', $officer->id) }}" method="POST" style="display: inline;">
+            <ul style="max-height: 280px; overflow-y: auto; margin: 0 0 16px 0; padding-left: 20px;">
+                @foreach($pendingEmailHandlers as $emailHandler)
+                    <li style="padding: 12px 0; display: flex; align-items: center; justify-content: space-between; border-bottom: 1px solid #eee; list-style: none;">
+                        <span>{{ $emailHandler->name }}</span>
+                        <form action="{{ route('admin.email-handlers.approve', $emailHandler->id) }}" method="POST" style="display: inline;">
                             @csrf
-                            <button type="submit" class="fab-button fab-approve">
-                                Approve
-                            </button>
+                            <button type="submit" class="fab-button fab-approve">Approve</button>
                         </form>
                     </li>
                 @endforeach
             </ul>
         @endif
+
+        <h4 style="margin: 20px 0 10px 0; border-bottom: 1px solid #ccc; padding-bottom: 6px;">Officer of the Day</h4>
+        @if($pendingOfficers->isEmpty())
+            <p style="text-align: center; padding: 16px; color: #757575;">No pending officer approvals.</p>
+        @else
+            <ul style="max-height: 280px; overflow-y: auto; margin: 0; padding-left: 20px;">
+                @foreach($pendingOfficers as $officer)
+                    <li style="padding: 12px 0; display: flex; align-items: center; justify-content: space-between; border-bottom: 1px solid #eee; list-style: none;">
+                        <span>{{ $officer->name }}</span>
+                        <form action="{{ route('admin.officers.approve', $officer->id) }}" method="POST" style="display: inline;">
+                            @csrf
+                            <button type="submit" class="fab-button fab-approve">Approve</button>
+                        </form>
+                    </li>
+                @endforeach
+            </ul>
+        @endif
+
         <div class="dialog-actions" style="margin-top: 20px;">
-            <button type="button" class="cancel-btn closePendingODModal">Close</button>
+            <button type="button" class="cancel-btn closeUserApprovalsModal">Close</button>
         </div>
     </dialog>
 
@@ -242,7 +144,7 @@
     <!-- DashboardDD -->
     <div class="no-print" style="margin-bottom: 20px; padding: 15px; border: 1px solid #ccc;">
         <h2>Dashboard</h2>
-        
+
         <!-- Filters -->
         <form method="GET" action="{{ route('admin') }}" style="margin: 15px 0; padding: 15px; background: #f5f5f5; border-radius: 4px;">
             <input type="hidden" name="tab" value="dashboard">
@@ -420,6 +322,51 @@
                 @endforeach
             </tbody>
         </table>
+
+        <div style="margin: 22px 0 8px 0; display: flex; align-items: center; justify-content: space-between; gap: 10px; flex-wrap: wrap;">
+            <h4 style="margin: 0;">Records by Municipality</h4>
+            <div style="display: flex; align-items: center; gap: 6px; flex-wrap: wrap;">
+                <span style="font-size: 12px; color: #555; font-weight: 600;">Province slicer:</span>
+                <button
+                    type="button"
+                    class="dashProvinceSlicer"
+                    data-value=""
+                    style="padding: 6px 10px; font-size: 12px; border: 1px solid #bbb; border-radius: 8px; background: {{ request('dash_province') ? '#fff' : '#e3f2fd' }}; cursor: pointer; font-weight: 700;"
+                >All</button>
+                <button
+                    type="button"
+                    class="dashProvinceSlicer"
+                    data-value="Aurora"
+                    style="padding: 6px 10px; font-size: 12px; border: 1px solid #bbb; border-radius: 8px; background: {{ request('dash_province') == 'Aurora' ? '#e3f2fd' : '#fff' }}; cursor: pointer; font-weight: 700;"
+                >Aurora</button>
+                <button
+                    type="button"
+                    class="dashProvinceSlicer"
+                    data-value="Nueva Ecija"
+                    style="padding: 6px 10px; font-size: 12px; border: 1px solid #bbb; border-radius: 8px; background: {{ request('dash_province') == 'Nueva Ecija' ? '#e3f2fd' : '#fff' }}; cursor: pointer; font-weight: 700;"
+                >Nueva Ecija</button>
+            </div>
+        </div>
+        <table style="width: 100%; border-collapse: collapse;">
+            <thead>
+                <tr style="background-color: #f0f0f0;">
+                    <th style="border: 1px solid #ccc; padding: 10px; text-align: left; width: 70%;">Municipality</th>
+                    <th style="border: 1px solid #ccc; padding: 10px; text-align: center; width: 30%;">Record Count</th>
+                </tr>
+            </thead>
+            <tbody>
+                @forelse($recordsByMunicipality as $municipality => $count)
+                <tr>
+                    <td style="border: 1px solid #ccc; padding: 8px;">{{ $municipality }}</td>
+                    <td style="border: 1px solid #ccc; padding: 8px; text-align: center; font-weight: 500;">{{ $count }}</td>
+                </tr>
+                @empty
+                <tr>
+                    <td colspan="2" style="border: 1px solid #ccc; padding: 12px; text-align: center; color: #757575;">No municipality data for the selected filters.</td>
+                </tr>
+                @endforelse
+            </tbody>
+        </table>
     </div>
     <div class="no-print" style="margin-bottom: 20px; padding: 15px; border: 1px solid #ccc;">
         <h2>Active Officers of the Day</h2>
@@ -449,11 +396,6 @@
 
     <!-- NL Records Section -->
     <div id="nl-records-section" style="display: none;">
-
-    <form action="{{ route('admin.logout') }}" method="POST" style="display: inline; margin-bottom: 20px;">
-        @csrf
-        <button type="submit" style="padding: 8px 16px; background-color: #6c757d; color: white; border: none; border-radius: 4px; cursor: pointer;">Go back</button>
-    </form>
 
     <!-- Transmittal Management -->
     <div class="no-print" style="margin-bottom: 20px; padding: 15px; border: 1px solid #ccc; background-color: #f9f9f9;">
@@ -558,6 +500,10 @@
                     <input type="text" name="remarks" value="{{ request('remarks') }}" style="padding: 6px; font-size: 12px; border: 1px solid #ccc; border-radius: 3px;">
                 </div>
                 <div style="display: flex; flex-direction: column; gap: 4px;">
+                    <label style="font-size: 12px; font-weight: bold;">Date of occurrence</label>
+                    <input type="text" name="date_occurrence" value="{{ request('date_occurrence') }}" style="padding: 6px; font-size: 12px; border: 1px solid #ccc; border-radius: 3px;" placeholder="Search text">
+                </div>
+                <div style="display: flex; flex-direction: column; gap: 4px;">
                     <label style="font-size: 12px; font-weight: bold;">Rows per page</label>
                     <select name="per_page" style="padding: 6px; font-size: 12px; border: 1px solid #ccc; border-radius: 3px;">
                         <option value="25" {{ request('per_page') == '25' ? 'selected' : '' }}>25</option>
@@ -589,9 +535,6 @@
         @csrf
         @method('DELETE')
         <input type="hidden" name="record_ids" id="selected-record-ids">
-        <div class="no-print" style="margin-bottom: 15px; display: flex; gap: 10px; flex-wrap: wrap;">
-            <a href="{{ route('admin.export-excel', request()->query()) }}" target="_blank" style="padding: 8px 16px; background-color: #28a745; color: white; border: none; border-radius: 4px; cursor: pointer; font-weight: bold; text-decoration: none;">Export to CSV</a>
-        </div>
         <div id="table-loading-indicator" style="display: none; margin-bottom: 10px; color: #1565C0; font-weight: 600;">Loading records...</div>
         <div style="overflow-x: auto; width: 100%; margin-bottom: 20px; border: 1px solid #ccc; position: relative;">
             <x-table :records="$records" :showEncoder="true" :showFilters="false" :showAdminTransmittal="true" :allPrograms="$allPrograms" :allLines="$allLines" :allSources="$allSources" :allModes="$allModes" :showCheckbox="false" />
@@ -605,9 +548,8 @@
             {{ $records->links() }}
         </div>
     </form>
-    <div class="received-by">Received By: ____________________</div>
-    <dialog class="editRecordDialog">
-        <form class="editRecordform" method="POST">
+    <dialog class="editRecordDialog" id="recordEditDialog">
+        <form class="editRecordform" id="recordEditForm" method="POST">
             @csrf
             @method('PUT')
             <label for="farmerName">Farmer Name:</label>
@@ -677,8 +619,10 @@
             </select>
             <label for="accounts">Account (sender email/username):</label>
             <input type="text" id="accounts" name="accounts">
+            <label for="facebook_page_url">Facebook page link (Facebook source only):</label>
+            <input type="url" id="facebook_page_url" name="facebook_page_url" placeholder="https://www.facebook.com/...">
             <label for="date_occurrence">Date occurrence:</label>
-            <input type="date" id="date_occurrence" name="date_occurrence">
+            <input type="text" id="date_occurrence" name="date_occurrence" placeholder="e.g. early April, week of typhoon">
             
             <label for="remarks">Remarks - Care of:</label>
             <input type="text" id="remarks" name="remarks">
@@ -818,20 +762,20 @@
             }
         }
 
-        // OD Approval Modal
-        const openPendingODModal = document.getElementById('openPendingODModal');
-        const pendingODModal = document.getElementById('pendingODModal');
-        const closePendingODModal = document.querySelector('.closePendingODModal');
+        // User approvals modal (Email + OD)
+        const openUserApprovalsModal = document.getElementById('openUserApprovalsModal');
+        const userApprovalsModal = document.getElementById('userApprovalsModal');
+        const closeUserApprovalsModal = document.querySelector('.closeUserApprovalsModal');
 
-        if (openPendingODModal && pendingODModal) {
-            openPendingODModal.addEventListener('click', function() {
-                pendingODModal.showModal();
+        if (openUserApprovalsModal && userApprovalsModal) {
+            openUserApprovalsModal.addEventListener('click', function() {
+                userApprovalsModal.showModal();
             });
         }
 
-        if (closePendingODModal && pendingODModal) {
-            closePendingODModal.addEventListener('click', function() {
-                pendingODModal.close();
+        if (closeUserApprovalsModal && userApprovalsModal) {
+            closeUserApprovalsModal.addEventListener('click', function() {
+                userApprovalsModal.close();
             });
         }
 
@@ -2235,9 +2179,24 @@ Zabali,San Luis,Aurora`;
         
     });
     </script>
+
+    <script>
+        // Dashboard province slicer (Aurora / Nueva Ecija)
+        document.addEventListener('click', function (e) {
+            const btn = e.target?.closest?.('.dashProvinceSlicer');
+            if (!btn) return;
+            const select = document.getElementById('dashProvince');
+            if (!select) return;
+            select.value = btn.getAttribute('data-value') ?? '';
+            // Submit the dashboard filter form (the one containing dash_province)
+            const form = select.closest('form');
+            form?.submit();
+        });
+    </script>
     
     </div> <!-- END NL Records Section -->
-    
-    </div> <!-- END main-content -->
+
+        </main>
+    </div>
 
 @endsection

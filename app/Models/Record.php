@@ -17,6 +17,7 @@ class Record extends Model
         'causeOfDamage',
         'modeOfPayment',
         'accounts',
+        'facebook_page_url',
         'date_occurrence',
         'remarks',
         'source',

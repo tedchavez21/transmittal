@@ -18,6 +18,7 @@
         </section>
         @if($isLoggedIn)
         <section>
+            <p>Signed in as: <strong>{{ $emailUserName }}</strong></p>
             <form action="{{ route('email.logout') }}" method="POST">
                 @csrf
                 <button class="logoutButton" type="submit">Logout</button>
@@ -27,19 +28,47 @@
     </div>
     <div class="contentContainer">
     @if(!$isLoggedIn)
-        <form action="{{ route('email.login') }}" method="POST" class="officerOfTheDayNames">
+        <div class="app-card" style="max-width: 560px;">
+            <div class="app-card-header" style="padding: 18px 18px 14px 18px;">
+                <div>
+                    <h1 class="app-card-title" style="font-size: 18px;">Who is entering records?</h1>
+                    <p class="app-card-subtitle" style="margin-top: 6px;">Select your name to continue.</p>
+                </div>
+            </div>
+            <div class="app-card-body" style="padding: 16px 18px 18px 18px;">
+        <form action="{{ route('email.login') }}" method="POST" class="officerOfTheDayNames" id="emailLoginForm">
             @csrf
-            <label for="password">Password:</label>
-            <input type="password" id="password" name="password" required>
-            <button type="submit">Enter</button>
+            <select name="email_user" id="email_user" required>
+                <option value="">Select user</option>
+                <option value="juvielyn">Juvielyn Fiesta</option>
+                <option value="hanna">Hanna Marie Lorica</option>
+                <option value="other">Other (type name)</option>
+            </select>
+            <div id="email-other-wrap" style="display: none; margin-top: 10px;">
+                <input type="text" name="email_user_other" id="email_user_other" placeholder="Full name">
+            </div>
+            <button type="submit" style="margin-top: 12px;">Continue</button>
         </form>
+            </div>
+        </div>
+        <script>
+            document.getElementById('email_user')?.addEventListener('change', function () {
+                document.getElementById('email-other-wrap').style.display = this.value === 'other' ? 'block' : 'none';
+            });
+        </script>
         @if(session('error'))
-            <p style="color: red;">{{ session('error') }}</p>
+            <div class="app-alert app-alert--error" style="max-width: 560px;">{{ session('error') }}</div>
         @endif
     @else
         <br/>
-        <button class="addRecordButton">Add Record</button>
-        
+        @if($emailUserApproved)
+            <div class="app-alert app-alert--success" style="max-width: 980px;">Your account is approved. You may add records.</div>
+            <button class="addRecordButton">Add Record</button>
+        @else
+            <div class="app-alert app-alert--warning" style="max-width: 980px;">Your account is pending admin approval. You cannot add records until an admin approves you (Admin → User approval).</div>
+        @endif
+
+        @if($emailUserApproved)
         <dialog class="addRecordDialog">
             <h3>Add Record</h3>
             <form action="{{ route('records') }}" method="POST">
@@ -96,28 +125,21 @@
             </select>
             <label for="accounts">Account (sender email/username):</label>
             <input type="text" id="accounts" name="accounts" placeholder="Email address or username">
-            <label for="date_occurrence">Date occurrence:</label>
-            <input type="date" id="date_occurrence" name="date_occurrence">
+            <label for="date_occurrence">Date occurrence (free text):</label>
+            <input type="text" id="date_occurrence" name="date_occurrence" placeholder="e.g. early April, last week">
             <label for="remarks">Remarks - Care of:</label>
             <input type="text" id="remarks" name="remarks">
             <button type="submit">Add Record</button>
             <button type="button" class="closeAddRecordModal">Close</button>
         </form>
     </dialog>
-    <x-table :records="$records" :showDelete="false" :showCheckbox="false" :showSortableHeaders="false" />
-    @if($records->count() > 0)
-    <div style="margin-top: 20px;">
-        <form action="{{ route('records.submit-transmittal') }}" method="POST" style="display: inline;">
-            @csrf
-            <input type="hidden" name="source" value="Email">
-            <button type="submit" style="padding: 10px 20px; background-color: #4CAF50; color: white; border: none; border-radius: 4px; cursor: pointer; font-weight: bold;">Submit Transmittal</button>
-        </form>
-    </div>
     @endif
-    <dialog class="editRecordDialog">
-        <form class="editRecordform" method="POST">
+    <x-table :records="$records" :showDelete="false" :showCheckbox="false" :showSortableHeaders="false" />
+    <dialog class="editRecordDialog" id="recordEditDialog">
+        <form class="editRecordform" id="recordEditForm" method="POST">
             @csrf
             @method('PUT')
+            <input type="hidden" name="source" value="Email" id="editRecordSourceEmail">
             <label for="farmerName">Farmer Name:</label>
             <input type="text" id="farmerName" name="farmerName">
             <label for="province">Province:</label>
@@ -169,10 +191,16 @@
             </select>
             <label for="accounts">Account (sender email/username):</label>
             <input type="text" id="accounts" name="accounts">
-            <label for="date_occurrence">Date occurrence:</label>
-            <input type="date" id="date_occurrence" name="date_occurrence">
+            <label for="facebook_page_url">Facebook page link (read-only):</label>
+            <input type="text" id="facebook_page_url" name="facebook_page_url" readonly style="background:#f5f5f5;" placeholder="—">
+            <label for="date_occurrence">Date occurrence (free text):</label>
+            <input type="text" id="date_occurrence" name="date_occurrence">
             <label for="remarks">Remarks - Care of:</label>
             <input type="text" id="remarks" name="remarks">
+            <label for="transmittal_number">Control number:</label>
+            <input type="text" id="transmittal_number" name="transmittal_number" readonly style="background:#f5f5f5;">
+            <label for="admin_transmittal_number">Admin transmittal # (read-only):</label>
+            <input type="text" id="admin_transmittal_number" name="admin_transmittal_number" readonly style="background:#f5f5f5;">
             <button type="submit">Update Record</button>
             <button type="button" class="closeEditRecordDialog">Close</button>
         </form>

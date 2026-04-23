@@ -4,13 +4,17 @@ namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Validation\Rule;
 use App\Models\Record;
+use App\Models\EmailHandler;
 
 class RecordsController extends Controller
 {
     public function storeRecord(Request $request)
     {
         // Validate the incoming request data
+        $source = $request->input('source', 'OD');
+
         $validatedData = $request->validate([
             'farmerName' => 'required|string|max:255',
             'province' => 'required|string|max:255',
@@ -20,13 +24,22 @@ class RecordsController extends Controller
             'program' => 'required|string|max:255',
             'causeOfDamage' => 'required|string|max:255',
             'modeOfPayment' => 'required|string|max:255',
-            'accounts' => 'nullable|string|max:255',
-            'date_occurrence' => 'nullable|date',
+            'accounts' => ['required_if:source,Facebook', 'nullable', 'string', 'max:255'],
+            'facebook_page_url' => [
+                'nullable',
+                'string',
+                'max:5000',
+                'required_if:source,Facebook',
+                Rule::when($source === 'Facebook', ['regex:/^https?:\/\/.+/i']),
+            ],
+            'date_occurrence' => 'nullable|string|max:500',
             'remarks' => 'nullable|string|max:255',
             'source' => 'nullable|string|in:OD,Email,Facebook',
         ]);
 
-        $source = $request->source ?? 'OD';
+        if ($source !== 'Facebook') {
+            $validatedData['facebook_page_url'] = null;
+        }
 
         // Check authentication based on source
         if ($source === 'OD') {
@@ -34,8 +47,13 @@ class RecordsController extends Controller
                 return redirect()->back()->with('error', 'Please log in as Officer of the Day first.');
             }
         } elseif ($source === 'Email') {
-            if (!$request->session()->has('email_logged_in')) {
+            if (!$request->session()->has('email_logged_in') || !$request->session()->has('email_user_name')) {
                 return redirect()->back()->with('error', 'Please log in to Email handler first.');
+            }
+            $emailName = $request->session()->get('email_user_name');
+            $approvedHandler = EmailHandler::where('name', $emailName)->where('approved', true)->exists();
+            if (!$approvedHandler) {
+                return redirect()->back()->with('error', 'Your email handler account is not approved yet.');
             }
         } elseif ($source === 'Facebook') {
             if (!$request->session()->has('facebook_logged_in')) {
@@ -47,7 +65,10 @@ class RecordsController extends Controller
 
         if (!$encoderName) {
             if ($source === 'Email') {
-                $encoderName = 'Email';
+                $encoderName = $request->session()->get('email_user_name');
+                if (!$encoderName) {
+                    return redirect()->back()->with('error', 'Unauthorized access.');
+                }
             } elseif ($source === 'Facebook') {
                 $encoderName = 'Facebook';
             } else {
@@ -89,12 +110,27 @@ class RecordsController extends Controller
             'source' => 'required|string|max:255',
             'causeOfDamage' => 'required|string|max:255',
             'modeOfPayment' => 'required|string|max:255',
-            'accounts' => 'nullable|string|max:255',
-            'date_occurrence' => 'nullable|date',
+            'accounts' => ['required_if:source,Facebook', 'nullable', 'string', 'max:255'],
+            'facebook_page_url' => [
+                'nullable',
+                'string',
+                'max:5000',
+                Rule::requiredIf(function () use ($request) {
+                    return $request->input('source') === 'Facebook' && $request->has('facebook_page_url');
+                }),
+                Rule::when($request->filled('facebook_page_url'), ['regex:/^https?:\/\/.+/i']),
+            ],
+            'date_occurrence' => 'nullable|string|max:500',
             'remarks' => 'nullable|string|max:255',
             'transmittal_number' => 'nullable|string|max:255',
             'admin_transmittal_number' => 'nullable|string|max:255',
         ]);
+
+        if (($validatedData['source'] ?? '') !== 'Facebook') {
+            $validatedData['facebook_page_url'] = null;
+        } elseif (!$request->has('facebook_page_url')) {
+            unset($validatedData['facebook_page_url']);
+        }
 
         $address = trim(implode(', ', array_filter([
             $request->barangay,

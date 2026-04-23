@@ -3,12 +3,12 @@
 namespace App\Http\Controllers;
 
 use App\Models\Officer;
+use App\Models\EmailHandler;
 use App\Models\Admin;
 use App\Models\Record;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
-use Illuminate\Support\Facades\Http;
 
 class RoutesController extends Controller
 {
@@ -18,42 +18,81 @@ class RoutesController extends Controller
 
     public function showEmailHandler(Request $request)
     {
-        $isLoggedIn = $request->session()->get('email_logged_in', false);
+        $emailUserName = $request->session()->get('email_user_name');
+        $emailUserApproved = false;
         $records = collect();
 
-        if ($isLoggedIn) {
-            $records = Record::where('source', 'Email')
-                ->whereDate('created_at', today())
-                ->orderBy('id', 'asc')
-                ->get();
+        if ($emailUserName) {
+            $handler = EmailHandler::where('name', $emailUserName)->first();
+            $emailUserApproved = $handler && $handler->approved;
+
+            if ($emailUserApproved) {
+                $records = Record::where('source', 'Email')
+                    ->where('encoderName', $emailUserName)
+                    ->whereDate('created_at', today())
+                    ->orderBy('id', 'asc')
+                    ->get();
+            }
         }
 
         return view('email-handler', [
             'records' => $records,
-            'isLoggedIn' => $isLoggedIn,
+            'isLoggedIn' => (bool) $emailUserName,
+            'emailUserName' => $emailUserName,
+            'emailUserApproved' => $emailUserApproved,
         ]);
     }
 
     public function loginEmail(Request $request)
     {
         $request->validate([
-            'password' => 'required|string',
+            'email_user' => 'required|string|in:juvielyn,hanna,other',
+            'email_user_other' => 'nullable|string|max:255',
         ]);
 
-        $password = $request->password;
-        $correctPassword = env('EMAIL_HANDLER_PASSWORD', 'email2026'); // Default password, can be set in .env
+        $presetNames = [
+            'juvielyn' => 'Juvielyn Fiesta',
+            'hanna' => 'Hanna Marie Lorica',
+        ];
 
-        if ($password === $correctPassword) {
-            $request->session()->put('email_logged_in', true);
-            return redirect()->route('email-handler');
-        } else {
-            return redirect()->route('email-handler')->with('error', 'Invalid password.');
+        $name = $presetNames[$request->input('email_user')] ?? null;
+        if ($request->input('email_user') === 'other') {
+            $name = trim((string) $request->input('email_user_other', ''));
+            if ($name === '') {
+                return redirect()->route('email-handler')->with('error', 'Please enter your name when selecting Other.');
+            }
         }
+
+        EmailHandler::updateOrCreate(
+            ['name' => $name],
+            [
+                'approved' => false,
+                'approved_at' => null,
+                'active' => true,
+            ]
+        );
+
+        $request->session()->put('email_user_name', $name);
+        $request->session()->put('email_logged_in', true);
+
+        return redirect()->route('email-handler')->with('success', 'You are signed in. An admin must approve your account before you can add records.');
     }
 
     public function logoutEmail(Request $request)
     {
+        $emailUserName = $request->session()->get('email_user_name');
+
+        if ($emailUserName) {
+            EmailHandler::where('name', $emailUserName)->update([
+                'approved' => false,
+                'approved_at' => null,
+                'active' => false,
+            ]);
+        }
+
         $request->session()->forget('email_logged_in');
+        $request->session()->forget('email_user_name');
+
         return redirect()->route('welcome');
     }
 
@@ -96,76 +135,6 @@ class RoutesController extends Controller
     {
         $request->session()->forget('facebook_logged_in');
         return redirect()->route('welcome');
-    }
-
-    public function resolveFacebookName(Request $request)
-    {
-        if (!$request->session()->get('facebook_logged_in', false)) {
-            return response()->json(['name' => null], 401);
-        }
-
-        $data = $request->validate([
-            'url' => 'required|string|max:2000',
-        ]);
-
-        $url = trim($data['url']);
-
-        // Only allow facebook.com links
-        $host = parse_url($url, PHP_URL_HOST) ?? '';
-        $host = preg_replace('/^www\./', '', strtolower($host));
-        if (!str_contains($host, 'facebook.com')) {
-            return response()->json(['name' => null], 422);
-        }
-
-        try {
-            // Facebook sometimes blocks/changes markup on www. Using mbasic improves the odds of getting a stable title.
-            $normalizedUrl = preg_replace('~^https?://(www\.)?facebook\.com~i', 'https://mbasic.facebook.com', $url) ?? $url;
-
-            $response = Http::withHeaders([
-                'User-Agent' => 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/123 Safari/537.36',
-                'Accept-Language' => 'en-US,en;q=0.9',
-                'Accept' => 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8',
-            ])->timeout(10)->get($normalizedUrl);
-
-            if (!$response->ok()) {
-                return response()->json(['name' => null]);
-            }
-
-            $html = $response->body();
-
-            $candidates = [];
-            if (preg_match('/<meta\s+property="og:title"\s+content="([^"]+)"/i', $html, $matches)) {
-                $candidates[] = $matches[1];
-            }
-            if (preg_match('/<title[^>]*>(.*?)<\/title>/is', $html, $matches)) {
-                $candidates[] = $matches[1];
-            }
-
-            foreach ($candidates as $candidate) {
-                $name = html_entity_decode(strip_tags($candidate), ENT_QUOTES | ENT_HTML5, 'UTF-8');
-                $name = preg_replace('/\s+/', ' ', trim($name));
-                $name = preg_replace('/\s*\|\s*Facebook\s*$/i', '', $name);
-                $name = preg_replace('/\s*-\s*Facebook\s*$/i', '', $name);
-                $name = trim($name);
-
-                if ($name === '') {
-                    continue;
-                }
-
-                // Bail out if Facebook returned a generic/login/home title.
-                if (preg_match('/\b(log in|login|sign up|home|facebook)\b/i', $name) && !preg_match('/,/', $name)) {
-                    continue;
-                }
-
-                if (mb_strlen($name) >= 2 && mb_strlen($name) <= 120) {
-                    return response()->json(['name' => $name]);
-                }
-            }
-        } catch (\Throwable $e) {
-            // Ignore fetch failures; client will fall back to URL parsing
-        }
-
-        return response()->json(['name' => null]);
     }
 
     public function showOfficerOfTheDay(Request $request)
@@ -316,6 +285,9 @@ class RoutesController extends Controller
         if ($request->filled('remarks')) {
             $query->where('remarks', 'like', '%' . $request->remarks . '%');
         }
+        if ($request->filled('date_occurrence')) {
+            $query->where('date_occurrence', 'like', '%' . $request->date_occurrence . '%');
+        }
         if ($request->filled('accounts')) {
             $query->where('accounts', 'like', '%' . $request->accounts . '%');
         }
@@ -359,7 +331,7 @@ class RoutesController extends Controller
         }
         
         // Validate sort parameters to prevent injection
-        $allowedSortColumns = ['id', 'farmerName', 'province', 'municipality', 'barangay', 'program', 'line', 'causeOfDamage', 'modeOfPayment', 'remarks', 'accounts', 'source', 'transmittal_number', 'admin_transmittal_number', 'encoderName', 'approved', 'created_at'];
+        $allowedSortColumns = ['id', 'farmerName', 'province', 'municipality', 'barangay', 'program', 'line', 'causeOfDamage', 'modeOfPayment', 'date_occurrence', 'remarks', 'accounts', 'source', 'transmittal_number', 'admin_transmittal_number', 'encoderName', 'approved', 'created_at'];
         if (!in_array($sortBy, $allowedSortColumns)) {
             $sortBy = 'created_at';
         }
@@ -416,10 +388,18 @@ class RoutesController extends Controller
         $totalRecords = $statsQuery->count();
         $recordsByProgram = $statsQuery->selectRaw('program, count(*) as count')->groupBy('program')->pluck('count', 'program');
         $recordsByLine = $statsQuery->selectRaw('line, count(*) as count')->groupBy('line')->pluck('count', 'line');
+        $recordsByMunicipality = $statsQuery
+            ->selectRaw('municipality, count(*) as count')
+            ->whereNotNull('municipality')
+            ->where('municipality', '!=', '')
+            ->groupBy('municipality')
+            ->orderByRaw('count(*) desc')
+            ->pluck('count', 'municipality');
         $recentRecords = (clone $statsQuery)->where('created_at', '>=', now()->subDays(7))->count();
         
         // Unfiltered stats for reference
         $pendingOfficers = Officer::where('approved', false)->where('active', true)->orderBy('created_at')->get();
+        $pendingEmailHandlers = EmailHandler::where('approved', false)->where('active', true)->orderBy('created_at')->get();
         $activeOfficers = Officer::where('active', true)->orderBy('name')->get();
         $admins = Admin::all();
 
@@ -475,8 +455,10 @@ class RoutesController extends Controller
             'totalRecords' => $totalRecords,
             'recordsByProgram' => $recordsByProgram,
             'recordsByLine' => $recordsByLine,
+            'recordsByMunicipality' => $recordsByMunicipality,
             'recentRecords' => $recentRecords,
             'pendingOfficers' => $pendingOfficers,
+            'pendingEmailHandlers' => $pendingEmailHandlers,
             'activeOfficers' => $activeOfficers,
             'admins' => $admins,
             'allPrograms' => $allPrograms,
@@ -542,6 +524,25 @@ class RoutesController extends Controller
             $pageNum = floor($index / $perPage) + 1;
             if ($record->admin_transmittal_number) {
                 $pageTransmittalNumbers[$pageNum] = $record->admin_transmittal_number;
+            }
+        }
+
+        // If a page has no assigned number yet, show the next numbers that would be assigned.
+        // This keeps numbering consistent across pages (40 records per page).
+        if ($totalPages > 0) {
+            $maxExisting = Record::whereNotNull('admin_transmittal_number')
+                ->get()
+                ->map(function ($record) {
+                    $transmittal = $record->admin_transmittal_number;
+                    preg_match('/(\d+)$/', $transmittal, $matches);
+                    return isset($matches[1]) ? (int) $matches[1] : 0;
+                })
+                ->max() ?? 0;
+
+            for ($p = 1; $p <= $totalPages; $p++) {
+                if (!isset($pageTransmittalNumbers[$p]) || $pageTransmittalNumbers[$p] === null || $pageTransmittalNumbers[$p] === '') {
+                    $pageTransmittalNumbers[$p] = (string) ($maxExisting + $p);
+                }
             }
         }
 
@@ -698,6 +699,9 @@ class RoutesController extends Controller
         if ($request->filled('remarks')) {
             $query->where('remarks', 'like', '%' . $request->remarks . '%');
         }
+        if ($request->filled('date_occurrence')) {
+            $query->where('date_occurrence', 'like', '%' . $request->date_occurrence . '%');
+        }
         if ($request->filled('accounts')) {
             $query->where('accounts', 'like', '%' . $request->accounts . '%');
         }
@@ -764,6 +768,17 @@ class RoutesController extends Controller
         ]);
 
         return redirect()->back()->with('success', 'Officer approved successfully.');
+    }
+
+    public function approveEmailHandler($id)
+    {
+        $handler = EmailHandler::findOrFail($id);
+        $handler->update([
+            'approved' => true,
+            'approved_at' => Carbon::now(),
+        ]);
+
+        return redirect()->back()->with('success', 'Email handler approved successfully.');
     }
 
     public function exportExcel(Request $request)
@@ -858,7 +873,7 @@ class RoutesController extends Controller
             return redirect()->back()->with('error', 'Please log in as Officer of the Day first.');
         }
 
-        if ($source === 'Email' && !$request->session()->has('email_logged_in')) {
+        if ($source === 'Email' && (!$request->session()->has('email_logged_in') || !$request->session()->has('email_user_name'))) {
             return redirect()->back()->with('error', 'Please log in to Email handler first.');
         }
 
@@ -880,6 +895,10 @@ class RoutesController extends Controller
 
         if ($source === 'OD' && $conditions['encoderName']) {
             $query->where('encoderName', $conditions['encoderName']);
+        }
+
+        if ($source === 'Email' && $request->session()->has('email_user_name')) {
+            $query->where('encoderName', $request->session()->get('email_user_name'));
         }
 
         $recordsToSubmit = $query->get();

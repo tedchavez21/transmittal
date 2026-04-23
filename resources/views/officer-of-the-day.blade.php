@@ -23,9 +23,16 @@
     </div>
     <div class="contentContainer">
     @if(!$officerName)
+        <div class="app-card" style="max-width: 560px;">
+            <div class="app-card-header" style="padding: 18px 18px 14px 18px;">
+                <div>
+                    <h1 class="app-card-title" style="font-size: 18px;">Officer of the Day</h1>
+                    <p class="app-card-subtitle" style="margin-top: 6px;">Select your name to continue.</p>
+                </div>
+            </div>
+            <div class="app-card-body" style="padding: 16px 18px 18px 18px;">
         <form action="{{ route('officer.login') }}" method="POST" class="officerOfTheDayNames">
             @csrf
-            <label for="officerName">Officer of the day Name:</label>
             <select id="officerName" name="officerName" required>
                 <option value="">Select Officer of the day</option>
                 <option value="Gemmary Eiden Chavez">Gemmary Eiden Chavez</option>
@@ -56,19 +63,22 @@
             </select>
             <button type="submit">Enter</button>
         </form>
+            </div>
+        </div>
     @else
         <br/>
         @if($officerApproved)
-            <p style="color: green;">Your login is approved. You may add records.</p>
+            <div class="app-alert app-alert--success" style="max-width: 980px;">Your login is approved. You may add records.</div>
             <button class="addRecordButton">Add Record</button>
         @else
-            <p style="color: orange;">Your login is pending admin approval. You cannot add records until it is approved.</p>
+            <div class="app-alert app-alert--warning" style="max-width: 980px;">Your login is pending admin approval. You cannot add records until it is approved.</div>
         @endif
         
         <dialog class="addRecordDialog">
             <h3>Add Record</h3>
             <form action="{{ route('records') }}" method="POST">
                 @csrf
+                <input type="hidden" name="source" value="OD">
             <label for="farmerName">Farmer Name:</label>
             <input type="text" id="farmerName" name="farmerName" required>
             <label for="province">Province:</label>
@@ -119,17 +129,15 @@
                 <option value="palawan">Palawan Pay</option>
                 <option value="not_indicated">Not indicated</option>
             </select>
-            <label for="accounts">Account (sender email/username):</label>
-            <input type="text" id="accounts" name="accounts" placeholder="Optional">
-            <label for="date_occurrence">Date occurrence:</label>
-            <input type="date" id="date_occurrence" name="date_occurrence">
+            <label for="date_occurrence">Date occurrence (free text):</label>
+            <input type="text" id="date_occurrence" name="date_occurrence" placeholder="e.g. early April, last week">
             <label for="remarks">Remarks - Care of:</label>
             <input type="text" id="remarks" name="remarks">
             <button type="submit">Add Record</button>
             <button type="button" class="closeAddRecordModal">Close</button>
         </form>
     </dialog>
-    <x-table :records="$records" :showDelete="false" :showCheckbox="false" :showSortableHeaders="false" />
+    <x-table :records="$records" :showDelete="false" :showCheckbox="false" :showSortableHeaders="false" :hideAccountsColumn="true" />
     @if($officerApproved && $records->count() > 0)
     <div style="margin-top: 20px;">
         <form id="submitTransmittalForm" action="{{ route('records.submit-transmittal') }}" method="POST" style="display: inline;">
@@ -203,10 +211,11 @@
             });
         });
     </script>
-    <dialog class="editRecordDialog">
-        <form class="editRecordform" method="POST">
+    <dialog class="editRecordDialog" id="recordEditDialog">
+        <form class="editRecordform" id="recordEditForm" method="POST">
             @csrf
             @method('PUT')
+            <input type="hidden" name="source" value="OD" id="editRecordSourceOd">
             <label for="farmerName">Farmer Name:</label>
             <input type="text" id="farmerName" name="farmerName">
             <label for="province">Province:</label>
@@ -256,12 +265,17 @@
                 <option value="palawan">Palawan Pay</option>
                 <option value="not_indicated">Not indicated</option>
             </select>
-            <label for="accounts">Account (sender email/username):</label>
-            <input type="text" id="accounts" name="accounts">
-            <label for="date_occurrence">Date occurrence:</label>
-            <input type="date" id="date_occurrence" name="date_occurrence">
+            <label for="accounts">Account (if recorded):</label>
+            <input type="text" id="accounts" name="accounts" placeholder="Optional">
+            <input type="hidden" name="facebook_page_url" value="">
+            <label for="date_occurrence">Date occurrence (free text):</label>
+            <input type="text" id="date_occurrence" name="date_occurrence">
             <label for="remarks">Remarks - Care of:</label>
             <input type="text" id="remarks" name="remarks">
+            <label for="transmittal_number">Control number:</label>
+            <input type="text" id="transmittal_number" name="transmittal_number" readonly style="background:#f5f5f5;">
+            <label for="admin_transmittal_number">Admin transmittal # (read-only):</label>
+            <input type="text" id="admin_transmittal_number" name="admin_transmittal_number" readonly style="background:#f5f5f5;">
             <button type="submit">Update Record</button>
             <button type="button" class="closeEditRecordDialog">Close</button>
         </form>

@@ -60,11 +60,11 @@
             border-collapse: collapse;
             margin-bottom: 20px;
             table-layout: auto;
-            font-size: 11px;
+            font-size: 10px;
         }
 
         th, td {
-            padding: 8px;
+            padding: 4px 6px;
             text-align: left;
             vertical-align: top;
         }
@@ -94,6 +94,33 @@
             display: none;
         }
 
+        /* Keep "Assign" visible while scrolling (screen only) */
+        .assign-form {
+            position: fixed;
+            right: 14px;
+            bottom: 14px;
+            z-index: 9999;
+            background: rgba(255, 255, 255, 0.96);
+            border: 1px solid #ddd;
+            padding: 10px 12px;
+            border-radius: 10px;
+            box-shadow: 0 10px 24px rgba(0,0,0,0.15);
+        }
+
+        .assign-form button {
+            padding: 10px 14px;
+            font-weight: 700;
+            background: #1e7e34;
+            color: #fff;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+        }
+
+        .assign-form button:hover {
+            background: #16692a;
+        }
+
         @media print {
             .assign-form,
             .no-data {
@@ -110,6 +137,14 @@
 
             .page-section {
                 page-break-after: always;
+            }
+
+            thead {
+                display: table-header-group;
+            }
+
+            tfoot {
+                display: table-footer-group;
             }
         }
     </style>
@@ -138,6 +173,7 @@
                             <th>Program</th>
                             <th>Line</th>
                             <th>Cause of Damage</th>
+                            <th>Date of Occurrence</th>
                         </tr>
                     </thead>
                     <tbody>
@@ -150,6 +186,7 @@
                                 <td>{{ $record->program }}</td>
                                 <td>{{ $record->line }}</td>
                                 <td>{{ $record->causeOfDamage }}</td>
+                                <td>{{ $record->date_occurrence ? $record->date_occurrence : '—' }}</td>
                             </tr>
                         @endforeach
                     </tbody>

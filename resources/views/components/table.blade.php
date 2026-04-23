@@ -1,4 +1,4 @@
-@props(['records', 'showDelete' => true, 'showEncoder' => false, 'showApproval' => false, 'showAction' => false, 'showCheckbox' => true, 'showFilters' => false, 'showSortableHeaders' => true, 'showAdminTransmittal' => false, 'allPrograms' => [], 'allLines' => [], 'allSources' => [], 'allModes' => []])
+@props(['records', 'showDelete' => true, 'showEncoder' => false, 'showApproval' => false, 'showAction' => false, 'showCheckbox' => true, 'showFilters' => false, 'showSortableHeaders' => true, 'showAdminTransmittal' => false, 'hideAccountsColumn' => false, 'allPrograms' => [], 'allLines' => [], 'allSources' => [], 'allModes' => []])
 
 @php
 $currentSort = request('sort_by', 'created_at');
@@ -112,6 +112,14 @@ function getSortIndicator($column, $currentSort, $currentOrder) {
                 Mode of Payment
                 @endif
             </th>
+            <th class="col-date-occurrence">
+                @if($showSortableHeaders)
+                <a href="{{ getSortUrl('date_occurrence', $currentSort, $currentOrder, $oppositeOrder) }}" style="color: inherit; text-decoration: none; cursor: pointer;">Date of Occurrence{{ getSortIndicator('date_occurrence', $currentSort, $currentOrder) }}</a>
+                @else
+                Date of Occurrence
+                @endif
+            </th>
+            @if(!$hideAccountsColumn)
             <th class="col-accounts">
                 @if($showSortableHeaders)
                 <a href="{{ getSortUrl('accounts', $currentSort, $currentOrder, $oppositeOrder) }}" style="color: inherit; text-decoration: none; cursor: pointer;">Account{{ getSortIndicator('accounts', $currentSort, $currentOrder) }}</a>
@@ -119,6 +127,7 @@ function getSortIndicator($column, $currentSort, $currentOrder) {
                 Account
                 @endif
             </th>
+            @endif
             <th class="col-remarks" class="col-remarks">
                 @if($showSortableHeaders)
                 <a href="{{ getSortUrl('remarks', $currentSort, $currentOrder, $oppositeOrder) }}" style="color: inherit; text-decoration: none; cursor: pointer;">Remarks{{ getSortIndicator('remarks', $currentSort, $currentOrder) }}</a>
@@ -189,7 +198,10 @@ function getSortIndicator($column, $currentSort, $currentOrder) {
                     @endforeach
                 </select>
             </th>
+            <th><input type="text" placeholder="Date of occurrence" name="date_occurrence" value="{{ request('date_occurrence') }}"></th>
+            @if(!$hideAccountsColumn)
             <th><input type="text" placeholder="Account" name="accounts" value="{{ request('accounts') }}"></th>
+            @endif
             <th><input type="text" placeholder="Remarks" name="remarks" value="{{ request('remarks') }}"></th>
             @if($showAdminTransmittal)
             <th><input type="text" placeholder="Admin Transmittal" name="admin_transmittal_number" value="{{ request('admin_transmittal_number') }}" style="width: calc(100% - 50px); box-sizing: border-box;"></th>
@@ -221,21 +233,22 @@ function getSortIndicator($column, $currentSort, $currentOrder) {
             <td class="no-print col-edit">
                 <button type="button" class="editButton"
                 data-id="{{ $record->id }}"
-                data-farmerName="{{ e($record->farmerName) }}"
+                data-farmer-name="{{ e($record->farmerName) }}"
                 data-province="{{ e($record->province) }}"
                 data-municipality="{{ e($record->municipality) }}"
                 data-barangay="{{ e($record->barangay) }}"
                 data-address="{{ e($record->address) }}"
                 data-program="{{ e($record->program) }}"
                 data-line="{{ e($record->line) }}"
-                data-causeOfDamage="{{ e($record->causeOfDamage) }}"
-                data-modeOfPayment="{{ e($record->modeOfPayment) }}"
+                data-cause-of-damage="{{ e($record->causeOfDamage) }}"
+                data-mode-of-payment="{{ e($record->modeOfPayment) }}"
                 data-accounts="{{ e($record->accounts) }}"
-                data-date_occurrence="{{ e(optional($record->date_occurrence)->format('Y-m-d')) }}"
+                data-fb-page-url="{{ e($record->facebook_page_url ?? '') }}"
+                data-date-occurrence="{{ e($record->date_occurrence ?? '') }}"
                 data-remarks="{{ e($record->remarks) }}"
                 data-source="{{ e($record->source) }}"
-                data-transmittal_number="{{ e($record->transmittal_number) }}"
-                data-admin_transmittal_number="{{ e($record->admin_transmittal_number) }}"
+                data-transmittal-number="{{ e($record->transmittal_number) }}"
+                data-admin-transmittal-number="{{ e($record->admin_transmittal_number) }}"
                 >edit</button>
             </td>
             @if($showDelete)
@@ -258,7 +271,24 @@ function getSortIndicator($column, $currentSort, $currentOrder) {
             <td class="col-line">{{ $record->line }}</td>
             <td class="col-causeOfDamage">{{ $record->causeOfDamage }}</td>
             <td class="col-modeOfPayment">{{ $record->modeOfPayment ?: '—' }}</td>
-            <td class="col-accounts">{{ $record->accounts ?: '—' }}</td>
+            <td class="col-date-occurrence">{{ $record->date_occurrence ? $record->date_occurrence : '—' }}</td>
+            @if(!$hideAccountsColumn)
+            <td class="col-accounts">
+                @php
+                    $accountLabel = $record->accounts;
+                    $fbUrl = $record->facebook_page_url ?? '';
+                    $isFacebook = ($record->source ?? '') === 'Facebook';
+                    $href = $fbUrl && filter_var($fbUrl, FILTER_VALIDATE_URL) ? $fbUrl : null;
+                @endphp
+                @if($isFacebook && $href && $accountLabel)
+                    <a href="{{ e($href) }}" target="_blank" rel="noopener noreferrer">{{ e($accountLabel) }}</a>
+                @elseif($accountLabel)
+                    {{ $accountLabel }}
+                @else
+                    —
+                @endif
+            </td>
+            @endif
             <td class="col-remarks">{{ $record->remarks }}</td>
             @if($showAdminTransmittal)
             <td class="col-admin-transmittal-number">{{ empty($record->admin_transmittal_number) ? '—' : $record->admin_transmittal_number }}</td>
@@ -277,7 +307,7 @@ function getSortIndicator($column, $currentSort, $currentOrder) {
             @endif
         </tr>
         @if($loop->iteration % 40 == 0 && !$loop->last)
-        <tr class="page-break"><td colspan="{{ 10 + ($showCheckbox ? 1 : 0) + ($showDelete ? 1 : 0) + ($showEncoder ? 1 : 0) + ($showAdminTransmittal ? 1 : 0) + ($showApproval ? 1 : 0) + ($showAction ? 1 : 0) }}" style="border: none; height: 50px;"></td></tr>
+        <tr class="page-break"><td colspan="{{ 11 + ($showCheckbox ? 1 : 0) + ($showDelete ? 1 : 0) + ($showEncoder ? 1 : 0) + ($showAdminTransmittal ? 1 : 0) + ($showApproval ? 1 : 0) + ($showAction ? 1 : 0) - ($hideAccountsColumn ? 1 : 0) }}" style="border: none; height: 50px;"></td></tr>
         @endif
     @endforeach
     </tbody>

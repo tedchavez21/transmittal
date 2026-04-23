@@ -1,27 +1,33 @@
 document.addEventListener('DOMContentLoaded', function () {
-    // Sidebar Navigation Toggle
-    const btnDashboard = document.getElementById('btn-dashboard');
-    const btnNlRecords = document.getElementById('btn-nl-records');
-    const dashboardSection = document.getElementById('dashboard-section');
-    const nlRecordsSection = document.getElementById('nl-records-section');
+    // Admin sidebar: collapse by default, expand on hover/focus
+    const adminShell = document.querySelector('.admin-shell');
+    const adminSidebar = document.querySelector('.admin-sidebar');
+    if (adminShell && adminSidebar) {
+        const expand = () => adminShell.classList.add('sidebar-expanded');
+        const collapse = () => adminShell.classList.remove('sidebar-expanded');
 
-    function showDashboard() {
-        dashboardSection.style.display = 'block';
-        nlRecordsSection.style.display = 'none';
-        btnDashboard.classList.add('active');
-        btnNlRecords.classList.remove('active');
-    }
+        // Hover behavior
+        adminSidebar.addEventListener('mouseenter', expand);
+        adminSidebar.addEventListener('mouseleave', () => {
+            // Keep expanded if focus is still inside sidebar
+            if (!adminSidebar.matches(':focus-within')) {
+                collapse();
+            }
+        });
 
-    function showNlRecords() {
-        dashboardSection.style.display = 'none';
-        nlRecordsSection.style.display = 'block';
-        btnDashboard.classList.remove('active');
-        btnNlRecords.classList.add('active');
-    }
+        // Focus behavior (keyboard navigation)
+        adminSidebar.addEventListener('focusin', expand);
+        adminSidebar.addEventListener('focusout', () => {
+            // If the next focused element is outside the sidebar, collapse
+            setTimeout(() => {
+                if (!adminSidebar.matches(':focus-within') && !adminSidebar.matches(':hover')) {
+                    collapse();
+                }
+            }, 0);
+        });
 
-    if (btnDashboard && btnNlRecords && dashboardSection && nlRecordsSection) {
-        btnDashboard.addEventListener('click', showDashboard);
-        btnNlRecords.addEventListener('click', showNlRecords);
+        // Start collapsed
+        collapse();
     }
 
     // Admin Login functionality
@@ -39,6 +45,62 @@ document.addEventListener('DOMContentLoaded', function () {
             loginDialog.close();
         });
     }
+
+    // Admin modals (Approvals / Admin users)
+    const userApprovalsModal = document.getElementById('userApprovalsModal');
+    const openUserApprovalsModal = document.getElementById('openUserApprovalsModal');
+    const closeUserApprovalsModal = document.querySelector('.closeUserApprovalsModal');
+
+    if (openUserApprovalsModal && userApprovalsModal) {
+        openUserApprovalsModal.addEventListener('click', function () {
+            userApprovalsModal.showModal();
+        });
+    }
+    if (closeUserApprovalsModal && userApprovalsModal) {
+        closeUserApprovalsModal.addEventListener('click', function () {
+            userApprovalsModal.close();
+        });
+    }
+
+    const adminUsersModal = document.getElementById('adminUsersModal');
+    const openAdminUsersModal = document.getElementById('openAdminUsersModal');
+    const closeAdminUsersModal = document.querySelector('.closeAdminUsersModal');
+
+    if (openAdminUsersModal && adminUsersModal) {
+        openAdminUsersModal.addEventListener('click', function () {
+            adminUsersModal.showModal();
+        });
+    }
+    if (closeAdminUsersModal && adminUsersModal) {
+        closeAdminUsersModal.addEventListener('click', function () {
+            adminUsersModal.close();
+        });
+    }
+
+    // Dashboard: date filter toggles (Admin dashboard)
+    function toggleDashDateFilters() {
+        const dateType = document.getElementById('dashDateType')?.value || '';
+        document.querySelectorAll('.dash-date-filter').forEach((el) => {
+            el.style.display = 'none';
+        });
+        if (dateType === 'single') {
+            const el = document.getElementById('dashSingleDate');
+            if (el) el.style.display = 'flex';
+        } else if (dateType === 'range') {
+            const el1 = document.getElementById('dashDateRange');
+            const el2 = document.getElementById('dashDateRangeTo');
+            if (el1) el1.style.display = 'flex';
+            if (el2) el2.style.display = 'flex';
+        } else if (dateType === 'month') {
+            const el = document.getElementById('dashMonthFilter');
+            if (el) el.style.display = 'flex';
+        }
+    }
+
+    // keep backward compatibility with inline onchange
+    window.toggleDashDateFilters = toggleDashDateFilters;
+    document.getElementById('dashDateType')?.addEventListener('change', toggleDashDateFilters);
+    toggleDashDateFilters();
 
     // Add Record Dialog
 
@@ -1195,127 +1257,171 @@ Zarah,San Luis,Aurora`;
 
     // Edit Record Dialog
 
-    document.querySelectorAll('.editButton').forEach(button => {
-        button.addEventListener('click', function () {
-            const id = this.getAttribute('data-id');
-            const farmerName = this.getAttribute('data-farmerName');
-            const province = this.getAttribute('data-province');
-            const municipality = this.getAttribute('data-municipality');
-            const barangay = this.getAttribute('data-barangay');
-            const address = this.getAttribute('data-address');
-            const program = this.getAttribute('data-program');
-            const line = this.getAttribute('data-line');
-            const causeOfDamage = this.getAttribute('data-causeOfDamage');
-            const modeOfPayment = this.getAttribute('data-modeOfPayment');
-            const accounts = this.getAttribute('data-accounts');
-            const date_occurrence = this.getAttribute('data-date_occurrence');
-            const remarks = this.getAttribute('data-remarks');
-            const source = this.getAttribute('data-source');
-            const transmittal_number = this.getAttribute('data-transmittal_number');
-            const admin_transmittal_number = this.getAttribute('data-admin_transmittal_number');
+    function setSelectValueOrAddOption(selectEl, rawValue) {
+        if (!selectEl || rawValue == null) {
+            return;
+        }
+        const v = String(rawValue).trim();
+        if (v === '') {
+            return;
+        }
+        selectEl.value = v;
+        if (selectEl.value !== v) {
+            const opt = document.createElement('option');
+            opt.value = v;
+            opt.textContent = v;
+            selectEl.appendChild(opt);
+            selectEl.value = v;
+        }
+    }
 
-            const editForm = document.querySelector('.editRecordform');
-            if (editForm) {
-                editForm.action = `/records/${id}`;
-                console.log('Form action set to:', editForm.action);
-            }
+    function openRecordEditDialog(button) {
+        const editForm = document.getElementById('recordEditForm');
+        if (!editForm) {
+            return;
+        }
+        // Do not use document as form root: the admin NL area has filter inputs (e.g. name="farmerName")
+        // that would be matched first and leave the real edit modal fields empty.
+        const formRoot = editForm;
+        // HTML lowercases data-* names; use dataset (kebab-case in markup → camelCase here)
+        const ds = button.dataset;
+        const id = button.getAttribute('data-id') || ds.id;
+        const farmerName = ds.farmerName != null ? String(ds.farmerName) : '';
+        const province = ds.province != null ? String(ds.province).trim() : '';
+        const municipality = ds.municipality != null ? String(ds.municipality).trim() : '';
+        const barangay = ds.barangay != null ? String(ds.barangay).trim() : '';
+        const address = ds.address != null ? String(ds.address) : '';
+        const program = ds.program != null ? String(ds.program) : '';
+        const line = ds.line != null ? String(ds.line) : '';
+        const causeOfDamage = ds.causeOfDamage != null ? String(ds.causeOfDamage) : '';
+        const modeOfPayment = ds.modeOfPayment != null ? String(ds.modeOfPayment) : '';
+        const accounts = ds.accounts != null ? String(ds.accounts) : '';
+        const fbPageUrl = ds.fbPageUrl != null ? String(ds.fbPageUrl) : '';
+        const dateOccurrence = ds.dateOccurrence != null ? String(ds.dateOccurrence) : '';
+        const remarks = ds.remarks != null ? String(ds.remarks) : '';
+        const source = ds.source != null ? String(ds.source) : '';
+        const transmittalNumber = ds.transmittalNumber != null ? String(ds.transmittalNumber) : '';
+        const adminTransmittalNumber = ds.adminTransmittalNumber != null ? String(ds.adminTransmittalNumber) : '';
 
-            if (farmerName) {
-                const farmerNameInput = document.querySelector('.editRecordform input[name="farmerName"]');
-                if (farmerNameInput) farmerNameInput.value = farmerName;
-            }
+        editForm.action = id ? `/records/${id}` : editForm.getAttribute('action') || '';
 
-            const editProvince = document.getElementById('editProvince');
-            const editMunicipality = document.getElementById('editMunicipality');
-            const editBarangay = document.getElementById('editBarangay');
-            const editRecordAddress = document.getElementById('editRecordAddress');
+        const farmerNameInput = formRoot.querySelector('input[name="farmerName"]');
+        if (farmerNameInput) farmerNameInput.value = farmerName;
 
-            if (editProvince && editMunicipality && editBarangay) {
+        const editProvince = document.getElementById('editProvince');
+        const editMunicipality = document.getElementById('editMunicipality');
+        const editBarangay = document.getElementById('editBarangay');
+        const editRecordAddress = document.getElementById('editRecordAddress');
+
+        if (editProvince && editMunicipality && editBarangay) {
+            if (!province && address) {
+                const addressParts = address.split(',').map((part) => part.trim());
+                setSelectValueOrAddOption(editProvince, addressParts[2] || '');
+                updateMunicipalities(editProvince, editMunicipality, editBarangay);
+                setSelectValueOrAddOption(editMunicipality, addressParts[1] || '');
+                updateBarangays(editProvince, editMunicipality, editBarangay);
+                setSelectValueOrAddOption(editBarangay, addressParts[0] || '');
+            } else {
                 if (province) {
-                    editProvince.value = province;
-                    updateMunicipalities(editProvince, editMunicipality, editBarangay);
+                    setSelectValueOrAddOption(editProvince, province);
                 } else {
                     editProvince.value = '';
-                    updateMunicipalities(editProvince, editMunicipality, editBarangay);
                 }
-
+                updateMunicipalities(editProvince, editMunicipality, editBarangay);
                 if (municipality) {
-                    editMunicipality.value = municipality;
-                    updateBarangays(editProvince, editMunicipality, editBarangay);
+                    setSelectValueOrAddOption(editMunicipality, municipality);
                 } else {
                     editMunicipality.value = '';
-                    updateBarangays(editProvince, editMunicipality, editBarangay);
                 }
-
+                updateBarangays(editProvince, editMunicipality, editBarangay);
                 if (barangay) {
-                    editBarangay.value = barangay;
-                }
-
-                if (!province && address) {
-                    const addressParts = address.split(',').map(part => part.trim());
-                    editProvince.value = addressParts[2] || '';
-                    updateMunicipalities(editProvince, editMunicipality, editBarangay);
-                    editMunicipality.value = addressParts[1] || '';
-                    updateBarangays(editProvince, editMunicipality, editBarangay);
-                    editBarangay.value = addressParts[0] || '';
+                    setSelectValueOrAddOption(editBarangay, barangay);
                 }
             }
+        }
 
-            const addressInput = document.querySelector('.editRecordform input[name="address"]');
-            if (addressInput) {
-                addressInput.value = address;
+        const addressInput = formRoot.querySelector('input[name="address"]');
+        if (addressInput) {
+            addressInput.value = address;
+        }
+
+        const programSelect = formRoot.querySelector('select[name="program"]');
+        if (programSelect) {
+            programSelect.value = program;
+            if (program && programSelect.value !== program) {
+                setSelectValueOrAddOption(programSelect, program);
             }
+        }
 
-            const programSelect = document.querySelector('.editRecordform select[name="program"]');
-            if (programSelect) programSelect.value = program;
+        const sourceField = formRoot.querySelector('[name="source"]');
+        if (sourceField) sourceField.value = source;
 
-            const sourceSelect = document.querySelector('.editRecordform select[name="source"]');
-            if (sourceSelect) sourceSelect.value = source;
-
-            const lineSelect = document.querySelector('.editRecordform select[name="line"]');
-            if (lineSelect) lineSelect.value = line;
-
-            const causeInput = document.querySelector('.editRecordform input[name="causeOfDamage"]');
-            if (causeInput) causeInput.value = causeOfDamage;
-
-            const modeOfPaymentSelect = document.querySelector('.editRecordform select[name="modeOfPayment"]');
-            if (modeOfPaymentSelect) modeOfPaymentSelect.value = modeOfPayment;
-
-            const remarksInput = document.querySelector('.editRecordform input[name="remarks"]');
-            if (remarksInput) remarksInput.value = remarks;
-
-            const accountsInput = document.querySelector('.editRecordform input[name="accounts"]');
-            if (accountsInput) accountsInput.value = accounts || '';
-
-            const dateOccurrenceInput = document.querySelector('.editRecordform input[name="date_occurrence"]');
-            if (dateOccurrenceInput) dateOccurrenceInput.value = date_occurrence || '';
-
-            const transmittalInput = document.querySelector('.editRecordform input[name="transmittal_number"]');
-            if (transmittalInput) transmittalInput.value = transmittal_number || '';
-
-            const adminTransmittalInput = document.querySelector('.editRecordform input[name="admin_transmittal_number"]');
-            if (adminTransmittalInput) adminTransmittalInput.value = admin_transmittal_number || '';
-
-            const clearAdminTransmittalCheckbox = document.querySelector('.editRecordform input[name="clear_admin_transmittal_number"]');
-            if (clearAdminTransmittalCheckbox) {
-                clearAdminTransmittalCheckbox.checked = false;
+        const lineSelect = formRoot.querySelector('select[name="line"]');
+        if (lineSelect) {
+            lineSelect.value = line;
+            if (line && lineSelect.value !== line) {
+                setSelectValueOrAddOption(lineSelect, line);
             }
+        }
 
-            if (editRecordAddress) {
-                setHiddenAddress(editProvince, editMunicipality, editBarangay, editRecordAddress);
-            }
+        const causeInput = formRoot.querySelector('input[name="causeOfDamage"]');
+        if (causeInput) causeInput.value = causeOfDamage;
 
-            const editDialog = document.querySelector('.editRecordDialog');
-            if (editDialog) {
-                editDialog.showModal();
-            }
-        });
+        const modeOfPaymentSelect = formRoot.querySelector('select[name="modeOfPayment"]');
+        if (modeOfPaymentSelect) {
+            modeOfPaymentSelect.value = modeOfPayment;
+        }
+
+        const remarksInput = formRoot.querySelector('input[name="remarks"]');
+        if (remarksInput) remarksInput.value = remarks;
+
+        const accountsInput = formRoot.querySelector('input[name="accounts"]');
+        if (accountsInput) accountsInput.value = accounts;
+
+        const facebookPageUrlInput = formRoot.querySelector('input[name="facebook_page_url"]');
+        if (facebookPageUrlInput) facebookPageUrlInput.value = fbPageUrl;
+
+        const dateOccurrenceField = formRoot.querySelector('[name="date_occurrence"]');
+        if (dateOccurrenceField) dateOccurrenceField.value = dateOccurrence;
+
+        const transmittalInput = formRoot.querySelector('input[name="transmittal_number"]');
+        if (transmittalInput) transmittalInput.value = transmittalNumber;
+
+        const adminTransmittalInput = formRoot.querySelector('input[name="admin_transmittal_number"]');
+        if (adminTransmittalInput) adminTransmittalInput.value = adminTransmittalNumber;
+
+        const clearAdminTransmittalCheckbox = formRoot.querySelector('input[name="clear_admin_transmittal_number"]');
+        if (clearAdminTransmittalCheckbox) {
+            clearAdminTransmittalCheckbox.checked = false;
+        }
+
+        if (editRecordAddress && editProvince && editMunicipality && editBarangay) {
+            setHiddenAddress(editProvince, editMunicipality, editBarangay, editRecordAddress);
+        }
+
+        const editDialog = document.getElementById('recordEditDialog') || document.querySelector('.editRecordDialog');
+        if (editDialog) {
+            editDialog.showModal();
+        }
+    }
+
+    document.addEventListener('click', function (e) {
+        const t = e.target;
+        if (!t || !t.closest) {
+            return;
+        }
+        const button = t.closest('.editButton');
+        if (!button) {
+            return;
+        }
+        e.preventDefault();
+        openRecordEditDialog(button);
     });
 
     const editProvinceInput = document.getElementById('editProvince');
     const editMunicipalityInput = document.getElementById('editMunicipality');
     const editBarangayInput = document.getElementById('editBarangay');
-    const editRecordForm = document.querySelector('.editRecordform');
+    const editRecordForm = document.getElementById('recordEditForm');
     const editRecordAddressInput = document.getElementById('editRecordAddress');
 
     if (editProvinceInput && editMunicipalityInput && editBarangayInput) {
@@ -1396,20 +1502,11 @@ Zarah,San Luis,Aurora`;
     }
 
     const closeEditRecordDialog = document.querySelector('.closeEditRecordDialog');
-    const editRecordDialog = document.querySelector('.editRecordDialog');
+    const editRecordDialog = document.getElementById('recordEditDialog') || document.querySelector('.editRecordDialog');
 
     if (closeEditRecordDialog && editRecordDialog) {
         closeEditRecordDialog.addEventListener('click', function () {
             editRecordDialog.close();
-        });
-    }
-
-    // Add form submit listener for debugging
-    const editForm = document.querySelector('.editRecordform');
-    if (editForm) {
-        editForm.addEventListener('submit', function (e) {
-            console.log('Form submitted with action:', this.action);
-            console.log('Form data:', new FormData(this));
         });
     }
 
