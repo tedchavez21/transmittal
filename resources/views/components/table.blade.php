@@ -20,15 +20,173 @@ function getSortIndicator($column, $currentSort, $currentOrder) {
 }
 @endphp
 
-<table>
+@if($showFilters)
+<div class="table-filters" style="margin-bottom: 15px; padding: 15px; background: #f8f9fa; border: 1px solid #dee2e6; border-radius: 4px;">
+    <form method="GET" style="display: contents;">
+        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 15px; align-items: end;">
+            <!-- 1. Transmittal Number Filter -->
+            <div>
+                <label style="display: block; margin-bottom: 5px; font-weight: 600;">Control Number</label>
+                <input type="text" placeholder="Control Number" name="transmittal_number" value="{{ request('transmittal_number') }}" style="width: 100%; padding: 5px;">
+            </div>
+            
+            <!-- 2. Encoder Filter -->
+            @if($showEncoder)
+            <div>
+                <label style="display: block; margin-bottom: 5px; font-weight: 600;">Encoder</label>
+                <input type="text" placeholder="Search Encoder" name="encoderName" value="{{ request('encoderName') }}" style="width: 100%; padding: 5px;">
+            </div>
+            @endif
+            
+            <!-- 3. Farmer Name Filter -->
+            <div>
+                <label style="display: block; margin-bottom: 5px; font-weight: 600;">Farmer Name</label>
+                <input type="text" placeholder="Search Farmer" name="farmerName" value="{{ request('farmerName') }}" style="width: 100%; padding: 5px;">
+            </div>
+            
+            <!-- 4. Municipality Filter -->
+            @if(!$hideProvinceColumn)
+            <div>
+                <label style="display: block; margin-bottom: 5px; font-weight: 600;">Municipality</label>
+                <input type="text" placeholder="Municipality" name="municipality" value="{{ request('municipality') }}" style="width: 100%; padding: 5px;">
+            </div>
+            @endif
+            
+            <!-- 5. Barangay Filter -->
+            <div>
+                <label style="display: block; margin-bottom: 5px; font-weight: 600;">Barangay</label>
+                <input type="text" placeholder="Barangay" name="barangay" value="{{ request('barangay') }}" style="width: 100%; padding: 5px;">
+            </div>
+            
+            <!-- 6. Province Filter -->
+            @if(!$hideProvinceColumn)
+            <div>
+                <label style="display: block; margin-bottom: 5px; font-weight: 600;">Province</label>
+                <input type="text" placeholder="Province" name="province" value="{{ request('province') }}" style="width: 100%; padding: 5px;">
+            </div>
+            @endif
+            
+            <!-- 7. Line Filter -->
+            <div>
+                <label style="display: block; margin-bottom: 5px; font-weight: 600;">Line</label>
+                <select name="line" style="width: 100%; padding: 5px;">
+                    <option value="">All Lines</option>
+                    @foreach($allLines as $line)
+                    <option value="{{ $line }}" {{ request('line') == $line ? 'selected' : '' }}>{{ $line }}</option>
+                    @endforeach
+                </select>
+            </div>
+            
+            <!-- 8. Program Filter -->
+            <div>
+                <label style="display: block; margin-bottom: 5px; font-weight: 600;">Program</label>
+                <select name="program" style="width: 100%; padding: 5px;">
+                    <option value="">All Programs</option>
+                    @foreach($allPrograms as $program)
+                    <option value="{{ $program }}" {{ request('program') == $program ? 'selected' : '' }}>{{ $program }}</option>
+                    @endforeach
+                </select>
+            </div>
+            
+            <!-- 9. Date of Occurrence Filter -->
+            <div>
+                <label style="display: block; margin-bottom: 5px; font-weight: 600;">Date of Occurrence</label>
+                <select name="date_occurrence_filter_type" style="width: 100%; padding: 5px; margin-bottom: 5px;">
+                    <option value="">Filter Type</option>
+                    <option value="single" {{ request('date_occurrence_filter_type') == 'single' ? 'selected' : '' }}>Single Date</option>
+                    <option value="range" {{ request('date_occurrence_filter_type') == 'range' ? 'selected' : '' }}>Date Range</option>
+                </select>
+                <div id="date_occurrence_single" style="display: {{ request('date_occurrence_filter_type') == 'single' ? 'block' : 'none' }};">
+                    <input type="date" name="date_occurrence" value="{{ request('date_occurrence') }}" style="width: 100%; padding: 5px;">
+                </div>
+                <div id="date_occurrence_range" style="display: {{ request('date_occurrence_filter_type') == 'range' ? 'block' : 'none' }};">
+                    <input type="date" name="date_occurrence_from" value="{{ request('date_occurrence_from') }}" placeholder="From" style="width: 100%; padding: 5px; margin-bottom: 5px;">
+                    <input type="date" name="date_occurrence_to" value="{{ request('date_occurrence_to') }}" placeholder="To" style="width: 100%; padding: 5px;">
+                </div>
+            </div>
+            
+            <!-- 10. Cause of Damage Filter -->
+            <div>
+                <label style="display: block; margin-bottom: 5px; font-weight: 600;">Cause of Damage</label>
+                <input type="text" placeholder="Damage" name="causeOfDamage" value="{{ request('causeOfDamage') }}" style="width: 100%; padding: 5px;">
+            </div>
+            
+            <!-- 11. Date Received Filter -->
+            <div>
+                <label style="display: block; margin-bottom: 5px; font-weight: 600;">Date Received</label>
+                <select name="date_received_filter_type" style="width: 100%; padding: 5px; margin-bottom: 5px;">
+                    <option value="">Filter Type</option>
+                    <option value="single" {{ request('date_received_filter_type') == 'single' ? 'selected' : '' }}>Single Date</option>
+                    <option value="range" {{ request('date_received_filter_type') == 'range' ? 'selected' : '' }}>Date Range</option>
+                </select>
+                <div id="date_received_single" style="display: {{ request('date_received_filter_type') == 'single' ? 'block' : 'none' }};">
+                    <input type="date" name="date_received" value="{{ request('date_received') }}" style="width: 100%; padding: 5px;">
+                </div>
+                <div id="date_received_range" style="display: {{ request('date_received_filter_type') == 'range' ? 'block' : 'none' }};">
+                    <input type="date" name="date_received_from" value="{{ request('date_received_from') }}" placeholder="From" style="width: 100%; padding: 5px; margin-bottom: 5px;">
+                    <input type="date" name="date_received_to" value="{{ request('date_received_to') }}" placeholder="To" style="width: 100%; padding: 5px;">
+                </div>
+            </div>
+            
+            <!-- 12. Account Filter -->
+            @if(!$hideAccountsColumn)
+            <div>
+                <label style="display: block; margin-bottom: 5px; font-weight: 600;">Account</label>
+                <input type="text" placeholder="Account" name="accounts" value="{{ request('accounts') }}" style="width: 100%; padding: 5px;">
+            </div>
+            @endif
+            
+            <!-- 13. Mode of Payment Filter -->
+            <div>
+                <label style="display: block; margin-bottom: 5px; font-weight: 600;">Mode of Payment</label>
+                <select name="modeOfPayment" style="width: 100%; padding: 5px;">
+                    <option value="">All Modes</option>
+                    @foreach($allModes as $mode)
+                    <option value="{{ $mode }}" {{ request('modeOfPayment') == $mode ? 'selected' : '' }}>{{ $mode }}</option>
+                    @endforeach
+                </select>
+            </div>
+            
+            <!-- 14. Remarks Filter -->
+            <div>
+                <label style="display: block; margin-bottom: 5px; font-weight: 600;">Remarks</label>
+                <input type="text" placeholder="Remarks" name="remarks" value="{{ request('remarks') }}" style="width: 100%; padding: 5px;">
+            </div>
+            
+            @if($showAdminTransmittal)
+            <div>
+                <label style="display: block; margin-bottom: 5px; font-weight: 600;">Admin Transmittal</label>
+                <input type="text" placeholder="Admin Transmittal" name="admin_transmittal_number" value="{{ request('admin_transmittal_number') }}" style="width: 100%; padding: 5px;">
+            </div>
+            @endif
+            
+            @if($showApproval)
+            <div>
+                <label style="display: block; margin-bottom: 5px; font-weight: 600;">Status</label>
+                <select name="approved" style="width: 100%; padding: 5px;">
+                    <option value="">All Status</option>
+                    <option value="1" {{ request('approved') == '1' ? 'selected' : '' }}>Approved</option>
+                    <option value="0" {{ request('approved') == '0' ? 'selected' : '' }}>Pending</option>
+                </select>
+            </div>
+            @endif
+            
+            <!-- Submit Button -->
+            <div style="display: flex; gap: 10px;">
+                <button type="submit" style="padding: 8px 16px; background: #007bff; color: white; border: none; border-radius: 4px; cursor: pointer;">Apply Filters</button>
+                <a href="{{ request()->url() }}" style="padding: 8px 16px; background: #6c757d; color: white; text-decoration: none; border-radius: 4px;">Clear</a>
+            </div>
+        </div>
+    </form>
+</div>
+@endif
+
+<table class="records-table" style="width: 100%; border-collapse: collapse; border: 1px solid #ccc;">
     <thead>
         <tr>
             @if($showCheckbox)
             <th class="no-print col-checkbox" style="display: none;">
                 <input type="checkbox" id="select-all">
-            </th>
-            <th class="no-print col-checkbox-transmit" style="display: none;">
-                <input type="checkbox" id="select-all-transmit">
             </th>
             @endif
             @if(!$hideAccountsColumn && $showAdminTransmittal)
@@ -195,132 +353,6 @@ function getSortIndicator($column, $currentSort, $currentOrder) {
             <th class="no-print">Action</th>
             @endif
         </tr>
-        @if($showFilters)
-        <tr class="filter-row">
-            @if($showCheckbox)
-            <th class="no-print"></th>
-            @endif
-            <th class="no-print"></th>
-            @if($showDelete)
-            <th class="no-print"></th>
-            @endif
-            <!-- 1. Transmittal Number Filter -->
-            <th><input type="text" placeholder="Control Number" name="transmittal_number" value="{{ request('transmittal_number') }}"></th>
-            
-            <!-- 2. Encoder Filter -->
-            @if($showEncoder)
-            <th><input type="text" placeholder="Search Encoder" name="encoderName" value="{{ request('encoderName') }}"></th>
-            @endif
-            
-            <!-- 3. Farmer Name Filter -->
-            <th><input type="text" placeholder="Search Farmer" name="farmerName" value="{{ request('farmerName') }}"></th>
-            
-            <!-- 4. Municipality Filter -->
-            @if(!$hideProvinceColumn)
-            <th><input type="text" placeholder="Municipality" name="municipality" value="{{ request('municipality') }}"></th>
-            @endif
-            
-            <!-- 5. Barangay Filter -->
-            <th><input type="text" placeholder="Barangay" name="barangay" value="{{ request('barangay') }}"></th>
-            
-            <!-- 6. Province Filter -->
-            @if(!$hideProvinceColumn)
-            <th><input type="text" placeholder="Province" name="province" value="{{ request('province') }}"></th>
-            @endif
-            
-            <!-- 7. Line Filter -->
-            <th>
-                <select name="line">
-                    <option value="">All Lines</option>
-                    @foreach($allLines as $line)
-                    <option value="{{ $line }}" {{ request('line') == $line ? 'selected' : '' }}>{{ $line }}</option>
-                    @endforeach
-                </select>
-            </th>
-            
-            <!-- 8. Program Filter -->
-            <th>
-                <select name="program">
-                    <option value="">All Programs</option>
-                    @foreach($allPrograms as $program)
-                    <option value="{{ $program }}" {{ request('program') == $program ? 'selected' : '' }}>{{ $program }}</option>
-                    @endforeach
-                </select>
-            </th>
-            
-            <!-- 9. Date of Occurrence Filter -->
-            <th>
-                <div style="display: flex; flex-direction: column; gap: 2px;">
-                    <select name="date_occurrence_filter_type" style="font-size: 11px; padding: 2px;">
-                        <option value="">Filter Type</option>
-                        <option value="single" {{ request('date_occurrence_filter_type') == 'single' ? 'selected' : '' }}>Single Date</option>
-                        <option value="range" {{ request('date_occurrence_filter_type') == 'range' ? 'selected' : '' }}>Date Range</option>
-                    </select>
-                    <div id="date_occurrence_single" style="display: {{ request('date_occurrence_filter_type') == 'single' ? 'block' : 'none' }};">
-                        <input type="date" name="date_occurrence" value="{{ request('date_occurrence') }}" style="font-size: 11px; padding: 2px;">
-                    </div>
-                    <div id="date_occurrence_range" style="display: {{ request('date_occurrence_filter_type') == 'range' ? 'block' : 'none' }};">
-                        <input type="date" name="date_occurrence_from" value="{{ request('date_occurrence_from') }}" placeholder="From" style="font-size: 11px; padding: 2px; margin-bottom: 2px;">
-                        <input type="date" name="date_occurrence_to" value="{{ request('date_occurrence_to') }}" placeholder="To" style="font-size: 11px; padding: 2px;">
-                    </div>
-                </div>
-            </th>
-            
-            <!-- 10. Cause of Damage Filter -->
-            <th><input type="text" placeholder="Damage" name="causeOfDamage" value="{{ request('causeOfDamage') }}"></th>
-            
-            <!-- 11. Date Received Filter -->
-            <th>
-                <div style="display: flex; flex-direction: column; gap: 2px;">
-                    <select name="date_received_filter_type" style="font-size: 11px; padding: 2px;">
-                        <option value="">Filter Type</option>
-                        <option value="single" {{ request('date_received_filter_type') == 'single' ? 'selected' : '' }}>Single Date</option>
-                        <option value="range" {{ request('date_received_filter_type') == 'range' ? 'selected' : '' }}>Date Range</option>
-                    </select>
-                    <div id="date_received_single" style="display: {{ request('date_received_filter_type') == 'single' ? 'block' : 'none' }};">
-                        <input type="date" name="date_received" value="{{ request('date_received') }}" style="font-size: 11px; padding: 2px;">
-                    </div>
-                    <div id="date_received_range" style="display: {{ request('date_received_filter_type') == 'range' ? 'block' : 'none' }};">
-                        <input type="date" name="date_received_from" value="{{ request('date_received_from') }}" placeholder="From" style="font-size: 11px; padding: 2px; margin-bottom: 2px;">
-                        <input type="date" name="date_received_to" value="{{ request('date_received_to') }}" placeholder="To" style="font-size: 11px; padding: 2px;">
-                    </div>
-                </div>
-            </th>
-            
-            <!-- 12. Account Filter -->
-            @if(!$hideAccountsColumn)
-            <th><input type="text" placeholder="Account" name="accounts" value="{{ request('accounts') }}"></th>
-            @endif
-            
-            <!-- 13. Mode of Payment Filter -->
-            <th>
-                <select name="modeOfPayment">
-                    <option value="">All Modes</option>
-                    @foreach($allModes as $mode)
-                    <option value="{{ $mode }}" {{ request('modeOfPayment') == $mode ? 'selected' : '' }}>{{ $mode }}</option>
-                    @endforeach
-                </select>
-            </th>
-            
-            <!-- 14. Remarks Filter -->
-            <th><input type="text" placeholder="Remarks" name="remarks" value="{{ request('remarks') }}"></th>
-            @if($showAdminTransmittal)
-            <th><input type="text" placeholder="Admin Transmittal" name="admin_transmittal_number" value="{{ request('admin_transmittal_number') }}" style="width: calc(100% - 50px); box-sizing: border-box;"></th>
-            @endif
-            @if($showApproval)
-            <th>
-                <select name="approved">
-                    <option value="">All Status</option>
-                    <option value="1" {{ request('approved') == '1' ? 'selected' : '' }}>Approved</option>
-                    <option value="0" {{ request('approved') == '0' ? 'selected' : '' }}>Pending</option>
-                </select>
-            </th>
-            @endif
-            @if($showAction)
-            <th class="no-print"></th>
-            @endif
-        </tr>
-        @endif
     </thead>
     <tbody>
     @foreach($records as $record)
