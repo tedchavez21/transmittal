@@ -23,12 +23,19 @@ function getSortIndicator($column, $currentSort, $currentOrder) {
 <table>
     <thead>
         <tr>
+            @if($showCheckbox)
             <th class="no-print col-checkbox" style="display: none;">
                 <input type="checkbox" id="select-all">
             </th>
             <th class="no-print col-checkbox-transmit" style="display: none;">
                 <input type="checkbox" id="select-all-transmit">
             </th>
+            @endif
+            @if(!$hideAccountsColumn && $showAdminTransmittal)
+            <th class="no-print col-checkbox-transmit" style="display: none;">
+                <input type="checkbox" id="select-all-transmit" style="display: none;">
+            </th>
+            @endif
             <th class="no-print col-edit">Edit</th>
             @if($showDelete)
             <th class="no-print col-delete">Delete</th>
@@ -243,7 +250,7 @@ function getSortIndicator($column, $currentSort, $currentOrder) {
                 <input type="checkbox" name="record_ids[]" value="{{ $record->id }}" class="record-checkbox">
             </td>
             <td class="no-print col-checkbox-transmit" style="display: none;">
-                <input type="checkbox" name="record_ids_transmit[]" value="{{ $record->id }}" class="record-checkbox-transmit">
+                <input type="checkbox" name="record_ids_transmit[]" value="{{ $record->id }}" class="record-checkbox-transmit" style="display: none;">
             </td>
             <td class="no-print col-edit">
                 <button type="button" class="editButton"

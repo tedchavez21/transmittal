@@ -8,7 +8,7 @@
         .print-preview-wrap {
             max-width: 1200px;
             margin: 18px auto 24px auto;
-            padding: 0 14px;
+            padding: 0 14px;record-checkbox-transmit
         }
 
         .print-preview-topbar {
@@ -344,7 +344,7 @@
                     <div class="print-preview-card">
                         <div class="meta">
                             <div><strong>Date Encoded:</strong> {{ $encodedDate }}</div>
-                            <div><strong>Transmittal #:</strong> ____________________</div>
+                            <div><strong>Transmittal #:</strong> {{ $pageTransmittalNumbers[$pageIndex + 1] ?? '____________________' }}</div>
                             <div><strong>Records:</strong> {{ $pageRecords->count() }} of {{ $totalRecords }} (Page {{ $pageIndex + 1 }} of {{ $totalPages }})</div>
                         </div>
 
@@ -386,11 +386,45 @@
         @endif
     </div>
 
-    <form class="assign-form no-print" method="POST" action="{{ route('admin.assign-transmittals') }}">
+    <form class="assign-form no-print" method="POST" action="{{ route('admin.assign-transmittals') }}" onsubmit="handleAssignTransmittal(event)">
         @csrf
         @foreach($query as $key => $value)
             <input type="hidden" name="{{ $key }}" value="{{ $value }}">
         @endforeach
         <button type="submit" class="btn btn-success">Assign Transmittal Number</button>
     </form>
+    
+    <script>
+        function handleAssignTransmittal(event) {
+            event.preventDefault();
+            
+            const form = event.target;
+            const formData = new FormData(form);
+            
+            fetch(form.action, {
+                method: 'POST',
+                body: formData,
+                headers: {
+                    'X-Requested-With': 'XMLHttpRequest',
+                }
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    // Show success message
+                    alert('Transmittal numbers assigned successfully!');
+                    
+                    // Refresh the page to update the transmittal numbers in headers
+                    window.location.reload();
+                } else {
+                    // Show error message
+                    alert('Error: ' + (data.message || 'Failed to assign transmittal numbers'));
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                alert('An error occurred while assigning transmittal numbers');
+            });
+        }
+    </script>
 @endsection

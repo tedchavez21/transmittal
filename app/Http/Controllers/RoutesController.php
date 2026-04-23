@@ -605,22 +605,38 @@ class RoutesController extends Controller
             return redirect()->route('welcome');
         }
 
-        $sessionRecordIds = $request->session()->get('admin_print_preview_record_ids', []);
         $perPage = 40;
 
-        if (!empty($sessionRecordIds)) {
-            $recordsQuery = Record::whereIn('id', $sessionRecordIds)
+        // Get record IDs from URL parameter
+        $urlIds = $request->input('ids', '');
+        $recordIds = [];
+        
+        if (!empty($urlIds)) {
+            // Parse comma-separated IDs from URL
+            $recordIds = explode(',', $urlIds);
+            // Convert to integers and filter out invalid values
+            $recordIds = array_filter(array_map('intval', $recordIds));
+        }
+
+        if (!empty($recordIds)) {
+            // Use records from URL parameter
+            $recordsQuery = Record::whereIn('id', $recordIds)
                 ->orderBy('id', 'asc');
         } else {
-            $query = Record::query();
-            $this->applyFilters($request, $query);
-            $recordsQuery = $query->orderBy('id', 'asc');
+            // If no URL IDs, return error
+            return response()->json([
+                'success' => false,
+                'message' => 'No record IDs found in URL. Please provide valid record IDs.'
+            ]);
         }
 
         $totalRecords = $recordsQuery->count();
 
         if ($totalRecords === 0) {
-            return redirect()->back()->with('error', 'No records found for assigning admin transmittal number.');
+            return response()->json([
+                'success' => false,
+                'message' => 'No records found for assigning admin transmittal number.'
+            ]);
         }
 
         // Get all records to process
@@ -655,7 +671,10 @@ class RoutesController extends Controller
         // Clear the print preview session after assigning
         $request->session()->forget('admin_print_preview_record_ids');
 
-        return redirect()->back()->with('success', "Admin transmittal numbers assigned successfully to {$totalAssigned} records across {$totalPages} pages.");
+        return response()->json([
+            'success' => true,
+            'message' => "Admin transmittal numbers assigned successfully to {$totalAssigned} records across {$totalPages} pages."
+        ]);
     }
 
     public function clearPrintPreview(Request $request)

@@ -539,15 +539,33 @@
         <input type="hidden" name="record_ids" id="selected-record-ids">
         <div id="table-loading-indicator" style="display: none; margin-bottom: 10px; color: #1565C0; font-weight: 600;">Loading records...</div>
         <div style="overflow-x: auto; width: 100%; margin-bottom: 20px; border: 1px solid #ccc; position: relative; padding: 0 10px;">
-            <x-table :records="$records" :showEncoder="true" :showFilters="false" :showAdminTransmittal="true" :allPrograms="$allPrograms" :allLines="$allLines" :allSources="$allSources" :allModes="$allModes" :showCheckbox="false" />
+            <x-table :records="$records" :showEncoder="true" :showFilters="false" :showAdminTransmittal="true" :allPrograms="$allPrograms" :allLines="$allLines" :allSources="$allSources" :allModes="$allModes" :showCheckbox="true" />
         </div>
         @if($records->isEmpty())
             <div style="padding: 16px; margin-bottom: 12px; border: 1px solid #e0e0e0; background: #fafafa; color: #555;">
                 No records found for the current filters.
             </div>
         @endif
-        <div class="no-print" style="margin: 10px 0;">
-            {{ $records->links() }}
+        <div class="no-print" style="margin: 10px 0; text-align: center;">
+            @if ($records->hasPages())
+                <div style="display: flex; justify-content: center; align-items: center; gap: 10px;">
+                    @if ($records->onFirstPage())
+                        <span style="color: #ccc;">Previous</span>
+                    @else
+                        <a href="{{ $records->previousPageUrl() }}" style="color: #007bff; text-decoration: none;">Previous</a>
+                    @endif
+                    
+                    <span style="margin: 0 10px;">
+                        Page {{ $records->currentPage() }} of {{ $records->lastPage() }}
+                    </span>
+                    
+                    @if ($records->hasMorePages())
+                        <a href="{{ $records->nextPageUrl() }}" style="color: #007bff; text-decoration: none;">Next</a>
+                    @else
+                        <span style="color: #ccc;">Next</span>
+                    @endif
+                </div>
+            @endif
         </div>
     </form>
     <dialog class="editRecordDialog" id="recordEditDialog">
@@ -2024,13 +2042,24 @@ Zabali,San Luis,Aurora`;
 
         // Toggle checkbox visibility for bulk delete
         deleteMultipleBtn?.addEventListener('click', function() {
-            const firstCheckboxCell = checkboxElements[0];
-            if (!firstCheckboxCell) return;
-
-            const isHidden = firstCheckboxCell.style.display === 'none';
-
-            checkboxElements.forEach(el => {
-                el.style.display = isHidden ? 'table-cell' : 'none';
+            let firstElement = checkboxElements[0];
+            let firstCheckbox = recordCheckboxes[0];
+            let isHidden = (firstElement && firstElement.style.display === 'none') || 
+                           (firstCheckbox && firstCheckbox.style.display === 'none');
+            
+            // Show/hide the table cells
+            checkboxElements.forEach(cl => {
+                cl.style.display = isHidden ? 'table-cell' : 'none';
+            });
+            // Also show/hide the checkbox inputs
+            recordCheckboxes.forEach(cb => {
+                cb.style.display = isHidden ? 'block' : 'none';
+            });
+            
+            // Also show/hide the select all checkboxes in headers
+            const selectAllBoxes = document.querySelectorAll('#select-all-transmit');
+            selectAllBoxes.forEach(box => {
+                box.style.display = isHidden ? 'block' : 'none';
             });
 
             if (isHidden) {
@@ -2048,10 +2077,25 @@ Zabali,San Luis,Aurora`;
 
         // toggle checkbox for transmitting records
         transmitToggleBtn?.addEventListener('click', function() {
-            let isHidden = transmitCheckboxElements[0].style.display === 'none';
+            // Check if any checkbox element is visible or if the first checkbox input is visible
+            let firstElement = transmitCheckboxElements[0];
+            let firstCheckbox = transmitCheckboxes[0];
+            let isHidden = (firstElement && firstElement.style.display === 'none') || 
+                           (firstCheckbox && firstCheckbox.style.display === 'none');
             
+            // Show/hide the table cells
             transmitCheckboxElements.forEach(el => {
                 el.style.display = isHidden ? 'table-cell' : 'none';
+            });
+            // Also show/hide the checkbox inputs
+            transmitCheckboxes.forEach(cb => {
+                cb.style.display = isHidden ? 'block' : 'none';
+            });
+            
+            // Also show/hide the select all checkboxes in headers
+            const selectAllTransmitBoxes = document.querySelectorAll('#select-all-transmit');
+            selectAllTransmitBoxes.forEach(box => {
+                box.style.display = isHidden ? 'block' : 'none';
             });
             
             // Update button text and style
@@ -2068,6 +2112,7 @@ Zabali,San Luis,Aurora`;
                 if(transmitActionBtn) transmitActionBtn.disabled = true;
             }
         });
+
         const updateTransmitButtonState = () => {
             let anyChecked = Array.from(transmitCheckboxes).some(cb => cb.checked);
             if (transmitActionBtn) transmitActionBtn.disabled = !anyChecked;

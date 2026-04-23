@@ -7,6 +7,19 @@
     <title>@yield('title','transmittal')</title>
     @yield('page-styles')
     @vite(['resources/css/app.css', 'resources/js/app.js'])
+    <style>
+        /* Fix pagination SVG icon sizing */
+        .pagination svg {
+            width: 12px !important;
+            height: 12px !important;
+            vertical-align: middle;
+        }
+        .pagination .page-link {
+            font-size: 14px;
+            padding: 8px 12px;
+            line-height: 1.4;
+        }
+    </style>
     <style media="print">
         @page { size: landscape; margin: 10mm; }
         body { margin: 0; padding: 0; }
