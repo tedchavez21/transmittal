@@ -1,4 +1,4 @@
-@props(['records', 'showDelete' => true, 'showEncoder' => false, 'showApproval' => false, 'showAction' => false, 'showCheckbox' => true, 'showFilters' => false, 'showSortableHeaders' => true, 'showAdminTransmittal' => false, 'hideAccountsColumn' => false, 'allPrograms' => [], 'allLines' => [], 'allSources' => [], 'allModes' => []])
+@props(['records', 'showDelete' => true, 'showEncoder' => false, 'showApproval' => false, 'showAction' => false, 'showCheckbox' => true, 'showFilters' => false, 'showSortableHeaders' => true, 'showAdminTransmittal' => false, 'hideAccountsColumn' => false, 'hideSourceColumn' => false, 'hideProvinceColumn' => false, 'allPrograms' => [], 'allLines' => [], 'allSources' => [], 'allModes' => []])
 
 @php
 $currentSort = request('sort_by', 'created_at');
@@ -49,6 +49,7 @@ function getSortIndicator($column, $currentSort, $currentOrder) {
                 Farmer Name
                 @endif
             </th>
+            @if(!$hideProvinceColumn)
             <th class="col-province" class="col-province">
                 @if($showSortableHeaders)
                 <a href="{{ getSortUrl('province', $currentSort, $currentOrder, $oppositeOrder) }}" style="color: inherit; text-decoration: none; cursor: pointer;">Province{{ getSortIndicator('province', $currentSort, $currentOrder) }}</a>
@@ -56,6 +57,8 @@ function getSortIndicator($column, $currentSort, $currentOrder) {
                 Province
                 @endif
             </th>
+            @endif
+            @if(!$hideProvinceColumn)
             <th class="col-municipality" class="col-municipality">
                 @if($showSortableHeaders)
                 <a href="{{ getSortUrl('municipality', $currentSort, $currentOrder, $oppositeOrder) }}" style="color: inherit; text-decoration: none; cursor: pointer;">Municipality{{ getSortIndicator('municipality', $currentSort, $currentOrder) }}</a>
@@ -63,11 +66,12 @@ function getSortIndicator($column, $currentSort, $currentOrder) {
                 Municipality
                 @endif
             </th>
+            @endif
             <th class="col-barangay" class="col-barangay">
                 @if($showSortableHeaders)
-                <a href="{{ getSortUrl('barangay', $currentSort, $currentOrder, $oppositeOrder) }}" style="color: inherit; text-decoration: none; cursor: pointer;">Barangay{{ getSortIndicator('barangay', $currentSort, $currentOrder) }}</a>
+                <a href="{{ getSortUrl('barangay', $currentSort, $currentOrder, $oppositeOrder) }}" style="color: inherit; text-decoration: none; cursor: pointer;">{{ $hideProvinceColumn ? 'Address' : 'Barangay' }}{{ getSortIndicator('barangay', $currentSort, $currentOrder) }}</a>
                 @else
-                Barangay
+                {{ $hideProvinceColumn ? 'Address' : 'Barangay' }}
                 @endif
             </th>
             <th class="col-program" class="col-program">
@@ -77,6 +81,7 @@ function getSortIndicator($column, $currentSort, $currentOrder) {
                 Program
                 @endif
             </th>
+            @if(!$hideSourceColumn)
             <th class="col-source">
                 @if($showSortableHeaders)
                 <a href="{{ getSortUrl('source', $currentSort, $currentOrder, $oppositeOrder) }}" style="color: inherit; text-decoration: none; cursor: pointer;">Source{{ getSortIndicator('source', $currentSort, $currentOrder) }}</a>
@@ -84,6 +89,16 @@ function getSortIndicator($column, $currentSort, $currentOrder) {
                 Source
                 @endif
             </th>
+            @endif
+            @if($showAdminTransmittal)
+            <th class="col-date-received">
+                @if($showSortableHeaders)
+                <a href="{{ getSortUrl('date_received', $currentSort, $currentOrder, $oppositeOrder) }}" style="color: inherit; text-decoration: none; cursor: pointer;">Date Received{{ getSortIndicator('date_received', $currentSort, $currentOrder) }}</a>
+                @else
+                Date Received
+                @endif
+            </th>
+            @endif
             <th class="col-control-number">
                 @if($showSortableHeaders)
                 <a href="{{ getSortUrl('transmittal_number', $currentSort, $currentOrder, $oppositeOrder) }}" style="color: inherit; text-decoration: none; cursor: pointer;">Control Number{{ getSortIndicator('transmittal_number', $currentSort, $currentOrder) }}</a>
@@ -262,16 +277,31 @@ function getSortIndicator($column, $currentSort, $currentOrder) {
             <td class="col-encoder">{{ $record->encoderName ?? 'Unknown' }}</td>
             @endif
             <td class="col-farmer-name">{{ $record->farmerName }}</td>
+            @if(!$hideProvinceColumn)
             <td class="col-province">{{ $record->province ?? '—' }}</td>
+            @endif
+            @if(!$hideProvinceColumn)
             <td class="col-municipality">{{ $record->municipality ?? '—' }}</td>
-            <td class="col-barangay">{{ $record->barangay ?? '—' }}</td>
+            @endif
+            <td class="col-barangay">
+                @if($hideProvinceColumn)
+                    {{ trim(implode(', ', array_filter([$record->barangay, $record->municipality]))) ?: '—' }}
+                @else
+                    {{ $record->barangay ?? '—' }}
+                @endif
+            </td>
             <td class="col-program">{{ $record->program }}</td>
+            @if(!$hideSourceColumn)
             <td class="col-source">{{ $record->source ?? '—' }}</td>
+            @endif
             <td class="col-control-number">{{ $record->transmittal_number ?? '—' }}</td>
             <td class="col-line">{{ $record->line }}</td>
             <td class="col-causeOfDamage">{{ $record->causeOfDamage }}</td>
             <td class="col-modeOfPayment">{{ $record->modeOfPayment ?: '—' }}</td>
             <td class="col-date-occurrence">{{ $record->date_occurrence ? $record->date_occurrence : '—' }}</td>
+            @if($showAdminTransmittal)
+            <td class="col-date-received">{{ $record->date_received ? $record->date_received : '—' }}</td>
+            @endif
             @if(!$hideAccountsColumn)
             <td class="col-accounts">
                 @php

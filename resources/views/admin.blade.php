@@ -20,13 +20,15 @@
                 </button>
             </nav>
 
-            <div style="margin-top: 14px; padding: 10px;">
+            <div class="admin-sidebar-actions">
                 <button type="button" class="btn btn-success" id="openUserApprovalsModal" style="width:100%;" title="Pending user approvals (Email and OD)">
-                    👤 User approvals
+                    <span class="icon" aria-hidden="true">👤</span>
+                    <span class="label">User approvals</span>
                 </button>
                 <div style="height: 8px;"></div>
                 <button type="button" class="btn btn-primary" id="openAdminUsersModal" style="width:100%;" title="Admin Users">
-                    ⚙️ Admin users
+                    <span class="icon" aria-hidden="true">⚙️</span>
+                    <span class="label">Admin users</span>
                 </button>
             </div>
         </aside>
@@ -536,7 +538,7 @@
         @method('DELETE')
         <input type="hidden" name="record_ids" id="selected-record-ids">
         <div id="table-loading-indicator" style="display: none; margin-bottom: 10px; color: #1565C0; font-weight: 600;">Loading records...</div>
-        <div style="overflow-x: auto; width: 100%; margin-bottom: 20px; border: 1px solid #ccc; position: relative;">
+        <div style="overflow-x: auto; width: 100%; margin-bottom: 20px; border: 1px solid #ccc; position: relative; padding: 0 10px;">
             <x-table :records="$records" :showEncoder="true" :showFilters="false" :showAdminTransmittal="true" :allPrograms="$allPrograms" :allLines="$allLines" :allSources="$allSources" :allModes="$allModes" :showCheckbox="false" />
         </div>
         @if($records->isEmpty())
@@ -622,7 +624,7 @@
             <label for="facebook_page_url">Facebook page link (Facebook source only):</label>
             <input type="url" id="facebook_page_url" name="facebook_page_url" placeholder="https://www.facebook.com/...">
             <label for="date_occurrence">Date occurrence:</label>
-            <input type="text" id="date_occurrence" name="date_occurrence" placeholder="e.g. early April, week of typhoon">
+            <input type="text" id="date_occurrence" name="date_occurrence">
             
             <label for="remarks">Remarks - Care of:</label>
             <input type="text" id="remarks" name="remarks">

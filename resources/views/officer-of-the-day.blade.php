@@ -129,15 +129,15 @@
                 <option value="palawan">Palawan Pay</option>
                 <option value="not_indicated">Not indicated</option>
             </select>
-            <label for="date_occurrence">Date occurrence (free text):</label>
-            <input type="text" id="date_occurrence" name="date_occurrence" placeholder="e.g. early April, last week">
+            <label for="date_occurrence">Date occurrence:</label>
+            <input type="text" id="date_occurrence" name="date_occurrence">
             <label for="remarks">Remarks - Care of:</label>
             <input type="text" id="remarks" name="remarks">
             <button type="submit">Add Record</button>
             <button type="button" class="closeAddRecordModal">Close</button>
         </form>
     </dialog>
-    <x-table :records="$records" :showDelete="false" :showCheckbox="false" :showSortableHeaders="false" :hideAccountsColumn="true" />
+    <x-table :records="$records" :showDelete="false" :showCheckbox="false" :showSortableHeaders="false" :hideAccountsColumn="true" :hideSourceColumn="true" :hideProvinceColumn="true" />
     @if($officerApproved && $records->count() > 0)
     <div style="margin-top: 20px;">
         <form id="submitTransmittalForm" action="{{ route('records.submit-transmittal') }}" method="POST" style="display: inline;">
@@ -268,7 +268,7 @@
             <label for="accounts">Account (if recorded):</label>
             <input type="text" id="accounts" name="accounts" placeholder="Optional">
             <input type="hidden" name="facebook_page_url" value="">
-            <label for="date_occurrence">Date occurrence (free text):</label>
+            <label for="date_occurrence">Date occurrence:</label>
             <input type="text" id="date_occurrence" name="date_occurrence">
             <label for="remarks">Remarks - Care of:</label>
             <input type="text" id="remarks" name="remarks">

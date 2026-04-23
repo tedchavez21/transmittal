@@ -104,18 +104,20 @@
                 <option value="not_indicated">Not indicated</option>
             </select>
             <label for="accounts">Account / page name (sender):</label>
-            <input type="text" id="accounts" name="accounts" required placeholder="Name of the Facebook page or account">
+            <input type="text" id="accounts" name="accounts" required placeholder="Name of Facebook page or account">
             <label for="facebook_page_url">Facebook page link:</label>
             <input type="url" id="facebook_page_url" name="facebook_page_url" required placeholder="https://www.facebook.com/...">
-            <label for="date_occurrence">Date occurrence (free text):</label>
-            <input type="text" id="date_occurrence" name="date_occurrence" placeholder="e.g. early April, last week">
+            <label for="date_occurrence">Date occurrence:</label>
+            <input type="text" id="date_occurrence" name="date_occurrence">
+            <label for="date_received">Date received:</label>
+            <input type="text" id="date_received" name="date_received">
             <label for="remarks">Remarks - Care of:</label>
             <input type="text" id="remarks" name="remarks">
             <button type="submit">Add Record</button>
             <button type="button" class="closeAddRecordModal">Close</button>
         </form>
     </dialog>
-    <x-table :records="$records" :showDelete="false" :showCheckbox="false" :showSortableHeaders="false" />
+    <x-table :records="$records" :showDelete="false" :showCheckbox="false" :showSortableHeaders="false" :hideSourceColumn="true" :hideProvinceColumn="true" />
     <dialog class="editRecordDialog" id="recordEditDialog">
         <form class="editRecordform" id="recordEditForm" method="POST">
             @csrf
@@ -174,7 +176,7 @@
             <input type="text" id="accounts" name="accounts">
             <label for="facebook_page_url">Facebook page link:</label>
             <input type="url" id="facebook_page_url" name="facebook_page_url" placeholder="https://www.facebook.com/...">
-            <label for="date_occurrence">Date occurrence (free text):</label>
+            <label for="date_occurrence">Date occurrence:</label>
             <input type="text" id="date_occurrence" name="date_occurrence">
             <label for="remarks">Remarks - Care of:</label>
             <input type="text" id="remarks" name="remarks">

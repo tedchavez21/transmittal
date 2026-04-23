@@ -125,8 +125,10 @@
             </select>
             <label for="accounts">Account (sender email/username):</label>
             <input type="text" id="accounts" name="accounts" placeholder="Email address or username">
-            <label for="date_occurrence">Date occurrence (free text):</label>
-            <input type="text" id="date_occurrence" name="date_occurrence" placeholder="e.g. early April, last week">
+            <label for="date_occurrence">Date occurrence:</label>
+            <input type="text" id="date_occurrence" name="date_occurrence">
+            <label for="date_received">Date received:</label>
+            <input type="text" id="date_received" name="date_received">
             <label for="remarks">Remarks - Care of:</label>
             <input type="text" id="remarks" name="remarks">
             <button type="submit">Add Record</button>
@@ -134,7 +136,7 @@
         </form>
     </dialog>
     @endif
-    <x-table :records="$records" :showDelete="false" :showCheckbox="false" :showSortableHeaders="false" />
+    <x-table :records="$records" :showDelete="false" :showCheckbox="false" :showSortableHeaders="false" :hideSourceColumn="true" :hideProvinceColumn="true" />
     <dialog class="editRecordDialog" id="recordEditDialog">
         <form class="editRecordform" id="recordEditForm" method="POST">
             @csrf
@@ -193,7 +195,7 @@
             <input type="text" id="accounts" name="accounts">
             <label for="facebook_page_url">Facebook page link (read-only):</label>
             <input type="text" id="facebook_page_url" name="facebook_page_url" readonly style="background:#f5f5f5;" placeholder="—">
-            <label for="date_occurrence">Date occurrence (free text):</label>
+            <label for="date_occurrence">Date occurrence:</label>
             <input type="text" id="date_occurrence" name="date_occurrence">
             <label for="remarks">Remarks - Care of:</label>
             <input type="text" id="remarks" name="remarks">
