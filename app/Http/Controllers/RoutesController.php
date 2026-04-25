@@ -31,7 +31,8 @@ class RoutesController extends Controller
                     ->where('encoderName', $emailUserName)
                     ->whereDate('created_at', today())
                     ->orderBy('id', 'asc')
-                    ->get();
+                    ->paginate(25)
+                    ->withQueryString();
             }
         }
 
@@ -105,7 +106,8 @@ class RoutesController extends Controller
             $records = Record::where('source', 'Facebook')
                 ->whereDate('created_at', today())
                 ->orderBy('id', 'asc')
-                ->get();
+                ->paginate(25)
+                ->withQueryString();
         }
 
         return view('facebook-handler', [
@@ -154,7 +156,8 @@ class RoutesController extends Controller
                 ->where('source', 'OD')
                 ->whereDate('created_at', today())
                 ->orderBy('id', 'asc')
-                ->get();
+                ->paginate(25)
+                ->withQueryString();
         }
 
         return view('officer-of-the-day', [
@@ -200,6 +203,52 @@ class RoutesController extends Controller
         $request->session()->forget('officer_name');
 
         return redirect()->route('welcome');
+    }
+
+    public function exportOfficerCsv(Request $request)
+    {
+        $officerName = $request->session()->get('officer_name');
+        if (!$officerName) { return redirect()->route('officer-of-the-day'); }
+
+        $query = Record::where('encoderName', $officerName)
+            ->where('source', 'OD')
+            ->whereDate('created_at', today())
+            ->orderBy('id', 'asc');
+
+        $export = new \App\Exports\RecordsExport($query);
+        return response($export->toCsv())
+            ->header('Content-Type', 'text/csv')
+            ->header('Content-Disposition', 'attachment; filename="od-records-' . date('Y-m-d') . '.csv"');
+    }
+
+    public function exportEmailCsv(Request $request)
+    {
+        $emailUserName = $request->session()->get('email_user_name');
+        if (!$emailUserName) { return redirect()->route('email-handler'); }
+
+        $query = Record::where('source', 'Email')
+            ->where('encoderName', $emailUserName)
+            ->whereDate('created_at', today())
+            ->orderBy('id', 'asc');
+
+        $export = new \App\Exports\RecordsExport($query);
+        return response($export->toCsv())
+            ->header('Content-Type', 'text/csv')
+            ->header('Content-Disposition', 'attachment; filename="email-records-' . date('Y-m-d') . '.csv"');
+    }
+
+    public function exportFacebookCsv(Request $request)
+    {
+        if (!$request->session()->get('facebook_logged_in')) { return redirect()->route('facebook-handler'); }
+
+        $query = Record::where('source', 'Facebook')
+            ->whereDate('created_at', today())
+            ->orderBy('id', 'asc');
+
+        $export = new \App\Exports\RecordsExport($query);
+        return response($export->toCsv())
+            ->header('Content-Type', 'text/csv')
+            ->header('Content-Disposition', 'attachment; filename="facebook-records-' . date('Y-m-d') . '.csv"');
     }
 
     public function loginAdmin(Request $request)
@@ -385,9 +434,95 @@ class RoutesController extends Controller
             }
         }
 
+        // Dashboard (new) - only date + program filters
+        $dashQuery = Record::query();
+        if ($request->filled('dash_program')) {
+            $dashQuery->where('program', $request->dash_program);
+        }
+        if ($request->filled('dash_date_type')) {
+            $dashDateType = $request->dash_date_type;
+            if ($dashDateType === 'single' && $request->filled('dash_date_single')) {
+                $dashQuery->whereDate('created_at', $request->dash_date_single);
+            } elseif ($dashDateType === 'range') {
+                if ($request->filled('dash_date_from')) {
+                    $dashQuery->whereDate('created_at', '>=', $request->dash_date_from);
+                }
+                if ($request->filled('dash_date_to')) {
+                    $dashQuery->whereDate('created_at', '<=', $request->dash_date_to);
+                }
+            }
+        }
+
+        $dashProvinces = ['Nueva Ecija', 'Aurora'];
+
+        $dashMunicipalitiesByProvince = Record::query()
+            ->select('province', 'municipality')
+            ->whereIn('province', $dashProvinces)
+            ->whereNotNull('municipality')
+            ->where('municipality', '!=', '')
+            ->distinct()
+            ->orderBy('municipality', 'asc')
+            ->get()
+            ->groupBy('province')
+            ->map(function ($rows) {
+                return $rows->pluck('municipality')->values()->all();
+            })
+            ->all();
+
+        $dashMunicipalityRows = (clone $dashQuery)
+            ->selectRaw('province, municipality, count(*) as count')
+            ->whereIn('province', $dashProvinces)
+            ->whereNotNull('municipality')
+            ->where('municipality', '!=', '')
+            ->groupBy('province', 'municipality')
+            ->orderBy('municipality', 'asc')
+            ->get();
+
+        $dashCountMap = [];
+        foreach ($dashMunicipalityRows as $row) {
+            $dashCountMap[$row->province] ??= [];
+            $dashCountMap[$row->province][$row->municipality] = (int) $row->count;
+        }
+
+        $dashCountsByProvince = [
+            'Nueva Ecija' => [],
+            'Aurora' => [],
+        ];
+        foreach ($dashProvinces as $province) {
+            $municipalities = $dashMunicipalitiesByProvince[$province] ?? [];
+            foreach ($municipalities as $municipality) {
+                $dashCountsByProvince[$province][] = [
+                    'municipality' => $municipality,
+                    'count' => $dashCountMap[$province][$municipality] ?? 0,
+                ];
+            }
+        }
+
+        $dashBarangayRows = (clone $dashQuery)
+            ->selectRaw('province, municipality, barangay, count(*) as count')
+            ->whereIn('province', $dashProvinces)
+            ->whereNotNull('municipality')
+            ->where('municipality', '!=', '')
+            ->whereNotNull('barangay')
+            ->where('barangay', '!=', '')
+            ->groupBy('province', 'municipality', 'barangay')
+            ->orderByRaw('count(*) desc')
+            ->get();
+
+        $dashBarangayBreakdown = [];
+        foreach ($dashBarangayRows as $row) {
+            $dashBarangayBreakdown[$row->province] ??= [];
+            $dashBarangayBreakdown[$row->province][$row->municipality] ??= [];
+            $dashBarangayBreakdown[$row->province][$row->municipality][] = [
+                'barangay' => $row->barangay,
+                'count' => (int) $row->count,
+            ];
+        }
+
         $totalRecords = $statsQuery->count();
         $recordsByProgram = $statsQuery->selectRaw('program, count(*) as count')->groupBy('program')->pluck('count', 'program');
         $recordsByLine = $statsQuery->selectRaw('line, count(*) as count')->groupBy('line')->pluck('count', 'line');
+        $recordsBySource = (clone $statsQuery)->selectRaw('source, count(*) as count')->groupBy('source')->pluck('count', 'source');
         $recordsByMunicipality = $statsQuery
             ->selectRaw('municipality, count(*) as count')
             ->whereNotNull('municipality')
@@ -395,6 +530,16 @@ class RoutesController extends Controller
             ->groupBy('municipality')
             ->orderByRaw('count(*) desc')
             ->pluck('count', 'municipality');
+
+        $municipalityProgramCounts = (clone $statsQuery)
+            ->selectRaw('municipality, program, count(*) as count')
+            ->whereNotNull('municipality')
+            ->where('municipality', '!=', '')
+            ->whereNotNull('program')
+            ->where('program', '!=', '')
+            ->groupBy('municipality', 'program')
+            ->get()
+            ->groupBy('municipality');
         $recentRecords = (clone $statsQuery)->where('created_at', '>=', now()->subDays(7))->count();
         
         // Unfiltered stats for reference
@@ -455,7 +600,11 @@ class RoutesController extends Controller
             'totalRecords' => $totalRecords,
             'recordsByProgram' => $recordsByProgram,
             'recordsByLine' => $recordsByLine,
+            'recordsBySource' => $recordsBySource,
             'recordsByMunicipality' => $recordsByMunicipality,
+            'municipalityProgramCounts' => $municipalityProgramCounts,
+            'dashCountsByProvince' => $dashCountsByProvince,
+            'dashBarangayBreakdown' => $dashBarangayBreakdown,
             'recentRecords' => $recentRecords,
             'pendingOfficers' => $pendingOfficers,
             'pendingEmailHandlers' => $pendingEmailHandlers,
@@ -1010,5 +1159,30 @@ class RoutesController extends Controller
 
         $count = $recordsToSubmit->count();
         return redirect()->back()->with('success', "Transmittal $transmittalNumber created successfully with $count records.");
+    }
+
+    public function pendingApprovalsApi(Request $request)
+    {
+        if (!$request->session()->has('admin_logged_in') || !$request->session()->get('admin_logged_in')) {
+            return response()->json(['error' => 'unauthorized'], 401);
+        }
+
+        $pendingOfficers = Officer::where('approved', false)
+            ->where('active', true)
+            ->orderBy('created_at', 'desc')
+            ->get(['id', 'name', 'created_at']);
+
+        $pendingEmailHandlers = EmailHandler::where('approved', false)
+            ->where('active', true)
+            ->orderBy('created_at', 'desc')
+            ->get(['id', 'name', 'created_at']);
+
+        return response()->json([
+            'officers' => $pendingOfficers,
+            'emailHandlers' => $pendingEmailHandlers,
+            'officerCount' => $pendingOfficers->count(),
+            'emailHandlerCount' => $pendingEmailHandlers->count(),
+            'totalPending' => $pendingOfficers->count() + $pendingEmailHandlers->count(),
+        ]);
     }
 }

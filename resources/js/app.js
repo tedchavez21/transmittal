@@ -1223,6 +1223,10 @@ Zarah,San Luis,Aurora`;
     if (addRecordButton && addRecordDialog) {
         addRecordButton.addEventListener('click', function () {
             addRecordDialog.showModal();
+            setTimeout(function() {
+                var firstInput = addRecordDialog.querySelector('input:not([type="hidden"]):not([type="checkbox"])');
+                if (firstInput) firstInput.focus();
+            }, 100);
         });
     }
 

@@ -29,9 +29,13 @@ Route::get('/admin/print-preview', [RoutesController::class, 'printPreview'])->n
 Route::post('/admin/add-to-print-preview', [RoutesController::class, 'addToPrintPreview'])->name('admin.add-to-print-preview');
 Route::post('/admin/clear-print-preview', [RoutesController::class, 'clearPrintPreview'])->name('admin.clear-print-preview');
 Route::post('/admin/assign-transmittals', [RoutesController::class, 'assignTransmittals'])->name('admin.assign-transmittals');
+Route::get('/admin/api/pending-approvals', [RoutesController::class, 'pendingApprovalsApi'])->name('admin.api.pending-approvals');
 
 Route::post('/records', [RecordsController::class, 'storeRecord'])->name('records');
 Route::post('/records/submit-transmittal', [RoutesController::class, 'submitTransmittal'])->name('records.submit-transmittal');
+Route::get('/officer/export-csv', [RoutesController::class, 'exportOfficerCsv'])->name('officer.export-csv');
+Route::get('/email/export-csv', [RoutesController::class, 'exportEmailCsv'])->name('email.export-csv');
+Route::get('/facebook/export-csv', [RoutesController::class, 'exportFacebookCsv'])->name('facebook.export-csv');
 
 Route::put('/records/{id}', [RecordsController::class, 'updateRecord'])->name('records.update');
 Route::delete('/records/{id}', [RecordsController::class, 'destroyRecord'])->name('records.destroy');

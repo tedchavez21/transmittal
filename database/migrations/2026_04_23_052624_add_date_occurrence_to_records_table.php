@@ -11,9 +11,11 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::table('records', function (Blueprint $table) {
-            $table->date('date_occurrence')->nullable();
-        });
+        if (!Schema::hasColumn('records', 'date_occurrence')) {
+            Schema::table('records', function (Blueprint $table) {
+                $table->date('date_occurrence')->nullable();
+            });
+        }
     }
 
     /**
@@ -21,8 +23,10 @@ return new class extends Migration
      */
     public function down(): void
     {
-        Schema::table('records', function (Blueprint $table) {
-            $table->dropColumn('date_occurrence');
-        });
+        if (Schema::hasColumn('records', 'date_occurrence')) {
+            Schema::table('records', function (Blueprint $table) {
+                $table->dropColumn('date_occurrence');
+            });
+        }
     }
 };

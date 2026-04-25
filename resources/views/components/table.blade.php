@@ -1,4 +1,4 @@
-@props(['records', 'showDelete' => true, 'showEncoder' => false, 'showApproval' => false, 'showAction' => false, 'showCheckbox' => true, 'showFilters' => false, 'showSortableHeaders' => true, 'showAdminTransmittal' => false, 'hideAccountsColumn' => false, 'hideSourceColumn' => false, 'hideProvinceColumn' => false, 'allPrograms' => [], 'allLines' => [], 'allSources' => [], 'allModes' => []])
+@props(['records', 'showDelete' => true, 'showEncoder' => false, 'showApproval' => false, 'showAction' => false, 'showCheckbox' => true, 'showFilters' => false, 'showSortableHeaders' => true, 'showAdminTransmittal' => false, 'hideAccountsColumn' => false, 'hideSourceColumn' => false, 'hideProvinceColumn' => false, 'hideDateReceivedColumn' => false, 'allPrograms' => [], 'allLines' => [], 'allSources' => [], 'allModes' => []])
 
 @php
 $currentSort = request('sort_by', 'created_at');
@@ -21,7 +21,7 @@ function getSortIndicator($column, $currentSort, $currentOrder) {
 @endphp
 
 @if($showFilters)
-<div class="table-filters" style="margin-bottom: 15px; padding: 15px; background: #f8f9fa; border: 1px solid #dee2e6; border-radius: 4px;">
+<div class="table-filters" style="margin-bottom: 15px; padding: 15px; background: #f0fdf4; border: 1px solid rgba(0, 108, 53, 0.18); border-radius: 16px;">
     <form method="GET" style="display: contents;">
         <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 15px; align-items: end;">
             <!-- 1. Transmittal Number Filter -->
@@ -111,6 +111,7 @@ function getSortIndicator($column, $currentSort, $currentOrder) {
                 <input type="text" placeholder="Damage" name="causeOfDamage" value="{{ request('causeOfDamage') }}" style="width: 100%; padding: 5px;">
             </div>
             
+            @if(!$hideDateReceivedColumn)
             <!-- 11. Date Received Filter -->
             <div>
                 <label style="display: block; margin-bottom: 5px; font-weight: 600;">Date Received</label>
@@ -127,6 +128,7 @@ function getSortIndicator($column, $currentSort, $currentOrder) {
                     <input type="date" name="date_received_to" value="{{ request('date_received_to') }}" placeholder="To" style="width: 100%; padding: 5px;">
                 </div>
             </div>
+            @endif
             
             <!-- 12. Account Filter -->
             @if(!$hideAccountsColumn)
@@ -173,8 +175,8 @@ function getSortIndicator($column, $currentSort, $currentOrder) {
             
             <!-- Submit Button -->
             <div style="display: flex; gap: 10px;">
-                <button type="submit" style="padding: 8px 16px; background: #007bff; color: white; border: none; border-radius: 4px; cursor: pointer;">Apply Filters</button>
-                <a href="{{ request()->url() }}" style="padding: 8px 16px; background: #6c757d; color: white; text-decoration: none; border-radius: 4px;">Clear</a>
+                <button type="submit" style="padding: 8px 16px; background: #006c35; color: white; border: none; border-radius: 10px; cursor: pointer; font-weight: 800; font-size: 13px; letter-spacing: 0.2px; transition: background 0.15s ease;">Apply Filters</button>
+                <a href="{{ request()->url() }}" style="padding: 8px 16px; background: #64748b; color: white; text-decoration: none; border-radius: 10px; font-weight: 800; font-size: 13px; letter-spacing: 0.2px;">Clear</a>
             </div>
         </div>
     </form>
@@ -294,6 +296,7 @@ function getSortIndicator($column, $currentSort, $currentOrder) {
                 @endif
             </th>
             
+            @if(!$hideDateReceivedColumn)
             <!-- 11. Date Received -->
             <th class="col-date-received">
                 @if($showSortableHeaders)
@@ -302,6 +305,7 @@ function getSortIndicator($column, $currentSort, $currentOrder) {
                 Date Received
                 @endif
             </th>
+            @endif
             
             <!-- 12. Account -->
             @if(!$hideAccountsColumn)
@@ -433,8 +437,10 @@ function getSortIndicator($column, $currentSort, $currentOrder) {
             <!-- 10. Cause of Damage -->
             <td class="col-causeOfDamage">{{ $record->causeOfDamage }}</td>
             
+            @if(!$hideDateReceivedColumn)
             <!-- 11. Date Received -->
             <td class="col-date-received">{{ $record->date_received ? $record->date_received : '—' }}</td>
+            @endif
             
             <!-- 12. Account -->
             @if(!$hideAccountsColumn)
@@ -477,13 +483,86 @@ function getSortIndicator($column, $currentSort, $currentOrder) {
             @endif
         </tr>
         @if($loop->iteration % 40 == 0 && !$loop->last)
-        <tr class="page-break"><td colspan="{{ 14 + ($showCheckbox ? 1 : 0) + ($showDelete ? 1 : 0) + ($showEncoder ? 1 : 0) + ($showAdminTransmittal ? 1 : 0) + ($showApproval ? 1 : 0) + ($showAction ? 1 : 0) - ($hideAccountsColumn ? 1 : 0) }}" style="border: none; height: 50px;"></td></tr>
+        <tr class="page-break"><td colspan="{{ 14 + ($showCheckbox ? 1 : 0) + ($showDelete ? 1 : 0) + ($showEncoder ? 1 : 0) + ($showAdminTransmittal ? 1 : 0) + ($showApproval ? 1 : 0) + ($showAction ? 1 : 0) - ($hideAccountsColumn ? 1 : 0) - ($hideDateReceivedColumn ? 1 : 0) }}" style="border: none; height: 50px;"></td></tr>
         @endif
     @endforeach
+    @if($records->isEmpty())
     </tbody>
 </table>
+<div class="empty-state" style="display:flex;flex-direction:column;align-items:center;justify-content:center;padding:48px 20px;text-align:center;">
+    <svg width="80" height="80" viewBox="0 0 80 80" fill="none" xmlns="http://www.w3.org/2000/svg" style="margin-bottom:16px;opacity:0.5;">
+        <rect x="18" y="8" width="44" height="56" rx="6" stroke="#006c35" stroke-width="2.5" fill="#f0fdf4"/>
+        <rect x="28" y="4" width="24" height="12" rx="4" stroke="#006c35" stroke-width="2.5" fill="#fff"/>
+        <line x1="28" y1="28" x2="52" y2="28" stroke="#86efac" stroke-width="2.5" stroke-linecap="round"/>
+        <line x1="28" y1="38" x2="48" y2="38" stroke="#86efac" stroke-width="2.5" stroke-linecap="round"/>
+        <line x1="28" y1="48" x2="42" y2="48" stroke="#86efac" stroke-width="2.5" stroke-linecap="round"/>
+        <circle cx="58" cy="58" r="14" fill="#006c35"/>
+        <path d="M51 58l4 4 9-9" stroke="#fff" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>
+    </svg>
+    <div style="font-size:16px;font-weight:900;color:#0f172a;">No records yet</div>
+    <div style="font-size:13px;color:#64748b;margin-top:4px;font-weight:600;">Records will appear here once they are added.</div>
+</div>
+    @else
+    </tbody>
+</table>
+    @endif
 
 <style>
+/* Sticky table headers */
+.records-table thead th {
+    position: sticky;
+    top: 0;
+    z-index: 2;
+    background: #006c35;
+    color: #fff;
+    font-size: 12px;
+    font-weight: 800;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    border-bottom: 2px solid #005428;
+}
+.records-table thead th a {
+    color: #fff !important;
+    text-decoration: none;
+}
+.records-table thead th a:hover {
+    text-decoration: underline;
+}
+
+/* Table filter inputs & selects — PCIC theme */
+.table-filters label {
+    font-size: 12px;
+    font-weight: 900;
+    color: #334155;
+    letter-spacing: 0.2px;
+}
+.table-filters input,
+.table-filters select {
+    width: 100%;
+    height: 36px;
+    padding: 0 10px;
+    font-size: 13px;
+    border: 1px solid rgba(15, 23, 42, 0.16);
+    border-radius: 10px;
+    background: #fff;
+    outline: none;
+    transition: border-color 0.15s ease, box-shadow 0.15s ease;
+    box-sizing: border-box;
+}
+.table-filters input:focus,
+.table-filters select:focus {
+    border-color: rgba(0, 108, 53, 0.55);
+    box-shadow: 0 0 0 3px rgba(0, 108, 53, 0.15);
+}
+.table-filters select {
+    appearance: none;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath fill='%2364748b' d='M6 8L1 3h10z'/%3E%3C/svg%3E");
+    background-repeat: no-repeat;
+    background-position: right 12px center;
+    padding-right: 34px;
+}
+
+/* Record row interaction */
 .record-row {
     cursor: pointer;
     transition: all 0.2s ease;
@@ -494,31 +573,31 @@ function getSortIndicator($column, $currentSort, $currentOrder) {
 }
 
 .record-row.highlighted {
-    background-color: #1976d2 !important;
-    border: 3px solid #0d47a1 !important;
-    box-shadow: 0 4px 8px rgba(13, 71, 161, 0.4);
+    background-color: #006c35 !important;
+    border: 3px solid #003d1c !important;
+    box-shadow: 0 4px 8px rgba(0, 61, 28, 0.4);
     color: white !important;
     font-weight: 600;
 }
 
 .record-row.highlighted td {
-    border-top: 1px solid #0d47a1 !important;
-    border-bottom: 1px solid #0d47a1 !important;
+    border-top: 1px solid #003d1c !important;
+    border-bottom: 1px solid #003d1c !important;
     color: white !important;
 }
 
 .record-row.highlighted td:first-child {
-    border-left: 3px solid #0d47a1 !important;
+    border-left: 3px solid #003d1c !important;
 }
 
 .record-row.highlighted td:last-child {
-    border-right: 3px solid #0d47a1 !important;
+    border-right: 3px solid #003d1c !important;
 }
 
 /* Button styling in highlighted rows */
 .record-row.highlighted .editButton {
     background-color: white !important;
-    color: #1976d2 !important;
+    color: #006c35 !important;
     border: 1px solid white !important;
     font-weight: 600;
 }
@@ -542,12 +621,16 @@ document.addEventListener('DOMContentLoaded', function() {
             if (e.target.tagName === 'BUTTON' || e.target.tagName === 'INPUT' || e.target.tagName === 'A' || e.target.closest('button, input, a')) {
                 return;
             }
+
+            const isAlreadyHighlighted = this.classList.contains('highlighted');
             
             // Remove highlight from all rows
             recordRows.forEach(r => r.classList.remove('highlighted'));
-            
-            // Add highlight to clicked row
-            this.classList.add('highlighted');
+
+            // Toggle highlight for clicked row
+            if (!isAlreadyHighlighted) {
+                this.classList.add('highlighted');
+            }
         });
     });
     

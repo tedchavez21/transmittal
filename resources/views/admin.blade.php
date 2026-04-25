@@ -9,25 +9,35 @@
 @section('content')
     <div class="admin-shell">
         <aside class="admin-sidebar no-print">
+            <div class="admin-brand">
+                <div>
+                    <div class="title">PCIC</div>
+                    <div class="subtitle">NL Monitoring</div>
+                </div>
+            </div>
+
+            <div class="admin-sidebar-section-label">Navigation</div>
             <nav class="admin-nav" aria-label="Admin navigation">
                 <button type="button" class="active" id="btn-dashboard">
-                    <span class="icon">📊</span>
+                    <span class="icon" aria-hidden="true">DB</span>
                     <span>Dashboard</span>
                 </button>
                 <button type="button" id="btn-nl-records">
-                    <span class="icon">📋</span>
+                    <span class="icon" aria-hidden="true">NL</span>
                     <span>NL Records</span>
                 </button>
             </nav>
 
+            <div class="admin-sidebar-divider"></div>
+            <div class="admin-sidebar-section-label">Tools</div>
             <div class="admin-sidebar-actions">
-                <button type="button" class="btn btn-success" id="openUserApprovalsModal" style="width:100%;" title="Pending user approvals (Email and OD)">
-                    <span class="icon" aria-hidden="true">👤</span>
+                <button type="button" class="admin-sidebar-tool" id="openUserApprovalsModal" title="Pending user approvals (Email and OD)">
+                    <span class="icon" aria-hidden="true">AP</span>
                     <span class="label">User approvals</span>
+                    <span id="pendingBadge" class="pending-badge" style="display:none;"></span>
                 </button>
-                <div style="height: 8px;"></div>
-                <button type="button" class="btn btn-primary" id="openAdminUsersModal" style="width:100%;" title="Admin Users">
-                    <span class="icon" aria-hidden="true">⚙️</span>
+                <button type="button" class="admin-sidebar-tool" id="openAdminUsersModal" title="Admin Users">
+                    <span class="icon" aria-hidden="true">AU</span>
                     <span class="label">Admin users</span>
                 </button>
             </div>
@@ -36,363 +46,465 @@
         <main class="admin-main">
             <div class="admin-topbar no-print">
                 <div class="heading">
-                    <h1>Admin Dashboard</h1>
+                    <h1>PCIC Admin Portal</h1>
                     <p>Monitoring • approvals • transmittals</p>
                 </div>
                 <div class="actions">
                     <form action="{{ route('admin.logout') }}" method="POST" style="margin:0;">
                         @csrf
-                        <button type="submit" class="btn btn-outline btn-sm" title="Logout">Logout</button>
+                        <button type="submit" class="h-8 px-3 rounded-lg border border-gray-200 bg-white text-xs font-bold text-gray-600 hover:bg-red-50 hover:border-red-200 hover:text-red-600 transition-colors cursor-pointer" title="Logout">Logout</button>
                     </form>
                 </div>
             </div>
 
-    @if(session('success'))
-        <div class="app-alert app-alert--success">{{ session('success') }}</div>
-    @endif
-
-    @if(session('error'))
-        <div class="app-alert app-alert--error">{{ session('error') }}</div>
-    @endif
-
-    @if(session('warning'))
-        <div class="app-alert app-alert--warning">{{ session('warning') }}</div>
-    @endif
-
-    @if(session('info'))
-        <div class="app-alert app-alert--info">{{ session('info') }}</div>
-    @endif
-
     <!-- User approvals: Email handlers + Officers of the Day -->
-    <dialog class="largeModal" id="userApprovalsModal">
-        <h3 style="margin-bottom: 16px;">Pending user approvals</h3>
-
-        <h4 style="margin: 20px 0 10px 0; border-bottom: 1px solid #ccc; padding-bottom: 6px;">Email (NL entry)</h4>
+    <dialog class="largeModal rounded-2xl shadow-2xl bg-white backdrop:bg-black/40 p-0 w-[min(640px,calc(100vw-2rem))]" id="userApprovalsModal">
+        <div class="px-5 pt-5 pb-3 border-b border-gray-100">
+            <h3 class="text-base font-black text-gray-900">Pending user approvals</h3>
+        </div>
+        <div class="px-5 py-4">
+        <h4 class="text-sm font-bold text-gray-700 mt-2 mb-2 pb-1.5 border-b border-gray-200">Email (NL entry)</h4>
         @if($pendingEmailHandlers->isEmpty())
-            <p style="text-align: center; padding: 16px; color: #757575;">No pending email handler approvals.</p>
+            <p class="text-center py-4 text-sm text-gray-400">No pending email handler approvals.</p>
         @else
-            <ul style="max-height: 280px; overflow-y: auto; margin: 0 0 16px 0; padding-left: 20px;">
+            <ul class="max-h-72 overflow-y-auto mb-4">
                 @foreach($pendingEmailHandlers as $emailHandler)
-                    <li style="padding: 12px 0; display: flex; align-items: center; justify-content: space-between; border-bottom: 1px solid #eee; list-style: none;">
-                        <span>{{ $emailHandler->name }}</span>
+                    <li class="py-3 flex items-center justify-between border-b border-gray-100 list-none">
+                        <span class="text-sm font-semibold text-gray-800">{{ $emailHandler->name }}</span>
                         <form action="{{ route('admin.email-handlers.approve', $emailHandler->id) }}" method="POST" style="display: inline;">
                             @csrf
-                            <button type="submit" class="fab-button fab-approve">Approve</button>
+                            <button type="submit" class="h-7 px-3 rounded-lg bg-pcic-700 text-white text-xs font-bold hover:bg-pcic-800 transition-colors cursor-pointer">Approve</button>
                         </form>
                     </li>
                 @endforeach
             </ul>
         @endif
 
-        <h4 style="margin: 20px 0 10px 0; border-bottom: 1px solid #ccc; padding-bottom: 6px;">Officer of the Day</h4>
+        <h4 class="text-sm font-bold text-gray-700 mt-2 mb-2 pb-1.5 border-b border-gray-200">Officer of the Day</h4>
         @if($pendingOfficers->isEmpty())
-            <p style="text-align: center; padding: 16px; color: #757575;">No pending officer approvals.</p>
+            <p class="text-center py-4 text-sm text-gray-400">No pending officer approvals.</p>
         @else
-            <ul style="max-height: 280px; overflow-y: auto; margin: 0; padding-left: 20px;">
+            <ul class="max-h-72 overflow-y-auto">
                 @foreach($pendingOfficers as $officer)
-                    <li style="padding: 12px 0; display: flex; align-items: center; justify-content: space-between; border-bottom: 1px solid #eee; list-style: none;">
-                        <span>{{ $officer->name }}</span>
+                    <li class="py-3 flex items-center justify-between border-b border-gray-100 list-none">
+                        <span class="text-sm font-semibold text-gray-800">{{ $officer->name }}</span>
                         <form action="{{ route('admin.officers.approve', $officer->id) }}" method="POST" style="display: inline;">
                             @csrf
-                            <button type="submit" class="fab-button fab-approve">Approve</button>
+                            <button type="submit" class="h-7 px-3 rounded-lg bg-pcic-700 text-white text-xs font-bold hover:bg-pcic-800 transition-colors cursor-pointer">Approve</button>
                         </form>
                     </li>
                 @endforeach
             </ul>
         @endif
 
-        <div class="dialog-actions" style="margin-top: 20px;">
-            <button type="button" class="cancel-btn closeUserApprovalsModal">Close</button>
+        <div class="mt-5 flex justify-end">
+            <button type="button" class="closeUserApprovalsModal h-9 px-4 rounded-lg border border-gray-200 text-xs font-bold text-gray-600 hover:bg-gray-50 transition-colors cursor-pointer">Close</button>
+        </div>
         </div>
     </dialog>
 
     <!-- Admin Users Modal -->
-    <dialog class="largeModal" id="adminUsersModal">
-        <h3 style="margin-bottom: 20px;">Admin Users</h3>
-        <div style="margin-bottom: 15px; text-align: right;">
-            <button type="button" class="fab-button fab-approve addAdminButton">Add New Admin</button>
+    <dialog class="largeModal rounded-2xl shadow-2xl bg-white backdrop:bg-black/40 p-0 w-[min(640px,calc(100vw-2rem))]" id="adminUsersModal">
+        <div class="px-5 pt-5 pb-3 border-b border-gray-100 flex items-center justify-between">
+            <h3 class="text-base font-black text-gray-900">Admin Users</h3>
+            <button type="button" class="addAdminButton h-8 px-3 rounded-lg bg-pcic-700 text-white text-xs font-bold hover:bg-pcic-800 transition-colors cursor-pointer">Add New Admin</button>
         </div>
+        <div class="px-5 py-4">
         @if($admins->isEmpty())
-            <p style="text-align: center; padding: 30px; color: #757575;">No admin users found.</p>
+            <p class="text-center py-8 text-sm text-gray-400">No admin users found.</p>
         @else
-            <table style="width: 100%; border-collapse: collapse; max-height: 350px; overflow-y: auto; display: block;">
+            <table class="w-full border-collapse">
                 <thead>
-                    <tr style="border-bottom: 1px solid #ccc;">
-                        <th style="text-align: left; padding: 8px; width: 40%;">Username</th>
-                        <th style="text-align: left; padding: 8px; width: 30%;">Password</th>
-                        <th style="text-align: left; padding: 8px; width: 30%;">Actions</th>
+                    <tr class="border-b border-gray-200">
+                        <th class="text-left px-3 py-2 text-xs font-bold text-gray-500 w-2/5">Username</th>
+                        <th class="text-left px-3 py-2 text-xs font-bold text-gray-500 w-1/3">Password</th>
+                        <th class="text-left px-3 py-2 text-xs font-bold text-gray-500 w-1/4">Actions</th>
                     </tr>
                 </thead>
                 <tbody>
                     @foreach($admins as $admin)
-                        <tr style="border-bottom: 1px solid #ddd;">
-                            <td style="padding: 8px;">{{ $admin->username }}</td>
-                            <td style="padding: 8px;">••••••••</td>
-                            <td style="padding: 8px;">
-                                <button type="button" class="fab-button fab-edit editAdminButton" data-id="{{ $admin->id }}" data-username="{{ $admin->username }}">Edit</button>
+                        <tr class="border-b border-gray-100">
+                            <td class="px-3 py-2 text-sm text-gray-800">{{ $admin->username }}</td>
+                            <td class="px-3 py-2 text-sm text-gray-400">••••••••</td>
+                            <td class="px-3 py-2">
+                                <button type="button" class="editAdminButton h-7 px-3 rounded-lg border border-gray-200 text-xs font-bold text-gray-600 hover:bg-gray-50 transition-colors cursor-pointer" data-id="{{ $admin->id }}" data-username="{{ $admin->username }}">Edit</button>
                             </td>
                         </tr>
                     @endforeach
                 </tbody>
             </table>
         @endif
-        <div class="dialog-actions" style="margin-top: 20px;">
-            <button type="button" class="cancel-btn closeAdminUsersModal">Close</button>
+        <div class="mt-5 flex justify-end">
+            <button type="button" class="closeAdminUsersModal h-9 px-4 rounded-lg border border-gray-200 text-xs font-bold text-gray-600 hover:bg-gray-50 transition-colors cursor-pointer">Close</button>
+        </div>
         </div>
     </dialog>
 
     <!-- Dashboard Section -->
     <div id="dashboard-section">
     <!-- DashboardDD -->
-    <div class="no-print" style="margin-bottom: 20px; padding: 15px; border: 1px solid #ccc;">
-        <h2>Dashboard</h2>
-
-        <!-- Filters -->
-        <form method="GET" action="{{ route('admin') }}" style="margin: 15px 0; padding: 15px; background: #f5f5f5; border-radius: 4px;">
-            <input type="hidden" name="tab" value="dashboard">
-            <p style="font-weight: bold; margin-bottom: 10px;">DASHBOARD FILTERS:</p>
-            <div style="display: flex; flex-wrap: wrap; gap: 10px; align-items: end;">
-                <div style="display: flex; flex-direction: column; gap: 4px;">
-                    <label style="font-size: 12px; font-weight: bold;">Line</label>
-                    <select name="dash_line" style="padding: 6px; font-size: 12px; border: 1px solid #ccc; border-radius: 3px;">
-                        <option value="">All Lines</option>
-                        @foreach($allLines as $line)
-                            <option value="{{ $line }}" {{ request('dash_line') == $line ? 'selected' : '' }}>{{ $line }}</option>
-                        @endforeach
-                    </select>
-                </div>
-                <div style="display: flex; flex-direction: column; gap: 4px;">
-                    <label style="font-size: 12px; font-weight: bold;">Program</label>
-                    <select name="dash_program" style="padding: 6px; font-size: 12px; border: 1px solid #ccc; border-radius: 3px;">
-                        <option value="">All Programs</option>
-                        @foreach($allPrograms as $program)
-                            <option value="{{ $program }}" {{ request('dash_program') == $program ? 'selected' : '' }}>{{ $program }}</option>
-                        @endforeach
-                    </select>
-                </div>
-                <div style="display: flex; flex-direction: column; gap: 4px;">
-                    <label style="font-size: 12px; font-weight: bold;">Province</label>
-                    <select name="dash_province" id="dashProvince" style="padding: 6px; font-size: 12px; border: 1px solid #ccc; border-radius: 3px;">
-                        <option value="">All Provinces</option>
-                        <option value="Aurora" {{ request('dash_province') == 'Aurora' ? 'selected' : '' }}>Aurora</option>
-                        <option value="Nueva Ecija" {{ request('dash_province') == 'Nueva Ecija' ? 'selected' : '' }}>Nueva Ecija</option>
-                    </select>
-                </div>
-                <div style="display: flex; flex-direction: column; gap: 4px;">
-                    <label style="font-size: 12px; font-weight: bold;">Municipality</label>
-                    <select name="dash_municipality" id="dashMunicipality" style="padding: 6px; font-size: 12px; border: 1px solid #ccc; border-radius: 3px;">
-                        <option value="">All Municipalities</option>
-                    </select>
-                </div>
-                <div style="display: flex; flex-direction: column; gap: 4px;">
-                    <label style="font-size: 12px; font-weight: bold;">Barangay</label>
-                    <select name="dash_barangay" id="dashBarangay" style="padding: 6px; font-size: 12px; border: 1px solid #ccc; border-radius: 3px;">
-                        <option value="">All Barangays</option>
-                    </select>
-                </div>
-                <div style="display: flex; flex-direction: column; gap: 4px;">
-                    <label style="font-size: 12px; font-weight: bold;">Source</label>
-                    <div style="display: flex; gap: 8px; flex-wrap: wrap; align-items: center;">
-                        <label style="font-size: 12px;"><input type="checkbox" name="dash_source[]" value="OD" {{ is_array(request('dash_source')) && in_array('OD', request('dash_source')) ? 'checked' : '' }}> OD</label>
-                        <label style="font-size: 12px;"><input type="checkbox" name="dash_source[]" value="Email" {{ is_array(request('dash_source')) && in_array('Email', request('dash_source')) ? 'checked' : '' }}> Email</label>
-                        <label style="font-size: 12px;"><input type="checkbox" name="dash_source[]" value="Facebook" {{ is_array(request('dash_source')) && in_array('Facebook', request('dash_source')) ? 'checked' : '' }}> Facebook</label>
-                    </div>
-                </div>
-                <div style="display: flex; flex-direction: column; gap: 4px;">
-                    <label style="font-size: 12px; font-weight: bold;">Date Filter</label>
-                    <select name="dash_date_type" id="dashDateType" onchange="toggleDashDateFilters()" style="padding: 6px; font-size: 12px; border: 1px solid #ccc; border-radius: 3px;">
-                        <option value="">All Dates</option>
-                        <option value="single" {{ request('dash_date_type') == 'single' ? 'selected' : '' }}>Specific Date</option>
-                        <option value="range" {{ request('dash_date_type') == 'range' ? 'selected' : '' }}>Date Range</option>
-                        <option value="month" {{ request('dash_date_type') == 'month' ? 'selected' : '' }}>Month</option>
-                    </select>
-                </div>
-                <div id="dashSingleDate" class="dash-date-filter" style="display: {{ request('dash_date_type') == 'single' ? 'flex' : 'none' }}; flex-direction: column; gap: 4px;">
-                    <label style="font-size: 12px; font-weight: bold;">Date</label>
-                    <input type="date" name="dash_date_single" value="{{ request('dash_date_single') }}" style="padding: 6px; font-size: 12px; border: 1px solid #ccc; border-radius: 3px;">
-                </div>
-                <div id="dashDateRange" class="dash-date-filter" style="display: {{ request('dash_date_type') == 'range' ? 'flex' : 'none' }}; flex-direction: column; gap: 4px;">
-                    <label style="font-size: 12px; font-weight: bold;">From</label>
-                    <input type="date" name="dash_date_from" value="{{ request('dash_date_from') }}" style="padding: 6px; font-size: 12px; border: 1px solid #ccc; border-radius: 3px;">
-                </div>
-                <div id="dashDateRangeTo" class="dash-date-filter" style="display: {{ request('dash_date_type') == 'range' ? 'flex' : 'none' }}; flex-direction: column; gap: 4px;">
-                    <label style="font-size: 12px; font-weight: bold;">To</label>
-                    <input type="date" name="dash_date_to" value="{{ request('dash_date_to') }}" style="padding: 6px; font-size: 12px; border: 1px solid #ccc; border-radius: 3px;">
-                </div>
-                <div id="dashMonthFilter" class="dash-date-filter" style="display: {{ request('dash_date_type') == 'month' ? 'flex' : 'none' }}; flex-direction: column; gap: 4px;">
-                    <label style="font-size: 12px; font-weight: bold;">Month</label>
-                    <input type="month" name="dash_date_month" value="{{ request('dash_date_month') }}" style="padding: 6px; font-size: 12px; border: 1px solid #ccc; border-radius: 3px;">
-                </div>
-                <button type="submit" style="padding: 8px 16px; background-color: #1976D2; color: white; border: none; border-radius: 4px; cursor: pointer; font-weight: bold;">Filter</button>
-                <a href="{{ route('admin') }}" style="padding: 8px 16px; background-color: #757575; color: white; text-decoration: none; border-radius: 4px; font-weight: bold; display: inline-block; line-height: 20px;">Clear</a>
-            </div>
-        </form>
-        <script>
-            function toggleDashDateFilters() {
-                var dateType = document.getElementById('dashDateType').value;
-                document.querySelectorAll('.dash-date-filter').forEach(function(el) {
-                    el.style.display = 'none';
-                });
-                if (dateType === 'single') {
-                    document.getElementById('dashSingleDate').style.display = 'flex';
-                } else if (dateType === 'range') {
-                    document.getElementById('dashDateRange').style.display = 'flex';
-                    document.getElementById('dashDateRangeTo').style.display = 'flex';
-                } else if (dateType === 'month') {
-                    document.getElementById('dashMonthFilter').style.display = 'flex';
+        @php
+            $summaryDate = '';
+            if(request('dash_date_type') == 'single' && request('dash_date_single')) {
+                $summaryDate = date('F j, Y', strtotime(request('dash_date_single')));
+            } elseif(request('dash_date_type') == 'range' && (request('dash_date_from') || request('dash_date_to'))) {
+                $from = request('dash_date_from') ? date('F j, Y', strtotime(request('dash_date_from'))) : null;
+                $to = request('dash_date_to') ? date('F j, Y', strtotime(request('dash_date_to'))) : null;
+                if ($from && $to) {
+                    $summaryDate = $from . ' to ' . $to;
+                } elseif ($from) {
+                    $summaryDate = 'From ' . $from;
+                } elseif ($to) {
+                    $summaryDate = 'Until ' . $to;
                 }
             }
-        </script>
-        
-        {{-- Filtered Display Summary --}}
-        @php
-            $summaryParts = [];
-            
-            if(request('dash_barangay')) $summaryParts[] = 'Barangay ' . request('dash_barangay');
-            if(request('dash_municipality')) $summaryParts[] = request('dash_municipality');
-            if(request('dash_province')) $summaryParts[] = request('dash_province');
-            if(request('dash_program')) $summaryParts[] = request('dash_program') . ' program';
-            if(request('dash_line')) $summaryParts[] = request('dash_line') . ' line';
-            
-            // Handle multiple sources
-            $sources = request('dash_source');
-            if(is_array($sources) && count($sources) > 0) {
-                $summaryParts[] = implode(', ', $sources) . ' source(s)';
-            } elseif(is_string($sources) && !empty($sources)) {
-                $summaryParts[] = $sources . ' source';
-            }
-            
-            $dateText = '';
-            if(request('dash_date_type') == 'single' && request('dash_date_single')) {
-                $dateText = 'on ' . date('F j, Y', strtotime(request('dash_date_single')));
-            } elseif(request('dash_date_type') == 'range' && request('dash_date_from') && request('dash_date_to')) {
-                $dateText = 'from ' . date('F j, Y', strtotime(request('dash_date_from'))) . ' to ' . date('F j, Y', strtotime(request('dash_date_to')));
-            } elseif(request('dash_date_type') == 'range' && request('dash_date_from') && !request('dash_date_to')) {
-                $dateText = 'from ' . date('F j, Y', strtotime(request('dash_date_from')));
-            } elseif(request('dash_date_type') == 'range' && !request('dash_date_from') && request('dash_date_to')) {
-                $dateText = 'until ' . date('F j, Y', strtotime(request('dash_date_to')));
-            } elseif(request('dash_date_type') == 'month' && request('dash_date_month')) {
-                $dateText = 'for ' . date('F Y', strtotime(request('dash_date_month') . '-01'));
-            }
-            
-            $summary = 'Displaying summary';
-            if(count($summaryParts) > 0) {
-                $summary .= ' for ' . implode(', ', $summaryParts);
-            }
-            if($dateText) {
-                $summary .= ' ' . $dateText;
-            }
+
+            $summaryProgram = request('dash_program') ? request('dash_program') : 'All Programs';
+
+            $dash3MetaText = $summaryProgram . ' • ' . ($summaryDate ? $summaryDate : 'All dates');
+
+            $provinceTables = [
+                'Aurora' => $dashCountsByProvince['Aurora'] ?? [],
+                'Nueva Ecija' => $dashCountsByProvince['Nueva Ecija'] ?? [],
+            ];
         @endphp
-        
-        <div style="background: #e3f2fd; padding: 12px 15px; border-radius: 4px; margin: 15px 0; font-weight: 500; border-left: 4px solid #1976D2;">
-            {{ $summary }}
-        </div>
 
-        <table style="width: 100%; border-collapse: collapse; margin: 15px 0;">
-            <thead>
-                <tr style="background-color: #f0f0f0;">
-                    <th style="border: 1px solid #ccc; padding: 12px; text-align: left; width: 60%;">Metric</th>
-                    <th style="border: 1px solid #ccc; padding: 12px; text-align: center; width: 40%;">Value</th>
-                </tr>
-            </thead>
-            <tbody>
-                <tr>
-                    <td style="border: 1px solid #ccc; padding: 10px; font-weight: 500;">Total Records</td>
-                    <td style="border: 1px solid #ccc; padding: 10px; text-align: center; font-weight: bold; font-size: 16px;">{{ $totalRecords }}</td>
-                </tr>
-                <tr>
-                    <td style="border: 1px solid #ccc; padding: 10px; font-weight: 500;">Recent Records (Last 7 days)</td>
-                    <td style="border: 1px solid #ccc; padding: 10px; text-align: center; font-weight: bold; font-size: 16px;">{{ $recentRecords }}</td>
-                </tr>
-            </tbody>
-        </table>
+        <div class="dash3-shell">
+            <div class="dash3-layout">
+            <div class="admin-card no-print">
+                <div class="card-header">
+                    <div>
+                        <h3 class="card-title">NL Dashboard</h3>
+                        <p class="card-subtitle">Aurora and Nueva Ecija municipality summary. Click a municipality for barangays.</p>
+                    </div>
+                </div>
+                <div class="card-body">
+                    <form method="GET" action="{{ route('admin') }}" class="dash3-filter-form">
+                        <input type="hidden" name="tab" value="dashboard">
+                        <div class="dash3-filter-row">
+                            <div class="form-field">
+                                <label>Program</label>
+                                <select name="dash_program">
+                                    <option value="">All Programs</option>
+                                    @foreach($allPrograms as $program)
+                                        <option value="{{ $program }}" {{ request('dash_program') == $program ? 'selected' : '' }}>{{ $program }}</option>
+                                    @endforeach
+                                </select>
+                            </div>
 
-        <h4 style="margin: 20px 0 10px 0;">Records by Program</h4>
-        <table style="width: 100%; border-collapse: collapse;">
-            <thead>
-                <tr style="background-color: #f0f0f0;">
-                    <th style="border: 1px solid #ccc; padding: 10px; text-align: left; width: 70%;">Program Name</th>
-                    <th style="border: 1px solid #ccc; padding: 10px; text-align: center; width: 30%;">Record Count</th>
-                </tr>
-            </thead>
-            <tbody>
-                @foreach($recordsByProgram as $program => $count)
-                <tr>
-                    <td style="border: 1px solid #ccc; padding: 8px;">{{ $program }}</td>
-                    <td style="border: 1px solid #ccc; padding: 8px; text-align: center; font-weight: 500;">{{ $count }}</td>
-                </tr>
-                @endforeach
-            </tbody>
-        </table>
+                            <div class="form-field">
+                                <label>Date filter</label>
+                                <select name="dash_date_type" id="dashDateType" onchange="toggleDashDateFilters()">
+                                    <option value="">All Dates</option>
+                                    <option value="single" {{ request('dash_date_type') == 'single' ? 'selected' : '' }}>Specific Date</option>
+                                    <option value="range" {{ request('dash_date_type') == 'range' ? 'selected' : '' }}>Date Range</option>
+                                </select>
+                            </div>
 
-        <div style="margin: 22px 0 8px 0; display: flex; align-items: center; justify-content: space-between; gap: 10px; flex-wrap: wrap;">
-            <h4 style="margin: 0;">Records by Municipality</h4>
-            <div style="display: flex; align-items: center; gap: 6px; flex-wrap: wrap;">
-                <span style="font-size: 12px; color: #555; font-weight: 600;">Province slicer:</span>
-                <button
-                    type="button"
-                    class="dashProvinceSlicer"
-                    data-value=""
-                    style="padding: 6px 10px; font-size: 12px; border: 1px solid #bbb; border-radius: 8px; background: {{ request('dash_province') ? '#fff' : '#e3f2fd' }}; cursor: pointer; font-weight: 700;"
-                >All</button>
-                <button
-                    type="button"
-                    class="dashProvinceSlicer"
-                    data-value="Aurora"
-                    style="padding: 6px 10px; font-size: 12px; border: 1px solid #bbb; border-radius: 8px; background: {{ request('dash_province') == 'Aurora' ? '#e3f2fd' : '#fff' }}; cursor: pointer; font-weight: 700;"
-                >Aurora</button>
-                <button
-                    type="button"
-                    class="dashProvinceSlicer"
-                    data-value="Nueva Ecija"
-                    style="padding: 6px 10px; font-size: 12px; border: 1px solid #bbb; border-radius: 8px; background: {{ request('dash_province') == 'Nueva Ecija' ? '#e3f2fd' : '#fff' }}; cursor: pointer; font-weight: 700;"
-                >Nueva Ecija</button>
+                            <div class="form-field dash-date-filter" id="dashSingleDate" style="display: {{ request('dash_date_type') == 'single' ? 'flex' : 'none' }};">
+                                <label>Date</label>
+                                <input type="date" name="dash_date_single" value="{{ request('dash_date_single') }}">
+                            </div>
+
+                            <div class="form-field dash-date-filter" id="dashDateRange" style="display: {{ request('dash_date_type') == 'range' ? 'flex' : 'none' }};">
+                                <label>From</label>
+                                <input type="date" name="dash_date_from" value="{{ request('dash_date_from') }}">
+                            </div>
+
+                            <div class="form-field dash-date-filter" id="dashDateRangeTo" style="display: {{ request('dash_date_type') == 'range' ? 'flex' : 'none' }};">
+                                <label>To</label>
+                                <input type="date" name="dash_date_to" value="{{ request('dash_date_to') }}">
+                            </div>
+                        </div>
+
+                        <div class="dash3-actions">
+                            <button type="submit" class="btn btn-primary btn-sm">Apply</button>
+                            <a href="{{ route('admin', ['tab' => 'dashboard']) }}" class="btn btn-muted btn-sm">Clear</a>
+                        </div>
+                    </form>
+
+                    <script>
+                        function toggleDashDateFilters() {
+                            var dateType = document.getElementById('dashDateType').value;
+                            document.querySelectorAll('.dash-date-filter').forEach(function(el) {
+                                el.style.display = 'none';
+                            });
+                            if (dateType === 'single') {
+                                document.getElementById('dashSingleDate').style.display = 'flex';
+                            } else if (dateType === 'range') {
+                                document.getElementById('dashDateRange').style.display = 'flex';
+                                document.getElementById('dashDateRangeTo').style.display = 'flex';
+                            }
+                        }
+                    </script>
+
+                    <div class="dash3-summary">
+                        <div class="dash3-summary-title">Filters</div>
+                        <div class="dash3-summary-sub">
+                            {{ $summaryProgram }} • {{ $summaryDate ? $summaryDate : 'All dates' }}
+                        </div>
+                    </div>
+                </div>
             </div>
+
+            {{-- Charts Section --}}
+            <div class="dash3-charts-row">
+                @php
+                    $chartMax = max($recordsByProgram->max() ?? 1, $recordsByLine->max() ?? 1, $recordsByMunicipality->max() ?? 1, 1);
+                    $sourceTotal = $recordsBySource->sum();
+                    $sourceColors = ['OD' => '#006c35', 'Email' => '#638c08', 'Facebook' => '#008a43'];
+                    $sourceConicParts = [];
+                    $sourceOffset = 0;
+                    foreach (['OD', 'Email', 'Facebook'] as $src) {
+                        $count = $recordsBySource->get($src, 0);
+                        if ($count > 0 && $sourceTotal > 0) {
+                            $pct = ($count / $sourceTotal) * 100;
+                            $sourceConicParts[] = $sourceColors[$src] . ' ' . $sourceOffset . '% ' . ($sourceOffset + $pct) . '%';
+                            $sourceOffset += $pct;
+                        }
+                    }
+                    $sourceConic = count($sourceConicParts) > 0 ? implode(',', $sourceConicParts) : '#e2e8f0 0% 100%';
+                @endphp
+
+                <div class="admin-card dash3-chart-card">
+                    <div class="card-header">
+                        <div>
+                            <h3 class="card-title">By Program</h3>
+                            <p class="card-subtitle">NL count per program</p>
+                        </div>
+                    </div>
+                    <div class="card-body dash3-chart-body">
+                        @foreach($recordsByProgram as $program => $count)
+                        <div class="dash3-chart-bar-row">
+                            <span class="dash3-chart-label">{{ $program }}</span>
+                            <div class="dash3-chart-bar-track">
+                                <div class="dash3-chart-bar-fill" style="width: {{ $chartMax > 0 ? round($count / $chartMax * 100) : 0 }}%"></div>
+                            </div>
+                            <span class="dash3-chart-value">{{ number_format($count) }}</span>
+                        </div>
+                        @endforeach
+                        @if($recordsByProgram->isEmpty())
+                            <div class="dash3-empty">No data</div>
+                        @endif
+                    </div>
+                </div>
+
+                <div class="admin-card dash3-chart-card">
+                    <div class="card-header">
+                        <div>
+                            <h3 class="card-title">By Line</h3>
+                            <p class="card-subtitle">NL count per line</p>
+                        </div>
+                    </div>
+                    <div class="card-body dash3-chart-body">
+                        @foreach($recordsByLine as $line => $count)
+                        <div class="dash3-chart-bar-row">
+                            <span class="dash3-chart-label">{{ $line }}</span>
+                            <div class="dash3-chart-bar-track">
+                                <div class="dash3-chart-bar-fill dash3-chart-bar-fill--line" style="width: {{ $chartMax > 0 ? round($count / $chartMax * 100) : 0 }}%"></div>
+                            </div>
+                            <span class="dash3-chart-value">{{ number_format($count) }}</span>
+                        </div>
+                        @endforeach
+                        @if($recordsByLine->isEmpty())
+                            <div class="dash3-empty">No data</div>
+                        @endif
+                    </div>
+                </div>
+
+                <div class="admin-card dash3-chart-card">
+                    <div class="card-header">
+                        <div>
+                            <h3 class="card-title">By Municipality</h3>
+                            <p class="card-subtitle">Top municipalities</p>
+                        </div>
+                    </div>
+                    <div class="card-body dash3-chart-body">
+                        @foreach($recordsByMunicipality as $municipality => $count)
+                        <div class="dash3-chart-bar-row">
+                            <span class="dash3-chart-label">{{ $municipality }}</span>
+                            <div class="dash3-chart-bar-track">
+                                <div class="dash3-chart-bar-fill dash3-chart-bar-fill--muni" style="width: {{ $chartMax > 0 ? round($count / $chartMax * 100) : 0 }}%"></div>
+                            </div>
+                            <span class="dash3-chart-value">{{ number_format($count) }}</span>
+                        </div>
+                        @endforeach
+                        @if($recordsByMunicipality->isEmpty())
+                            <div class="dash3-empty">No data</div>
+                        @endif
+                    </div>
+                </div>
+
+                <div class="admin-card dash3-chart-card">
+                    <div class="card-header">
+                        <div>
+                            <h3 class="card-title">By Source</h3>
+                            <p class="card-subtitle">OD vs Email vs Facebook</p>
+                        </div>
+                    </div>
+                    <div class="card-body dash3-chart-body dash3-donut-body">
+                        @if($sourceTotal > 0)
+                        <div class="dash3-donut" style="background: conic-gradient({{ $sourceConic }});">
+                            <div class="dash3-donut-hole">
+                                <span class="dash3-donut-total">{{ number_format($sourceTotal) }}</span>
+                                <span class="dash3-donut-label">total</span>
+                            </div>
+                        </div>
+                        <div class="dash3-donut-legend">
+                            @foreach(['OD', 'Email', 'Facebook'] as $src)
+                            @if($recordsBySource->has($src))
+                            <div class="dash3-donut-legend-item">
+                                <span class="dash3-donut-dot" style="background:{{ $sourceColors[$src] }}"></span>
+                                <span class="dash3-donut-legend-label">{{ $src }}</span>
+                                <span class="dash3-donut-legend-value">{{ number_format($recordsBySource->get($src)) }}</span>
+                            </div>
+                            @endif
+                            @endforeach
+                        </div>
+                        @else
+                            <div class="dash3-empty">No data</div>
+                        @endif
+                    </div>
+                </div>
+            </div>
+
+            <div class="dash3-grid">
+                @foreach($provinceTables as $province => $rows)
+                    @php
+                        $provinceTotal = array_sum(array_map(function ($r) { return (int) ($r['count'] ?? 0); }, $rows));
+                    @endphp
+                    <div class="admin-card">
+                        <div class="card-header">
+                            <div>
+                                <h3 class="card-title">{{ $province }}</h3>
+                                <p class="card-subtitle">Municipality • Number of NLs</p>
+                                <div class="dash3-province-total">Total NLs: <span>{{ number_format($provinceTotal) }}</span></div>
+                            </div>
+                        </div>
+                        <div class="card-body">
+                            <div class="dash3-table-wrap">
+                                <table class="dash3-table">
+                                    <thead>
+                                        <tr>
+                                            <th>Municipality</th>
+                                            <th class="dash3-num">Number of NLs</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        @forelse($rows as $row)
+                                            <tr>
+                                                <td>
+                                                    <button type="button" class="dash3-muni-btn" data-province="{{ $province }}" data-municipality="{{ $row['municipality'] }}">
+                                                        {{ $row['municipality'] }}
+                                                    </button>
+                                                </td>
+                                                <td class="dash3-num">{{ number_format($row['count']) }}</td>
+                                            </tr>
+                                        @empty
+                                            <tr>
+                                                <td colspan="2" class="dash3-empty">No data for {{ $province }} with the selected filters.</td>
+                                            </tr>
+                                        @endforelse
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                @endforeach
+            </div>
+            </div>
+
+            <dialog id="dash3BarangayDialog" class="dash3-dialog">
+                <div class="dash3-dialog-card">
+                    <div class="dash3-dialog-header">
+                        <div class="dash3-dialog-title" id="dash3DialogTitle">Barangays</div>
+                        <button type="button" class="btn btn-muted btn-sm" id="dash3DialogClose">Close</button>
+                    </div>
+                    <div class="dash3-dialog-meta" id="dash3DialogMeta"></div>
+                    <div class="dash3-dialog-body">
+                        <div class="dash3-table-wrap">
+                            <table class="dash3-table">
+                                <thead>
+                                    <tr>
+                                        <th>Barangay</th>
+                                        <th class="dash3-num">Number of NLs</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="dash3BarangayTbody"></tbody>
+                            </table>
+                        </div>
+                        <div id="dash3BarangayEmpty" class="dash3-empty" style="display: none;">No barangay data found.</div>
+                    </div>
+                </div>
+            </dialog>
+
+            <script>
+                (function () {
+                    var barangayData = @json($dashBarangayBreakdown ?? []);
+                    var dialog = document.getElementById('dash3BarangayDialog');
+                    var titleEl = document.getElementById('dash3DialogTitle');
+                    var metaEl = document.getElementById('dash3DialogMeta');
+                    var tbodyEl = document.getElementById('dash3BarangayTbody');
+                    var emptyEl = document.getElementById('dash3BarangayEmpty');
+                    var closeBtn = document.getElementById('dash3DialogClose');
+
+                    if (!dialog || !titleEl || !metaEl || !tbodyEl || !emptyEl || !closeBtn) {
+                        return;
+                    }
+
+                    function renderBarangays(rows) {
+                        tbodyEl.innerHTML = '';
+                        if (!rows || rows.length === 0) {
+                            emptyEl.style.display = 'block';
+                            return;
+                        }
+                        emptyEl.style.display = 'none';
+                        rows.forEach(function (row) {
+                            var tr = document.createElement('tr');
+                            var td1 = document.createElement('td');
+                            var td2 = document.createElement('td');
+                            td1.textContent = row.barangay;
+                            td2.textContent = row.count;
+                            td2.className = 'dash3-num';
+                            tr.appendChild(td1);
+                            tr.appendChild(td2);
+                            tbodyEl.appendChild(tr);
+                        });
+                    }
+
+                    function openDialog(province, municipality) {
+                        var rows = [];
+                        if (barangayData[province] && barangayData[province][municipality]) {
+                            rows = barangayData[province][municipality];
+                        }
+                        titleEl.textContent = municipality + ' — ' + province;
+                        metaEl.textContent = @json($dash3MetaText);
+                        renderBarangays(rows);
+                        if (typeof dialog.showModal === 'function') {
+                            dialog.showModal();
+                        } else {
+                            dialog.setAttribute('open', 'open');
+                        }
+                    }
+
+                    document.querySelectorAll('.dash3-muni-btn').forEach(function (btn) {
+                        btn.addEventListener('click', function () {
+                            openDialog(btn.dataset.province, btn.dataset.municipality);
+                        });
+                    });
+
+                    closeBtn.addEventListener('click', function () {
+                        dialog.close();
+                    });
+
+                    dialog.addEventListener('click', function (e) {
+                        if (e.target === dialog) {
+                            dialog.close();
+                        }
+                    });
+                })();
+            </script>
         </div>
-        <table style="width: 100%; border-collapse: collapse;">
-            <thead>
-                <tr style="background-color: #f0f0f0;">
-                    <th style="border: 1px solid #ccc; padding: 10px; text-align: left; width: 70%;">Municipality</th>
-                    <th style="border: 1px solid #ccc; padding: 10px; text-align: center; width: 30%;">Record Count</th>
-                </tr>
-            </thead>
-            <tbody>
-                @forelse($recordsByMunicipality as $municipality => $count)
-                <tr>
-                    <td style="border: 1px solid #ccc; padding: 8px;">{{ $municipality }}</td>
-                    <td style="border: 1px solid #ccc; padding: 8px; text-align: center; font-weight: 500;">{{ $count }}</td>
-                </tr>
-                @empty
-                <tr>
-                    <td colspan="2" style="border: 1px solid #ccc; padding: 12px; text-align: center; color: #757575;">No municipality data for the selected filters.</td>
-                </tr>
-                @endforelse
-            </tbody>
-        </table>
-    </div>
-    <div class="no-print" style="margin-bottom: 20px; padding: 15px; border: 1px solid #ccc;">
-        <h2>Active Officers of the Day</h2>
-        @if($activeOfficers->isEmpty())
-            <p style="padding: 15px; text-align: center; color: #757575;">No active officers currently logged in.</p>
-        @else
-            <table style="width: 100%; border-collapse: collapse; margin-top: 10px;">
-                <thead>
-                    <tr style="background-color: #f0f0f0;">
-                        <th style="border: 1px solid #ccc; padding: 10px; text-align: left;">#</th>
-                        <th style="border: 1px solid #ccc; padding: 10px; text-align: left;">Officer Name</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    @foreach($activeOfficers as $index => $officer)
-                    <tr>
-                        <td style="border: 1px solid #ccc; padding: 8px; width: 50px; text-align: center;">{{ $index + 1 }}</td>
-                        <td style="border: 1px solid #ccc; padding: 8px;">{{ $officer->name }}</td>
-                    </tr>
-                    @endforeach
-                </tbody>
-            </table>
-        @endif
-    </div>
 
     </div> <!-- END Dashboard Section -->
 
@@ -400,15 +512,17 @@
     <div id="nl-records-section" style="display: none;">
 
     <!-- Transmittal Management -->
-    <div class="no-print" style="margin-bottom: 20px; padding: 15px; border: 1px solid #ccc; background-color: #f9f9f9;">
-        <label>
-            <input type="checkbox" id="unassigned-toggle" {{ request('unassigned_only') ? 'checked' : '' }}>
-            Show only records without admin transmittal numbers
-        </label>
+    <div class="admin-card no-print" style="margin-bottom: 14px;">
+        <div class="card-body">
+            <label class="admin-toggle">
+                <input type="checkbox" id="unassigned-toggle" {{ request('unassigned_only') ? 'checked' : '' }}>
+                <span>Show only records without admin transmittal numbers</span>
+            </label>
+        </div>
     </div>
 
     <!-- TABLE FILTERS -->
-    <div class="no-print" style="margin-bottom: 20px; padding: 15px; border: 1px solid #ccc; background: #fff;">
+    <div class="no-print table-filters" style="margin-bottom: 20px; padding: 15px; border: 1px solid #ccc; background: #fff;">
         <h3 style="margin-top: 0; margin-bottom: 15px;">TABLE FILTERS</h3>
         <form method="GET" action="{{ route('admin') }}" style="margin: 0;">
             <input type="hidden" name="tab" value="nl-records">
@@ -490,8 +604,24 @@
                     <input type="text" name="admin_transmittal_number" value="{{ request('admin_transmittal_number') }}" style="padding: 6px; font-size: 12px; border: 1px solid #ccc; border-radius: 3px;">
                 </div>
                 <div style="display: flex; flex-direction: column; gap: 4px;">
-                    <label style="font-size: 12px; font-weight: bold;">Date Encoded</label>
-                    <input type="date" name="date_encoded" value="{{ request('date_encoded') }}" style="padding: 6px; font-size: 12px; border: 1px solid #ccc; border-radius: 3px;">
+                    <label style="font-size: 12px; font-weight: bold;">Date Received</label>
+                    <select name="date_received_type" id="tableDateReceivedType" style="padding: 6px; font-size: 12px; border: 1px solid #ccc; border-radius: 3px;">
+                        <option value="">All Dates</option>
+                        <option value="single" {{ request('date_received_type') == 'single' ? 'selected' : '' }}>Specific Date</option>
+                        <option value="range" {{ request('date_received_type') == 'range' ? 'selected' : '' }}>Date Range</option>
+                    </select>
+                </div>
+                <div id="tableDateReceivedSingleWrap" style="display: {{ request('date_received_type') == 'single' ? 'flex' : 'none' }}; flex-direction: column; gap: 4px;">
+                    <label style="font-size: 12px; font-weight: bold;">Date</label>
+                    <input type="date" name="date_single" value="{{ request('date_single') }}" style="padding: 6px; font-size: 12px; border: 1px solid #ccc; border-radius: 3px;" {{ request('date_received_type') == 'single' ? '' : 'disabled' }}>
+                </div>
+                <div id="tableDateReceivedFromWrap" style="display: {{ request('date_received_type') == 'range' ? 'flex' : 'none' }}; flex-direction: column; gap: 4px;">
+                    <label style="font-size: 12px; font-weight: bold;">From</label>
+                    <input type="date" name="date_from" value="{{ request('date_from') }}" style="padding: 6px; font-size: 12px; border: 1px solid #ccc; border-radius: 3px;" {{ request('date_received_type') == 'range' ? '' : 'disabled' }}>
+                </div>
+                <div id="tableDateReceivedToWrap" style="display: {{ request('date_received_type') == 'range' ? 'flex' : 'none' }}; flex-direction: column; gap: 4px;">
+                    <label style="font-size: 12px; font-weight: bold;">To</label>
+                    <input type="date" name="date_to" value="{{ request('date_to') }}" style="padding: 6px; font-size: 12px; border: 1px solid #ccc; border-radius: 3px;" {{ request('date_received_type') == 'range' ? '' : 'disabled' }}>
                 </div>
                 <div style="display: flex; flex-direction: column; gap: 4px;">
                     <label style="font-size: 12px; font-weight: bold;">Cause of Damage</label>
@@ -517,29 +647,61 @@
                 <a href="{{ route('admin') }}" style="padding: 8px 16px; background-color: #6c757d; color: white; text-decoration: none; border-radius: 4px; font-weight: bold; display: inline-block; line-height: 20px;">Clear</a>
             </div>
         </form>
+
+        <script>
+            (function () {
+                var typeEl = document.getElementById('tableDateReceivedType');
+                var singleWrap = document.getElementById('tableDateReceivedSingleWrap');
+                var fromWrap = document.getElementById('tableDateReceivedFromWrap');
+                var toWrap = document.getElementById('tableDateReceivedToWrap');
+                if (!typeEl || !singleWrap || !fromWrap || !toWrap) {
+                    return;
+                }
+
+                function setEnabled(wrap, enabled) {
+                    var input = wrap.querySelector('input');
+                    if (input) {
+                        input.disabled = !enabled;
+                    }
+                }
+
+                function toggle() {
+                    var v = typeEl.value;
+                    singleWrap.style.display = (v === 'single') ? 'flex' : 'none';
+                    fromWrap.style.display = (v === 'range') ? 'flex' : 'none';
+                    toWrap.style.display = (v === 'range') ? 'flex' : 'none';
+                    setEnabled(singleWrap, v === 'single');
+                    setEnabled(fromWrap, v === 'range');
+                    setEnabled(toWrap, v === 'range');
+                }
+
+                typeEl.addEventListener('change', toggle);
+                toggle();
+            })();
+        </script>
     </div>
 
-    <p>NL RECORDS:</p>
-    <button id="delete-multiple" class="btn btn-danger">
-        Delete Multiple
-    </button>
-    <button id="delete-selected" class="btn btn-warning" disabled>
-        Delete Selected
-    </button>
-    <span id="bulk-selected-count" style="margin-left: 10px; color: #555; font-size: 13px;"></span>
-    <button type="button" id="select-records-transmit" class="btn btn-info">
-        Select Records for Transmit
-    </button>
-    <button type="button" id="transmit-selected-records" class="btn btn-success" disabled>
-        Transmit Selected Records
-    </button>
+    <div class="admin-card no-print" style="margin-bottom: 14px;">
+        <div class="card-body">
+            <div class="admin-toolbar">
+                <div class="admin-toolbar-title">NL Records</div>
+                <div class="admin-toolbar-actions">
+                    <button id="delete-multiple" class="btn btn-danger">Delete Multiple</button>
+                    <button id="delete-selected" class="btn btn-warning" disabled>Delete Selected</button>
+                    <button type="button" id="select-records-transmit" class="btn btn-info">Select for Transmit</button>
+                    <button type="button" id="transmit-selected-records" class="btn btn-success" disabled>Transmit Selected</button>
+                    <span id="bulk-selected-count" class="admin-toolbar-count"></span>
+                </div>
+            </div>
+        </div>
+    </div>
     <form id="bulk-form" method="POST" action="{{ route('admin.bulk-delete') }}">
         @csrf
         @method('DELETE')
         <input type="hidden" name="record_ids" id="selected-record-ids">
         <div id="table-loading-indicator" style="display: none; margin-bottom: 10px; color: #1565C0; font-weight: 600;">Loading records...</div>
         <div style="overflow-x: auto; width: 100%; margin-bottom: 20px; border: 1px solid #ccc; position: relative; padding: 0 10px;">
-            <x-table :records="$records" :showEncoder="true" :showFilters="true" :showAdminTransmittal="true" :allPrograms="$allPrograms" :allLines="$allLines" :allSources="$allSources" :allModes="$allModes" :showCheckbox="true" />
+            <x-table :records="$records" :showEncoder="true" :showFilters="false" :showAdminTransmittal="true" :allPrograms="$allPrograms" :allLines="$allLines" :allSources="$allSources" :allModes="$allModes" :showCheckbox="true" />
         </div>
         @if($records->isEmpty())
             <div style="padding: 16px; margin-bottom: 12px; border: 1px solid #e0e0e0; background: #fafafa; color: #555;">
@@ -568,34 +730,37 @@
             @endif
         </div>
     </form>
-    <dialog class="editRecordDialog" id="recordEditDialog">
-        <form class="editRecordform" id="recordEditForm" method="POST">
+    <dialog class="editRecordDialog rounded-2xl shadow-2xl bg-white backdrop:bg-black/40 p-0 w-[min(640px,calc(100vw-2rem))]" id="recordEditDialog">
+        <div class="px-5 pt-5 pb-3 border-b border-gray-100">
+            <h3 class="text-base font-black text-gray-900">Edit Record</h3>
+        </div>
+        <form class="editRecordform grid grid-cols-[auto_1fr] gap-x-4 gap-y-3 px-5 py-4 items-center" id="recordEditForm" method="POST">
             @csrf
             @method('PUT')
-            <label for="farmerName">Farmer Name:</label>
-            <input type="text" id="farmerName" name="farmerName">
+            <label for="farmerName" class="text-xs font-bold text-gray-600 text-right">Farmer Name:</label>
+            <input type="text" id="farmerName" name="farmerName" class="h-9 px-3 rounded-lg border border-gray-200 focus:border-pcic-500 focus:ring-2 focus:ring-pcic-100 outline-none text-sm w-full">
             
-            <label for="editProvince">Province:</label>
-            <select name="province" id="editProvince" required>
+            <label for="editProvince" class="text-xs font-bold text-gray-600 text-right">Province:</label>
+            <select name="province" id="editProvince" required class="h-9 px-3 rounded-lg border border-gray-200 focus:border-pcic-500 focus:ring-2 focus:ring-pcic-100 outline-none text-sm w-full bg-white">
                 <option value="">Select Province</option>
                 <option value="Aurora">Aurora</option>
                 <option value="Nueva Ecija">Nueva Ecija</option>
             </select>
             
-            <label for="editMunicipality">Municipality:</label>
-            <select name="municipality" id="editMunicipality" required disabled>
+            <label for="editMunicipality" class="text-xs font-bold text-gray-600 text-right">Municipality:</label>
+            <select name="municipality" id="editMunicipality" required disabled class="h-9 px-3 rounded-lg border border-gray-200 focus:border-pcic-500 focus:ring-2 focus:ring-pcic-100 outline-none text-sm w-full bg-gray-50">
                 <option value="">Select Municipality</option>
             </select>
             
-            <label for="editBarangay">Barangay:</label>
-            <select name="barangay" id="editBarangay" required disabled>
+            <label for="editBarangay" class="text-xs font-bold text-gray-600 text-right">Barangay:</label>
+            <select name="barangay" id="editBarangay" required disabled class="h-9 px-3 rounded-lg border border-gray-200 focus:border-pcic-500 focus:ring-2 focus:ring-pcic-100 outline-none text-sm w-full bg-gray-50">
                 <option value="">Select Barangay</option>
             </select>
             
             <input type="hidden" name="address" id="editRecordAddress">
             
-            <label for="line">Line:</label>
-            <select name="line" id="line">
+            <label for="line" class="text-xs font-bold text-gray-600 text-right">Line:</label>
+            <select name="line" id="line" class="h-9 px-3 rounded-lg border border-gray-200 focus:border-pcic-500 focus:ring-2 focus:ring-pcic-100 outline-none text-sm w-full bg-white">
                 <option value="">Select Line</option>
                 <option value="rice">rice</option>
                 <option value="corn">corn</option>
@@ -606,8 +771,8 @@
                 <option value="fisheries">Fisheries</option>
             </select>
             
-            <label for="program">Program:</label>
-            <select name="program" id="program">
+            <label for="program" class="text-xs font-bold text-gray-600 text-right">Program:</label>
+            <select name="program" id="program" class="h-9 px-3 rounded-lg border border-gray-200 focus:border-pcic-500 focus:ring-2 focus:ring-pcic-100 outline-none text-sm w-full bg-white">
                 <option value="">Select Program</option>
                 <option value="RSBSA">RSBSA</option>
                 <option value="AGRI-SENSO">AGRI-SENSO</option>
@@ -619,110 +784,139 @@
                 <option value="SELF-FINANCED">SELF-FINANCED</option>
             </select>
             
-            <label for="source">Source:</label>
-            <select name="source" id="source">
+            <label for="source" class="text-xs font-bold text-gray-600 text-right">Source:</label>
+            <select name="source" id="source" class="h-9 px-3 rounded-lg border border-gray-200 focus:border-pcic-500 focus:ring-2 focus:ring-pcic-100 outline-none text-sm w-full bg-white">
                 <option value="">Select Source</option>
                 <option value="OD">OD</option>
                 <option value="Email">Email</option>
                 <option value="Facebook">Facebook</option>
             </select>
             
-            <label for="causeOfDamage">Cause of Damage:</label>
-            <input type="text" id="causeOfDamage" name="causeOfDamage">
+            <label for="causeOfDamage" class="text-xs font-bold text-gray-600 text-right">Cause of Damage:</label>
+            <input type="text" id="causeOfDamage" name="causeOfDamage" class="h-9 px-3 rounded-lg border border-gray-200 focus:border-pcic-500 focus:ring-2 focus:ring-pcic-100 outline-none text-sm w-full">
             
-            <label for="modeOfPayment">Mode of payment:</label>
-            <select name="modeOfPayment" id="modeOfPayment">
+            <label for="modeOfPayment" class="text-xs font-bold text-gray-600 text-right">Mode of payment:</label>
+            <select name="modeOfPayment" id="modeOfPayment" class="h-9 px-3 rounded-lg border border-gray-200 focus:border-pcic-500 focus:ring-2 focus:ring-pcic-100 outline-none text-sm w-full bg-white">
                 <option value="">Select Mode of payment</option>
                 <option value="check">Check</option>
                 <option value="palawan">Palawan Pay</option>
                 <option value="not_indicated">Not indicated</option>
             </select>
-            <label for="accounts">Account (sender email/username):</label>
-            <input type="text" id="accounts" name="accounts">
-            <label for="facebook_page_url">Facebook page link (Facebook source only):</label>
-            <input type="url" id="facebook_page_url" name="facebook_page_url" placeholder="https://www.facebook.com/...">
-            <label for="date_occurrence">Date occurrence:</label>
-            <input type="text" id="date_occurrence" name="date_occurrence">
+            <label for="accounts" class="text-xs font-bold text-gray-600 text-right">Account (sender):</label>
+            <input type="text" id="accounts" name="accounts" class="h-9 px-3 rounded-lg border border-gray-200 focus:border-pcic-500 focus:ring-2 focus:ring-pcic-100 outline-none text-sm w-full">
+            <label for="facebook_page_url" class="text-xs font-bold text-gray-600 text-right">FB page link:</label>
+            <input type="url" id="facebook_page_url" name="facebook_page_url" placeholder="https://www.facebook.com/..." class="h-9 px-3 rounded-lg border border-gray-200 focus:border-pcic-500 focus:ring-2 focus:ring-pcic-100 outline-none text-sm w-full">
+            <label for="date_occurrence" class="text-xs font-bold text-gray-600 text-right">Date occurrence:</label>
+            <input type="text" id="date_occurrence" name="date_occurrence" class="h-9 px-3 rounded-lg border border-gray-200 focus:border-pcic-500 focus:ring-2 focus:ring-pcic-100 outline-none text-sm w-full">
             
-            <label for="remarks">Remarks - Care of:</label>
-            <input type="text" id="remarks" name="remarks">
+            <label for="remarks" class="text-xs font-bold text-gray-600 text-right">Remarks - Care of:</label>
+            <input type="text" id="remarks" name="remarks" class="h-9 px-3 rounded-lg border border-gray-200 focus:border-pcic-500 focus:ring-2 focus:ring-pcic-100 outline-none text-sm w-full">
             
-            <label for="transmittal_number">Control Number:</label>
-            <input type="text" id="transmittal_number" name="transmittal_number" placeholder="e.g., 2026-0420-001...">
+            <label for="transmittal_number" class="text-xs font-bold text-gray-600 text-right">Control Number:</label>
+            <input type="text" id="transmittal_number" name="transmittal_number" placeholder="e.g., 2026-0420-001..." class="h-9 px-3 rounded-lg border border-gray-200 focus:border-pcic-500 focus:ring-2 focus:ring-pcic-100 outline-none text-sm w-full">
             
-            <label for="admin_transmittal_number">Admin Transmittal Number:</label>
-            <input type="text" id="admin_transmittal_number" name="admin_transmittal_number" placeholder="e.g., 001, 002, 003...">
+            <label for="admin_transmittal_number" class="text-xs font-bold text-gray-600 text-right">Admin Transmittal #:</label>
+            <input type="text" id="admin_transmittal_number" name="admin_transmittal_number" placeholder="e.g., 001, 002, 003..." class="h-9 px-3 rounded-lg border border-gray-200 focus:border-pcic-500 focus:ring-2 focus:ring-pcic-100 outline-none text-sm w-full">
 
-            <label for="clear_admin_transmittal_number" style="display: block; margin-top: 8px;">
-                <input type="checkbox" id="clear_admin_transmittal_number" name="clear_admin_transmittal_number" value="1">
+            <div></div>
+            <label for="clear_admin_transmittal_number" class="flex items-center gap-2 text-xs font-bold text-gray-600">
+                <input type="checkbox" id="clear_admin_transmittal_number" name="clear_admin_transmittal_number" value="1" class="w-4 h-4 accent-pcic-700">
                 Clear Admin Transmittal Number
             </label>
             
-            <button type="submit">Update Record</button>
+            <div></div>
+            <div class="flex gap-2 pt-1">
+                <button type="submit" class="h-9 px-4 rounded-lg bg-pcic-700 text-white text-xs font-bold hover:bg-pcic-800 transition-colors cursor-pointer">Update Record</button>
+                <button type="button" class="closeEditRecordDialog h-9 px-4 rounded-lg border border-gray-200 text-xs font-bold text-gray-600 hover:bg-gray-50 transition-colors cursor-pointer">Close</button>
+            </div>
         </form>
-        <button class="closeEditRecordDialog">Close</button>
     </dialog>
-    <dialog class="deleteRecordDialog">
-        <form class="deleteRecordForm" method="POST">
+    <dialog class="deleteRecordDialog rounded-2xl shadow-2xl bg-white backdrop:bg-black/40 p-0 w-[min(400px,calc(100vw-2rem))]">
+        <div class="px-5 pt-5 pb-3 border-b border-gray-100">
+            <h3 class="text-base font-black text-gray-900">Delete Record</h3>
+        </div>
+        <form class="deleteRecordForm px-5 py-4 flex flex-col gap-3" method="POST">
             @csrf
             @method('DELETE')
-            <p>Delete this record?</p>
-            <p class="deleteRecordMessage"></p>
-            <button type="submit">Confirm Delete</button>
-            <button type="button" class="cancelDeleteRecord">Cancel</button>
-        </form>
-    </dialog>
-
-    <!-- Bulk Delete Confirmation Dialog -->
-    <dialog class="bulkDeleteDialog">
-        <h3>Confirm Bulk Delete</h3>
-        <p>The following records will be deleted:</p>
-        <ul class="bulk-delete-list"></ul>
-        <p>Are you sure you want to proceed?</p>
-        <button type="button" id="confirm-bulk-delete">Confirm Delete</button>
-        <button type="button" class="cancelBulkDelete">Cancel</button>
-    </dialog>
-
-    <!-- Edit Admin Dialog -->
-    <dialog class="editAdminDialog">
-        <form class="editAdminForm" method="POST">
-            @csrf
-            @method('PUT')
-            <h3>Edit Admin Credentials</h3>
-            <label for="adminUsername">Username:</label>
-            <input type="text" id="adminUsername" name="username" required>
-            <label for="adminPassword">Password:</label>
-            <input type="password" id="adminPassword" name="password" required placeholder="Enter new password">
-            <button type="submit">Update</button>
-            <button type="button" class="closeEditAdminDialog">Cancel</button>
-        </form>
-    </dialog>
-
-    <!-- Approve Officer Dialog -->
-    <dialog class="approveOfficerDialog">
-        <h3>Confirm Officer Approval</h3>
-        <p>Are you sure you want to approve <strong id="approveOfficerName"></strong>?</p>
-        <form id="approveOfficerForm" method="POST">
-            @csrf
-            <div class="dialog-actions">
-                <button type="submit" class="confirm-btn">Confirm Approve</button>
-                <button type="button" class="cancel-btn closeApproveDialog">Cancel</button>
+            <p class="text-sm text-gray-600">Delete this record?</p>
+            <p class="deleteRecordMessage text-sm font-semibold text-red-700"></p>
+            <div class="flex gap-2 justify-end mt-2">
+                <button type="submit" class="h-9 px-4 rounded-lg bg-red-600 text-white text-xs font-bold hover:bg-red-700 transition-colors cursor-pointer">Confirm Delete</button>
+                <button type="button" class="cancelDeleteRecord h-9 px-4 rounded-lg border border-gray-200 text-xs font-bold text-gray-600 hover:bg-gray-50 transition-colors cursor-pointer">Cancel</button>
             </div>
         </form>
     </dialog>
 
+    <!-- Bulk Delete Confirmation Dialog -->
+    <dialog class="bulkDeleteDialog rounded-2xl shadow-2xl bg-white backdrop:bg-black/40 p-0 w-[min(440px,calc(100vw-2rem))]">
+        <div class="px-5 pt-5 pb-3 border-b border-gray-100">
+            <h3 class="text-base font-black text-gray-900">Confirm Bulk Delete</h3>
+        </div>
+        <div class="px-5 py-4">
+            <p class="text-sm text-gray-600 mb-2">The following records will be deleted:</p>
+            <ul class="bulk-delete-list max-h-40 overflow-y-auto mb-3"></ul>
+            <p class="text-sm font-semibold text-red-700 mb-3">Are you sure you want to proceed?</p>
+            <div class="flex gap-2 justify-end">
+                <button type="button" id="confirm-bulk-delete" class="h-9 px-4 rounded-lg bg-red-600 text-white text-xs font-bold hover:bg-red-700 transition-colors cursor-pointer">Confirm Delete</button>
+                <button type="button" class="cancelBulkDelete h-9 px-4 rounded-lg border border-gray-200 text-xs font-bold text-gray-600 hover:bg-gray-50 transition-colors cursor-pointer">Cancel</button>
+            </div>
+        </div>
+    </dialog>
+
+    <!-- Edit Admin Dialog -->
+    <dialog class="editAdminDialog rounded-2xl shadow-2xl bg-white backdrop:bg-black/40 p-0 w-[min(420px,calc(100vw-2rem))]">
+        <form class="editAdminForm" method="POST">
+            @csrf
+            @method('PUT')
+            <div class="px-5 pt-5 pb-3 border-b border-gray-100">
+                <h3 class="text-base font-black text-gray-900">Edit Admin Credentials</h3>
+            </div>
+            <div class="px-5 py-4 flex flex-col gap-3">
+                <label for="adminUsername" class="text-xs font-bold text-gray-600">Username:</label>
+                <input type="text" id="adminUsername" name="username" required class="h-9 px-3 rounded-lg border border-gray-200 focus:border-pcic-500 focus:ring-2 focus:ring-pcic-100 outline-none text-sm w-full">
+                <label for="adminPassword" class="text-xs font-bold text-gray-600">Password:</label>
+                <input type="password" id="adminPassword" name="password" required placeholder="Enter new password" class="h-9 px-3 rounded-lg border border-gray-200 focus:border-pcic-500 focus:ring-2 focus:ring-pcic-100 outline-none text-sm w-full">
+                <div class="flex gap-2 justify-end mt-2">
+                    <button type="submit" class="h-9 px-4 rounded-lg bg-pcic-700 text-white text-xs font-bold hover:bg-pcic-800 transition-colors cursor-pointer">Update</button>
+                    <button type="button" class="closeEditAdminDialog h-9 px-4 rounded-lg border border-gray-200 text-xs font-bold text-gray-600 hover:bg-gray-50 transition-colors cursor-pointer">Cancel</button>
+                </div>
+            </div>
+        </form>
+    </dialog>
+
+    <!-- Approve Officer Dialog -->
+    <dialog class="approveOfficerDialog rounded-2xl shadow-2xl bg-white backdrop:bg-black/40 p-0 w-[min(400px,calc(100vw-2rem))]">
+        <div class="px-5 pt-5 pb-3 border-b border-gray-100">
+            <h3 class="text-base font-black text-gray-900">Confirm Officer Approval</h3>
+        </div>
+        <div class="px-5 py-4">
+            <p class="text-sm text-gray-600 mb-4">Are you sure you want to approve <strong id="approveOfficerName" class="text-gray-900"></strong>?</p>
+            <form id="approveOfficerForm" method="POST">
+                @csrf
+                <div class="flex gap-2 justify-end">
+                    <button type="submit" class="h-9 px-4 rounded-lg bg-pcic-700 text-white text-xs font-bold hover:bg-pcic-800 transition-colors cursor-pointer">Confirm Approve</button>
+                    <button type="button" class="closeApproveDialog h-9 px-4 rounded-lg border border-gray-200 text-xs font-bold text-gray-600 hover:bg-gray-50 transition-colors cursor-pointer">Cancel</button>
+                </div>
+            </form>
+        </div>
+    </dialog>
+
     <!-- Add Admin Dialog -->
-    <dialog class="addAdminDialog">
+    <dialog class="addAdminDialog rounded-2xl shadow-2xl bg-white backdrop:bg-black/40 p-0 w-[min(420px,calc(100vw-2rem))]">
         <form action="{{ route('admin.users.create') }}" method="POST">
             @csrf
-            <h3>Add New Admin User</h3>
-            <label for="newAdminUsername">Username:</label>
-            <input type="text" id="newAdminUsername" name="username" required>
-            <label for="newAdminPassword">Password:</label>
-            <input type="password" id="newAdminPassword" name="password" required placeholder="Minimum 6 characters">
-            <div class="dialog-actions">
-                <button type="submit" class="confirm-btn">Create Admin</button>
-                <button type="button" class="cancel-btn closeAddAdminDialog">Cancel</button>
+            <div class="px-5 pt-5 pb-3 border-b border-gray-100">
+                <h3 class="text-base font-black text-gray-900">Add New Admin User</h3>
+            </div>
+            <div class="px-5 py-4 flex flex-col gap-3">
+                <label for="newAdminUsername" class="text-xs font-bold text-gray-600">Username:</label>
+                <input type="text" id="newAdminUsername" name="username" required class="h-9 px-3 rounded-lg border border-gray-200 focus:border-pcic-500 focus:ring-2 focus:ring-pcic-100 outline-none text-sm w-full">
+                <label for="newAdminPassword" class="text-xs font-bold text-gray-600">Password:</label>
+                <input type="password" id="newAdminPassword" name="password" required placeholder="Minimum 6 characters" class="h-9 px-3 rounded-lg border border-gray-200 focus:border-pcic-500 focus:ring-2 focus:ring-pcic-100 outline-none text-sm w-full">
+                <div class="flex gap-2 justify-end mt-2">
+                    <button type="submit" class="h-9 px-4 rounded-lg bg-pcic-700 text-white text-xs font-bold hover:bg-pcic-800 transition-colors cursor-pointer">Create Admin</button>
+                    <button type="button" class="closeAddAdminDialog h-9 px-4 rounded-lg border border-gray-200 text-xs font-bold text-gray-600 hover:bg-gray-50 transition-colors cursor-pointer">Cancel</button>
+                </div>
             </div>
         </form>
     </dialog>
@@ -2240,7 +2434,70 @@ Zabali,San Luis,Aurora`;
             form?.submit();
         });
     </script>
-    
+
+    {{-- Real-time pending approvals polling --}}
+    <script>
+    (function() {
+        var POLL_INTERVAL = 10000; // 10 seconds
+        var lastTotal = {{ $pendingOfficers->count() + $pendingEmailHandlers->count() }};
+        var lastOfficerIds = @json($pendingOfficers->pluck('id')->toArray());
+        var lastEmailIds = @json($pendingEmailHandlers->pluck('id')->toArray());
+
+        function updateBadge(count) {
+            var badge = document.getElementById('pendingBadge');
+            if (!badge) return;
+            if (count > 0) {
+                badge.style.display = 'inline-flex';
+                badge.textContent = count;
+            } else {
+                badge.style.display = 'none';
+            }
+        }
+
+        // Set initial badge
+        updateBadge(lastTotal);
+
+        function pollPendingApprovals() {
+            fetch('{{ route("admin.api.pending-approvals") }}')
+                .then(function(res) { return res.json(); })
+                .then(function(data) {
+                    if (data.error) return;
+
+                    var newOfficerIds = data.officers.map(function(o) { return o.id; });
+                    var newEmailIds = data.emailHandlers.map(function(e) { return e.id; });
+
+                    // Detect new officers
+                    newOfficerIds.forEach(function(id) {
+                        if (lastOfficerIds.indexOf(id) === -1) {
+                            var officer = data.officers.find(function(o) { return o.id === id; });
+                            if (officer) {
+                                showToast('New Officer of the Day login: ' + officer.name, 'warning');
+                            }
+                        }
+                    });
+
+                    // Detect new email handlers
+                    newEmailIds.forEach(function(id) {
+                        if (lastEmailIds.indexOf(id) === -1) {
+                            var handler = data.emailHandlers.find(function(e) { return e.id === id; });
+                            if (handler) {
+                                showToast('New Email handler login: ' + handler.name, 'warning');
+                            }
+                        }
+                    });
+
+                    lastOfficerIds = newOfficerIds;
+                    lastEmailIds = newEmailIds;
+                    lastTotal = data.totalPending;
+                    updateBadge(data.totalPending);
+                })
+                .catch(function() {});
+        }
+
+        setInterval(pollPendingApprovals, POLL_INTERVAL);
+    })();
+    </script>
+
     </div> <!-- END NL Records Section -->
 
         </main>
