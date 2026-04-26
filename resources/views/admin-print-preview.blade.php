@@ -156,22 +156,25 @@
                 page-break-inside: avoid;
                 margin: 0 !important;
                 overflow: visible !important;
-                height: calc(100vh - 16mm) !important;
+                height: auto !important;
+                max-height: none !important;
             }
 
             .print-preview-card .meta {
                 background: #006c35 !important;
                 border-bottom: 2px solid #005428 !important;
                 color: #fff !important;
-                padding: 8px 12px !important;
+                padding: 4px 8px !important;
                 font-weight: 700 !important;
-                font-size: 11px !important;
+                font-size: 10px !important;
                 display: flex !important;
-                gap: 10px !important;
+                gap: 8px !important;
                 flex-wrap: wrap !important;
                 justify-content: space-between !important;
                 -webkit-print-color-adjust: exact !important;
                 print-color-adjust: exact !important;
+                margin-bottom: 0 !important;
+                line-height: 1.2 !important;
             }
 
             .print-preview-card .meta strong {
@@ -181,31 +184,47 @@
 
             /* Table wrapper */
             .print-preview-card .table-wrap {
-                padding: 0 10px 10px 10px !important;
+                padding: 2px 4px 4px 4px !important;
+                margin: 0 !important;
             }
 
             /* Received by section */
             .received-by {
-                padding: 10px 14px 14px 14px !important;
-                font-size: 12px !important;
+                padding: 6px 8px 8px 8px !important;
+                font-size: 10px !important;
                 font-weight: 800 !important;
                 color: #000 !important;
+                margin: 0 !important;
             }
 
-            /* Page breaks - simple and effective */
+            /* Page breaks - keep headings and table together */
             .page-section {
                 page-break-after: always !important;
-                break-after: page !important;
                 margin-bottom: 0 !important;
+                padding: 0 !important;
             }
 
             .page-section:last-child {
                 page-break-after: auto !important;
-                break-after: auto !important;
             }
 
-            /* Prevent content cutoff */
+            /* Keep card content together - headings and table */
             .print-preview-card {
+                page-break-inside: avoid !important;
+                margin: 0 !important;
+                padding: 0 !important;
+                display: block !important;
+            }
+
+            /* Ensure meta section stays with table */
+            .print-preview-card .meta {
+                page-break-after: avoid !important;
+                page-break-inside: avoid !important;
+            }
+
+            /* Ensure table stays with meta */
+            .print-preview-card .table-wrap {
+                page-break-before: avoid !important;
                 page-break-inside: avoid !important;
             }
 
@@ -225,80 +244,83 @@
                 display: table !important;
                 width: 100% !important;
                 border-collapse: collapse !important;
-                border: 2px solid #000 !important;
-                margin: 12px auto 10px auto !important;
+                border: 1px solid #000 !important;
+                margin: 0 !important;
                 page-break-inside: avoid !important;
-                table-layout: fixed !important;
+                table-layout: auto !important;
             }
 
             .print-preview-table tr {
                 page-break-inside: avoid !important;
             }
 
+            /* Column widths optimized for 7-column layout */
             .print-preview-table th:nth-child(1),
             .print-preview-table td:nth-child(1) {
-                width: 5% !important;
+                width: 8% !important;
                 text-align: center !important;
             }
 
             .print-preview-table th:nth-child(2),
             .print-preview-table td:nth-child(2) {
-                width: 18% !important;
+                width: 20% !important;
             }
 
             .print-preview-table th:nth-child(3),
             .print-preview-table td:nth-child(3) {
-                width: 23% !important;
+                width: 25% !important;
             }
 
             .print-preview-table th:nth-child(4),
             .print-preview-table td:nth-child(4) {
-                width: 14% !important;
+                width: 12% !important;
             }
 
             .print-preview-table th:nth-child(5),
             .print-preview-table td:nth-child(5) {
-                width: 9% !important;
+                width: 10% !important;
             }
 
             .print-preview-table th:nth-child(6),
             .print-preview-table td:nth-child(6) {
-                width: 18% !important;
+                width: 15% !important;
             }
 
             .print-preview-table th:nth-child(7),
             .print-preview-table td:nth-child(7) {
-                width: 13% !important;
+                width: 10% !important;
             }
 
             .print-preview-table th {
-                padding: 6px 8px !important;
+                padding: 4px 6px !important;
                 border: 1px solid #000 !important;
                 background-color: #006c35 !important;
                 font-weight: 700 !important;
                 text-align: left !important;
-                font-size: 10px !important;
+                font-size: 9px !important;
                 display: table-cell !important;
-                height: auto !important;
+                height: 16px !important;
                 margin: 0 !important;
                 color: #fff !important;
-                vertical-align: top !important;
+                vertical-align: middle !important;
                 text-transform: uppercase !important;
-                letter-spacing: 0.5px !important;
+                letter-spacing: 0.3px !important;
                 -webkit-print-color-adjust: exact !important;
                 print-color-adjust: exact !important;
+                line-height: 1.2 !important;
             }
 
             .print-preview-table td {
-                padding: 4px 6px !important;
+                padding: 2px 4px !important;
                 border: 1px solid #000 !important;
-                font-size: 9px !important;
+                font-size: 8px !important;
                 display: table-cell !important;
-                height: auto !important;
+                height: 12px !important;
                 margin: 0 !important;
                 color: #000 !important;
-                vertical-align: top !important;
+                vertical-align: middle !important;
                 word-wrap: break-word !important;
+                line-height: 1.1 !important;
             }
 
             .print-preview-table .address-cell {
