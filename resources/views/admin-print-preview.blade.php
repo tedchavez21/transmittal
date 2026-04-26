@@ -4,11 +4,11 @@
 
 @section('page-styles')
     <style>
-        /* Print Preview: match site styles (app.css) while staying print-correct */
+        /* Print Preview: PCIC-themed screen + print styles */
         .print-preview-wrap {
             max-width: 1200px;
             margin: 18px auto 24px auto;
-            padding: 0 14px;record-checkbox-transmit
+            padding: 0 14px;
         }
 
         .print-preview-topbar {
@@ -30,7 +30,7 @@
             flex-wrap: wrap;
             justify-content: space-between;
             border-bottom: 1px solid rgba(0,0,0,0.06);
-            background: linear-gradient(180deg, rgba(25, 118, 210, 0.06), rgba(255, 255, 255, 0));
+            background: linear-gradient(180deg, rgba(0, 108, 53, 0.08), rgba(255, 255, 255, 0));
             font-weight: 700;
             color: rgba(15, 23, 42, 0.86);
             font-size: 12px;
@@ -51,29 +51,33 @@
             max-width: none;
             border-collapse: separate;
             border-spacing: 0;
-            border: 2px solid rgba(15, 23, 42, 0.2);
+            border: 2px solid rgba(0, 108, 53, 0.25);
             border-radius: 8px;
             overflow: hidden;
         }
 
         .print-preview-table th {
             padding: 12px 14px;
-            background: linear-gradient(180deg, rgba(25, 118, 210, 0.12), rgba(25, 118, 210, 0.08));
-            border-bottom: 2px solid rgba(15, 23, 42, 0.3);
+            background: #006c35;
+            border-bottom: 2px solid #005428;
             font-weight: 700;
-            color: #0f172a;
+            color: #fff;
             text-align: left;
+            font-size: 12px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
         }
 
         .print-preview-table td {
             padding: 10px 12px;
             border-bottom: 1px solid rgba(15, 23, 42, 0.1);
             vertical-align: top;
+            font-size: 12px;
         }
 
         /* Alternating row colors for screen */
         .print-preview-table tbody tr:nth-child(even) {
-            background-color: rgba(248, 250, 252, 0.8);
+            background-color: rgba(240, 253, 244, 0.6);
         }
 
         .print-preview-table tbody tr:nth-child(odd) {
@@ -81,7 +85,7 @@
         }
 
         .print-preview-table tbody tr:hover {
-            background-color: rgba(25, 118, 210, 0.06);
+            background-color: rgba(0, 108, 53, 0.06);
         }
 
         .print-preview-table .address-cell {
@@ -156,9 +160,9 @@
             }
 
             .print-preview-card .meta {
-                background: #fff !important;
-                border-bottom: 1px solid #000 !important;
-                color: #000 !important;
+                background: #006c35 !important;
+                border-bottom: 2px solid #005428 !important;
+                color: #fff !important;
                 padding: 8px 12px !important;
                 font-weight: 700 !important;
                 font-size: 11px !important;
@@ -166,10 +170,12 @@
                 gap: 10px !important;
                 flex-wrap: wrap !important;
                 justify-content: space-between !important;
+                -webkit-print-color-adjust: exact !important;
+                print-color-adjust: exact !important;
             }
 
             .print-preview-card .meta strong {
-                color: #000 !important;
+                color: #fff !important;
                 font-weight: 900 !important;
             }
 
@@ -268,15 +274,19 @@
             .print-preview-table th {
                 padding: 6px 8px !important;
                 border: 1px solid #000 !important;
-                background-color: #f5f5f5 !important;
+                background-color: #006c35 !important;
                 font-weight: 700 !important;
                 text-align: left !important;
                 font-size: 10px !important;
                 display: table-cell !important;
                 height: auto !important;
                 margin: 0 !important;
-                color: #000 !important;
+                color: #fff !important;
                 vertical-align: top !important;
+                text-transform: uppercase !important;
+                letter-spacing: 0.5px !important;
+                -webkit-print-color-adjust: exact !important;
+                print-color-adjust: exact !important;
             }
 
             .print-preview-table td {
@@ -295,18 +305,20 @@
                 white-space: normal !important;
             }
 
-            /* Alternating row colors - match screen exactly */
+            /* Alternating row colors - match screen */
             .print-preview-table tbody tr:nth-child(even) {
-                background-color: rgba(248, 250, 252, 0.8) !important;
+                background-color: rgba(240, 253, 244, 0.6) !important;
+                -webkit-print-color-adjust: exact !important;
+                print-color-adjust: exact !important;
             }
 
             .print-preview-table tbody tr:nth-child(odd) {
-                background-color: rgba(255, 255, 255, 0.9) !important;
+                background-color: #fff !important;
             }
 
             /* Ensure headers repeat on each printed page */
-            thead { 
-                display: table-header-group !important; 
+            thead {
+                display: table-header-group !important;
             }
 
             /* Hide any remaining elements */

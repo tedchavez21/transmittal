@@ -19,11 +19,11 @@
             <div class="admin-sidebar-section-label">Navigation</div>
             <nav class="admin-nav" aria-label="Admin navigation">
                 <button type="button" class="active" id="btn-dashboard">
-                    <span class="icon" aria-hidden="true">DB</span>
+                    <span class="icon" aria-hidden="true"><img src="/images/dashboard.svg" alt="" width="18" height="18"></span>
                     <span>Dashboard</span>
                 </button>
                 <button type="button" id="btn-nl-records">
-                    <span class="icon" aria-hidden="true">NL</span>
+                    <span class="icon" aria-hidden="true"><img src="/images/file-svgrepo-com.svg" alt="" width="18" height="18"></span>
                     <span>NL Records</span>
                 </button>
             </nav>
@@ -32,12 +32,12 @@
             <div class="admin-sidebar-section-label">Tools</div>
             <div class="admin-sidebar-actions">
                 <button type="button" class="admin-sidebar-tool" id="openUserApprovalsModal" title="Pending user approvals (Email and OD)">
-                    <span class="icon" aria-hidden="true">AP</span>
+                    <span class="icon" aria-hidden="true"><img src="/images/user.svg" alt="" width="18" height="18"></span>
                     <span class="label">User approvals</span>
                     <span id="pendingBadge" class="pending-badge" style="display:none;"></span>
                 </button>
                 <button type="button" class="admin-sidebar-tool" id="openAdminUsersModal" title="Admin Users">
-                    <span class="icon" aria-hidden="true">AU</span>
+                    <span class="icon" aria-hidden="true"><img src="/images/admin.svg" alt="" width="18" height="18"></span>
                     <span class="label">Admin users</span>
                 </button>
             </div>
