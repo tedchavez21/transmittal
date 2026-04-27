@@ -812,6 +812,7 @@
                 <option value="OTHER-LBP ACP">OTHER-LBP ACP</option>
                 <option value="REGULAR">REGULAR</option>
                 <option value="SELF-FINANCED">SELF-FINANCED</option>
+                <option value="CFITF">CFITF</option>
             </select>
             
             <label for="source" class="text-xs font-bold text-gray-600 text-right">Source:</label>

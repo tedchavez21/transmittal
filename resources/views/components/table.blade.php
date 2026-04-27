@@ -1,4 +1,4 @@
-@props(['records', 'showDelete' => true, 'showEncoder' => false, 'showApproval' => false, 'showAction' => false, 'showCheckbox' => true, 'showFilters' => false, 'showSortableHeaders' => true, 'showAdminTransmittal' => false, 'hideAccountsColumn' => false, 'hideSourceColumn' => false, 'hideProvinceColumn' => false, 'hideDateReceivedColumn' => false, 'allPrograms' => [], 'allLines' => [], 'allSources' => [], 'allModes' => []])
+@props(['records', 'showDelete' => true, 'showEncoder' => false, 'showApproval' => false, 'showAction' => false, 'showCheckbox' => true, 'showFilters' => false, 'showSortableHeaders' => true, 'showAdminTransmittal' => false, 'hideAccountsColumn' => false, 'hideSourceColumn' => false, 'hideProvinceColumn' => false, 'hideDateReceivedColumn' => false, 'useDateEncodedAsDateReceived' => false, 'allPrograms' => [], 'allLines' => [], 'allSources' => [], 'allModes' => []])
 
 @php
 $currentSort = request('sort_by', 'id');
@@ -333,6 +333,15 @@ function getSortIndicator($column, $currentSort, $currentOrder) {
                 Remarks
                 @endif
             </th>
+            
+            <!-- 15. Date Encoded -->
+            <th class="col-date-encoded">
+                @if($showSortableHeaders)
+                <a href="{{ getSortUrl('created_at', $currentSort, $currentOrder, $oppositeOrder) }}" style="color: inherit; text-decoration: none; cursor: pointer;">Date Encoded{{ getSortIndicator('created_at', $currentSort, $currentOrder) }}</a>
+                @else
+                Date Encoded
+                @endif
+            </th>
             @if($showAdminTransmittal)
             <th class="col-admin-transmittal-number">
                 @if($showSortableHeaders)
@@ -380,7 +389,7 @@ function getSortIndicator($column, $currentSort, $currentOrder) {
                 data-accounts="{{ e($record->accounts) }}"
                 data-fb-page-url="{{ e($record->facebook_page_url ?? '') }}"
                 data-date-occurrence="{{ e($record->date_occurrence ?? '') }}"
-                data-date-received="{{ e($record->date_received ?? '') }}"
+                data-date-received="{{ e($record->date_received ? $record->date_received->format('Y-m-d') : '') }}"
                 data-remarks="{{ e($record->remarks) }}"
                 data-source="{{ e($record->source) }}"
                 data-transmittal-number="{{ e($record->transmittal_number) }}"
@@ -438,7 +447,13 @@ function getSortIndicator($column, $currentSort, $currentOrder) {
             
             @if(!$hideDateReceivedColumn)
             <!-- 11. Date Received -->
-            <td class="col-date-received">{{ $record->date_received ? $record->date_received : '—' }}</td>
+            <td class="col-date-received">
+                @if($useDateEncodedAsDateReceived)
+                    {{ $record->created_at ? $record->created_at->format('M d, Y') : '—' }}
+                @else
+                    {{ $record->date_received ? (is_string($record->date_received) ? $record->date_received : $record->date_received->format('M d, Y')) : '—' }}
+                @endif
+            </td>
             @endif
             
             <!-- 12. Account -->
@@ -465,6 +480,9 @@ function getSortIndicator($column, $currentSort, $currentOrder) {
             
             <!-- 14. Remarks -->
             <td class="col-remarks">{{ $record->remarks }}</td>
+            
+            <!-- 15. Date Encoded -->
+            <td class="col-date-encoded">{{ $record->created_at ? $record->created_at->format('M d, Y') : '—' }}</td>
             @if($showAdminTransmittal)
             <td class="col-admin-transmittal-number">{{ empty($record->admin_transmittal_number) ? '—' : $record->admin_transmittal_number }}</td>
             @endif

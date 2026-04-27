@@ -158,6 +158,7 @@
                 <option value="OTHER-LBP ACP">OTHER-LBP ACP</option>
                 <option value="REGULAR">REGULAR</option>
                 <option value="SELF-FINANCED">SELF-FINANCED</option>
+                <option value="CFITF">CFITF</option>
             </select>
             <label for="causeOfDamage" class="text-xs font-bold text-gray-600 text-right">Cause of Damage:</label>
             <input type="text" id="causeOfDamage" name="causeOfDamage" required class="h-9 px-3 rounded-lg border border-gray-200 focus:border-pcic-500 focus:ring-2 focus:ring-pcic-100 outline-none text-sm w-full auto-caps">
@@ -232,6 +233,7 @@
                 <option value="OTHER-LBP ACP">OTHER-LBP ACP</option>
                 <option value="REGULAR">REGULAR</option>
                 <option value="SELF-FINANCED">SELF-FINANCED</option>
+                <option value="CFITF">CFITF</option>
             </select>
             <label for="causeOfDamage" class="text-xs font-bold text-gray-600 text-right">Cause of Damage:</label>
             <input type="text" id="causeOfDamage" name="causeOfDamage" class="h-9 px-3 rounded-lg border border-gray-200 focus:border-pcic-500 focus:ring-2 focus:ring-pcic-100 outline-none text-sm w-full">

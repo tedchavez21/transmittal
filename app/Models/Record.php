@@ -19,6 +19,7 @@ class Record extends Model
         'accounts',
         'facebook_page_url',
         'date_occurrence',
+        'date_received',
         'remarks',
         'source',
         'transmittal_number',
@@ -32,5 +33,6 @@ class Record extends Model
     protected $casts = [
         'approved' => 'boolean',
         'approved_at' => 'datetime',
+        'date_received' => 'date',
     ];
 }

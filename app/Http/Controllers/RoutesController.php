@@ -548,7 +548,7 @@ class RoutesController extends Controller
         $activeOfficers = Officer::where('active', true)->orderBy('name')->get();
         $admins = Admin::all();
 
-        // All available programs (8 total)
+        // All available programs (9 total)
         $allPrograms = [
             'RSBSA',
             'AGRI-SENSO',
@@ -557,7 +557,8 @@ class RoutesController extends Controller
             'OTHER-LI LC',
             'OTHER-LBP ACP',
             'REGULAR',
-            'SELF-FINANCED'
+            'SELF-FINANCED',
+            'CFITF'
         ];
 
         // All available lines (7 total)

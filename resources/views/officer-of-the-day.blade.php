@@ -121,7 +121,7 @@
                     <p class="text-xs text-gray-500 font-semibold mt-0.5">Latest encoded NLs</p>
                 </div>
                 <div class="p-4 overflow-x-auto">
-                    <x-table :records="$records" :showDelete="false" :showCheckbox="false" :showSortableHeaders="false" :hideAccountsColumn="true" :hideSourceColumn="true" :hideProvinceColumn="true" :hideDateReceivedColumn="true" :showFilters="false" />
+                    <x-table :records="$records" :showDelete="false" :showCheckbox="false" :showSortableHeaders="false" :hideAccountsColumn="true" :hideSourceColumn="true" :hideProvinceColumn="true" :useDateEncodedAsDateReceived="true" :showFilters="false" />
                     @if(method_exists($records, 'links'))
                         <div class="pagination mt-3 flex justify-center">{{ $records->links() }}</div>
                     @endif
@@ -175,6 +175,7 @@
                 <option value="OTHER-LBP ACP">OTHER-LBP ACP</option>
                 <option value="REGULAR">REGULAR</option>
                 <option value="SELF-FINANCED">SELF-FINANCED</option>
+                <option value="CFITF">CFITF</option>
                 <option value="CFITF-CIP">CFITF-CIP</option>
             </select>
             <label for="causeOfDamage" class="text-xs font-bold text-gray-600 text-right">Cause of Damage:</label>
@@ -312,6 +313,7 @@
                 <option value="OTHER-LBP ACP">OTHER-LBP ACP</option>
                 <option value="REGULAR">REGULAR</option>
                 <option value="SELF-FINANCED">SELF-FINANCED</option>
+                <option value="CFITF">CFITF</option>
             </select>
             <label for="causeOfDamage" class="text-xs font-bold text-gray-600 text-right">Cause of Damage:</label>
             <input type="text" id="causeOfDamage" name="causeOfDamage" class="h-9 px-3 rounded-lg border border-gray-200 focus:border-pcic-500 focus:ring-2 focus:ring-pcic-100 outline-none text-sm w-full">

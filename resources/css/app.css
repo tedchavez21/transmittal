@@ -33,7 +33,6 @@
     --border: rgba(15, 23, 42, 0.12);
 }
 
-/* Required field validation feedback */
 input:invalid:not(:focus):not([readonly]):not([type="hidden"]):not([type="checkbox"]),
 select:invalid:not(:focus):not([disabled]),
 textarea:invalid:not(:focus) {
@@ -63,7 +62,6 @@ select.shake-invalid {
     box-shadow: 0 0 0 3px rgba(239, 68, 68, 0.12) !important;
 }
 
-/* Toast notifications */
 .toast {
     display: flex;
     align-items: center;
