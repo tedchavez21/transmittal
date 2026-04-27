@@ -1101,6 +1101,8 @@
         const transmitAllBox = document.getElementById('select-all-transmit');
         const transmitCheckboxes = document.querySelectorAll('.record-checkbox-transmit');
         const bulkSelectedCount = document.getElementById('bulk-selected-count');
+        const recordCheckboxes = document.querySelectorAll('.record-checkbox');
+        const selectAllBox = document.getElementById('select-all');
 
         // Get selected IDs from URL parameter
         function getSelectedIdsFromUrl() {
@@ -1120,10 +1122,37 @@
             window.history.replaceState({}, '', url);
         }
 
+        // Get selected delete IDs from URL parameter
+        function getSelectedDeleteIdsFromUrl() {
+            const params = new URLSearchParams(window.location.search);
+            const selectedIds = params.get('selected_delete_ids');
+            return selectedIds ? selectedIds.split(',').filter(id => id) : [];
+        }
+
+        // Update URL with selected delete IDs
+        function updateUrlWithSelectedDeleteIds(selectedIds) {
+            const url = new URL(window.location);
+            if (selectedIds.length > 0) {
+                url.searchParams.set('selected_delete_ids', selectedIds.join(','));
+            } else {
+                url.searchParams.delete('selected_delete_ids');
+            }
+            window.history.replaceState({}, '', url);
+        }
+
         const updateTransmitButtonState = () => {
             const selectedIds = getSelectedIdsFromUrl();
             const totalSelected = selectedIds.length;
             if (transmitActionBtn) transmitActionBtn.disabled = totalSelected === 0;
+            if (bulkSelectedCount) {
+                bulkSelectedCount.textContent = totalSelected > 0 ? `${totalSelected} selected` : '';
+            }
+        };
+
+        const updateDeleteButtonState = () => {
+            const selectedIds = getSelectedDeleteIdsFromUrl();
+            const totalSelected = selectedIds.length;
+            if (deleteSelectedBtn) deleteSelectedBtn.disabled = totalSelected === 0;
             if (bulkSelectedCount) {
                 bulkSelectedCount.textContent = totalSelected > 0 ? `${totalSelected} selected` : '';
             }
@@ -1144,6 +1173,26 @@
                 }
                 updateUrlWithSelectedIds(selectedIds);
                 updateTransmitButtonState();
+            });
+        });
+
+        // Add event listeners for delete checkboxes
+        recordCheckboxes.forEach(cb => {
+            cb.addEventListener('change', function() {
+                const selectedIds = getSelectedDeleteIdsFromUrl();
+                const checkboxValue = cb.value;
+                if (this.checked) {
+                    if (!selectedIds.includes(checkboxValue)) {
+                        selectedIds.push(checkboxValue);
+                    }
+                } else {
+                    const index = selectedIds.indexOf(checkboxValue);
+                    if (index > -1) {
+                        selectedIds.splice(index, 1);
+                    }
+                }
+                updateUrlWithSelectedDeleteIds(selectedIds);
+                updateDeleteButtonState();
             });
         });
 
@@ -1234,8 +1283,6 @@
         const transmitToggleBtn = document.getElementById('select-records-transmit');
         const bulkDeleteDialog = document.querySelector('.bulkDeleteDialog');
         const checkboxElements = document.querySelectorAll('.col-checkbox');
-        const recordCheckboxes = document.querySelectorAll('.record-checkbox');
-        const selectAllBox = document.getElementById('select-all');
         const unassignedToggle = document.getElementById('unassigned-toggle');
         const transmitCheckboxElements = document.querySelectorAll('.col-checkbox-transmit');
         const selectedRecordIdsInput = document.getElementById('selected-record-ids');
@@ -1287,10 +1334,7 @@
             } else {
                 this.textContent = 'Delete Multiple';
                 this.style.backgroundColor = '';
-                recordCheckboxes.forEach(cb => cb.checked = false);
-                if (selectAllBox) selectAllBox.checked = false;
-                if (deleteSelectedBtn) deleteSelectedBtn.disabled = true;
-                if (selectedRecordIdsInput) selectedRecordIdsInput.value = '';
+                clearSelectedDeleteIds();
             }
         });
 
@@ -1371,6 +1415,17 @@
             });
             updateTransmitButtonState();
         }
+
+        function loadSelectedDeleteIds() {
+            const selectedIds = getSelectedDeleteIdsFromUrl();
+            // Use current checkboxes from the DOM (after AJAX replacement)
+            const currentCheckboxes = document.querySelectorAll('.record-checkbox');
+            currentCheckboxes.forEach(cb => {
+                // Handle both string and number comparison
+                cb.checked = selectedIds.includes(cb.value) || selectedIds.includes(String(cb.value)) || selectedIds.includes(parseInt(cb.value));
+            });
+            updateDeleteButtonState();
+        }
         
         function updateSelectedRecordIdsInput() {
             const selectedIds = getSelectedIdsFromUrl();
@@ -1388,8 +1443,17 @@
             updateSelectedRecordIdsInput();
         }
 
+        function clearSelectedDeleteIds() {
+            updateUrlWithSelectedDeleteIds([]);
+            const currentCheckboxes = document.querySelectorAll('.record-checkbox');
+            currentCheckboxes.forEach(cb => cb.checked = false);
+            if (selectAllBox) selectAllBox.checked = false;
+            updateDeleteButtonState();
+        }
+
         // Load saved selections on page load
         loadSelectedTransmitIds();
+        loadSelectedDeleteIds();
 
         // AJAX Pagination - prevent page refresh
         const paginationLinks = document.querySelectorAll('.pagination-link');
@@ -1398,11 +1462,18 @@
             link.addEventListener('click', function(e) {
                 e.preventDefault();
                 let url = this.href;
-                // Preserve selected IDs in URL
+                // Preserve selected transmit IDs in URL
                 const selectedIds = getSelectedIdsFromUrl();
                 if (selectedIds.length > 0) {
                     const urlObj = new URL(url, window.location.origin);
                     urlObj.searchParams.set('selected_transmit_ids', selectedIds.join(','));
+                    url = urlObj.toString();
+                }
+                // Preserve selected delete IDs in URL
+                const selectedDeleteIds = getSelectedDeleteIdsFromUrl();
+                if (selectedDeleteIds.length > 0) {
+                    const urlObj = new URL(url, window.location.origin);
+                    urlObj.searchParams.set('selected_delete_ids', selectedDeleteIds.join(','));
                     url = urlObj.toString();
                 }
                 showLoadingIndicator();
@@ -1438,6 +1509,7 @@
                     // Re-attach event listeners and restore checkbox state
                     reinitializeTableElements();
                     loadSelectedTransmitIds();
+                    loadSelectedDeleteIds();
 
                     // Restore checkbox visibility based on toggle button state
                     const toggleBtn = document.getElementById('select-records-transmit');
@@ -1455,6 +1527,26 @@
                             cb.style.display = 'block';
                         });
                         selectAllBoxes.forEach(box => {
+                            box.style.display = 'block';
+                        });
+                    }
+
+                    // Restore delete checkbox visibility based on toggle button state
+                    const deleteToggleBtn = document.getElementById('delete-multiple');
+                    const isCancelDelete = deleteToggleBtn && deleteToggleBtn.textContent.includes('Cancel');
+
+                    if (isCancelDelete) {
+                        const colDeleteCheckboxes = document.querySelectorAll('.col-checkbox');
+                        const deleteRecordCheckboxes = document.querySelectorAll('.record-checkbox');
+                        const selectAllDeleteBoxes = document.querySelectorAll('#select-all');
+
+                        colDeleteCheckboxes.forEach(el => {
+                            el.style.display = 'table-cell';
+                        });
+                        deleteRecordCheckboxes.forEach(cb => {
+                            cb.style.display = 'block';
+                        });
+                        selectAllDeleteBoxes.forEach(box => {
                             box.style.display = 'block';
                         });
                     }
@@ -1478,6 +1570,10 @@
             const newTransmitActionBtn = document.getElementById('transmit-selected-records');
             const newBulkSelectedCount = document.getElementById('bulk-selected-count');
             const newTransmitToggleBtn = document.getElementById('select-records-transmit');
+            const newDeleteCheckboxes = document.querySelectorAll('.record-checkbox');
+            const newDeleteCheckboxElements = document.querySelectorAll('.col-checkbox');
+            const newSelectAllBox = document.getElementById('select-all');
+            const newDeleteSelectedBtn = document.getElementById('delete-selected');
 
             // Re-attach event listeners
             newTransmitCheckboxes.forEach(cb => {
@@ -1523,7 +1619,52 @@
                 updateUrlWithSelectedIds(selectedIds);
                 updateTransmitButtonState();
             });
-            
+
+            // Re-attach event listeners for delete checkboxes
+            newDeleteCheckboxes.forEach(cb => {
+                cb.addEventListener('change', function() {
+                    const selectedIds = getSelectedDeleteIdsFromUrl();
+                    const checkboxValue = cb.value;
+                    if (this.checked) {
+                        if (!selectedIds.includes(checkboxValue)) {
+                            selectedIds.push(checkboxValue);
+                        }
+                    } else {
+                        const index = selectedIds.indexOf(checkboxValue);
+                        if (index > -1) {
+                            selectedIds.splice(index, 1);
+                        }
+                    }
+                    updateUrlWithSelectedDeleteIds(selectedIds);
+                    updateDeleteButtonState();
+                });
+            });
+
+            newSelectAllBox?.addEventListener('change', function() {
+                let selectedIds = getSelectedDeleteIdsFromUrl();
+
+                if (this.checked) {
+                    // Add all current checkboxes to selection
+                    newDeleteCheckboxes.forEach(cb => {
+                        cb.checked = true;
+                        if (!selectedIds.includes(cb.value)) {
+                            selectedIds.push(cb.value);
+                        }
+                    });
+                } else {
+                    // Remove all current checkboxes from selection
+                    newDeleteCheckboxes.forEach(cb => {
+                        cb.checked = false;
+                        const index = selectedIds.indexOf(cb.value);
+                        if (index > -1) {
+                            selectedIds.splice(index, 1);
+                        }
+                    });
+                }
+                updateUrlWithSelectedDeleteIds(selectedIds);
+                updateDeleteButtonState();
+            });
+
             newTransmitToggleBtn?.addEventListener('click', function() {
                 // Toggle logic here (same as before)
                 let firstElement = newTransmitCheckboxElements[0];
@@ -1593,26 +1734,30 @@
             }
         });
 
-        // 2. Enable/Disable "Delete Selected" based on checkmarks
-        const updateDeleteButtonState = () => {
-            const selectedCount = Array.from(recordCheckboxes).filter(cb => cb.checked).length;
-            
-            if (deleteSelectedBtn) {
-                deleteSelectedBtn.disabled = selectedCount === 0;
-            }
-            
-            if (bulkSelectedCount) {
-                bulkSelectedCount.textContent = selectedCount > 0 ? selectedCount + " selected" : "";
-            }
-        };
-
-        recordCheckboxes.forEach(cb => {
-            cb.addEventListener('change', updateDeleteButtonState);
-        });
-
         // 3. Select All Logic
         selectAllBox?.addEventListener('change', function() {
-            recordCheckboxes.forEach(cb => cb.checked = this.checked);
+            let selectedIds = getSelectedDeleteIdsFromUrl();
+            const currentCheckboxes = document.querySelectorAll('.record-checkbox');
+
+            if (this.checked) {
+                // Add all current checkboxes to selection
+                currentCheckboxes.forEach(cb => {
+                    cb.checked = true;
+                    if (!selectedIds.includes(cb.value)) {
+                        selectedIds.push(cb.value);
+                    }
+                });
+            } else {
+                // Remove all current checkboxes from selection
+                currentCheckboxes.forEach(cb => {
+                    cb.checked = false;
+                    const index = selectedIds.indexOf(cb.value);
+                    if (index > -1) {
+                        selectedIds.splice(index, 1);
+                    }
+                });
+            }
+            updateUrlWithSelectedDeleteIds(selectedIds);
             updateDeleteButtonState();
         });
 
@@ -1622,10 +1767,12 @@
         });
 
         document.getElementById('confirm-bulk-delete')?.addEventListener('click', () => {
-            const selectedIds = Array.from(document.querySelectorAll('.record-checkbox:checked')).map(cb => cb.value);
+            const selectedIds = getSelectedDeleteIdsFromUrl();
             if (selectedRecordIdsInput) {
                 selectedRecordIdsInput.value = selectedIds.join(',');
             }
+            // Clear URL selections before deleting
+            updateUrlWithSelectedDeleteIds([]);
             document.getElementById('bulk-form')?.submit();
         });
 
