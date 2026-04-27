@@ -13,6 +13,9 @@ class RecordsController extends Controller
 {
     public function storeRecord(Request $request)
     {
+        // Check if this is an AJAX request
+        $isAjax = $request->ajax() || $request->header('X-Requested-With') === 'XMLHttpRequest';
+        
         // Validate the incoming request data
         $source = $request->input('source', 'OD');
 
@@ -45,20 +48,28 @@ class RecordsController extends Controller
         // Check authentication based on source
         if ($source === 'OD') {
             if (!$request->session()->has('officer_name')) {
-                return redirect()->back()->with('error', 'Please log in as Officer of the Day first.');
+                $message = 'Please log in as Officer of the Day first.';
+                return $isAjax ? response()->json(['success' => false, 'message' => $message], 401) 
+                              : redirect()->back()->with('error', $message);
             }
         } elseif ($source === 'Email') {
             if (!$request->session()->has('email_logged_in') || !$request->session()->has('email_user_name')) {
-                return redirect()->back()->with('error', 'Please log in to Email handler first.');
+                $message = 'Please log in to Email handler first.';
+                return $isAjax ? response()->json(['success' => false, 'message' => $message], 401) 
+                              : redirect()->back()->with('error', $message);
             }
             $emailName = $request->session()->get('email_user_name');
             $approvedHandler = EmailHandler::where('name', $emailName)->where('approved', true)->exists();
             if (!$approvedHandler) {
-                return redirect()->back()->with('error', 'Your email handler account is not approved yet.');
+                $message = 'Your email handler account is not approved yet.';
+                return $isAjax ? response()->json(['success' => false, 'message' => $message], 403) 
+                              : redirect()->back()->with('error', $message);
             }
         } elseif ($source === 'Facebook') {
             if (!$request->session()->has('facebook_logged_in')) {
-                return redirect()->back()->with('error', 'Please log in to Facebook handler first.');
+                $message = 'Please log in to Facebook handler first.';
+                return $isAjax ? response()->json(['success' => false, 'message' => $message], 401) 
+                              : redirect()->back()->with('error', $message);
             }
         }
 
@@ -68,12 +79,16 @@ class RecordsController extends Controller
             if ($source === 'Email') {
                 $encoderName = $request->session()->get('email_user_name');
                 if (!$encoderName) {
-                    return redirect()->back()->with('error', 'Unauthorized access.');
+                    $message = 'Unauthorized access.';
+                    return $isAjax ? response()->json(['success' => false, 'message' => $message], 401) 
+                                  : redirect()->back()->with('error', $message);
                 }
             } elseif ($source === 'Facebook') {
                 $encoderName = 'Facebook';
             } else {
-                return redirect()->back()->with('error', 'Unauthorized access.');
+                $message = 'Unauthorized access.';
+                return $isAjax ? response()->json(['success' => false, 'message' => $message], 401) 
+                              : redirect()->back()->with('error', $message);
             }
         }
 
@@ -95,7 +110,15 @@ class RecordsController extends Controller
             ->get();
 
         if ($potentialDuplicates->isNotEmpty()) {
-            // Create a detailed error message with duplicate information
+            // Return duplicates as JSON for AJAX requests
+            if ($isAjax) {
+                return response()->json([
+                    'success' => true,
+                    'duplicates' => $potentialDuplicates->toArray()
+                ]);
+            }
+            
+            // For non-AJAX requests, create a detailed error message
             $duplicateInfo = [];
             foreach ($potentialDuplicates as $duplicate) {
                 $duplicateInfo[] = sprintf(
@@ -135,7 +158,17 @@ class RecordsController extends Controller
             
             DB::commit();
             
-            return redirect()->back()->with('success', 'Record stored successfully.');
+            // Return success response
+            $successMessage = 'Record stored successfully.';
+            if ($isAjax) {
+                return response()->json([
+                    'success' => true,
+                    'message' => $successMessage,
+                    'record' => $record
+                ]);
+            }
+            
+            return redirect()->back()->with('success', $successMessage);
             
         } catch (\Illuminate\Validation\ValidationException $e) {
             // Handle validation exceptions specifically
@@ -147,6 +180,14 @@ class RecordsController extends Controller
                 'source' => $request->source ?? 'OD',
                 'data' => $request->all()
             ]);
+            
+            if ($isAjax) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Validation failed. Please check your input.',
+                    'errors' => $e->errors()
+                ], 422);
+            }
             
             return redirect()->back()
                 ->withErrors($e->errors())
@@ -163,8 +204,16 @@ class RecordsController extends Controller
                 'data' => $validatedData
             ]);
             
+            $errorMessage = 'Database error occurred. Please try again. If the problem persists, contact an administrator.';
+            if ($isAjax) {
+                return response()->json([
+                    'success' => false,
+                    'message' => $errorMessage
+                ], 500);
+            }
+            
             return redirect()->back()
-                ->with('error', 'Database error occurred. Please try again. If the problem persists, contact an administrator.')
+                ->with('error', $errorMessage)
                 ->withInput();
                 
         } catch (\Exception $e) {
@@ -181,17 +230,34 @@ class RecordsController extends Controller
             ]);
             
             // Return user-friendly error message
+            $errorMessage = 'Unable to save record. Please try again. If the problem persists, contact an administrator.';
+            if ($isAjax) {
+                return response()->json([
+                    'success' => false,
+                    'message' => $errorMessage
+                ], 500);
+            }
+            
             return redirect()->back()
-                ->with('error', 'Unable to save record. Please try again. If the problem persists, contact an administrator.')
+                ->with('error', $errorMessage)
                 ->withInput();
         }
     }
 
     public function updateRecord(Request $request, $id)
     {
-        Log::info('Update record called', ['id' => $id, 'data' => $request->all()]);
+        Log::info('=== UPDATE RECORD METHOD STARTED ===', [
+            'id' => $id, 
+            'data' => $request->all(),
+            'clear_admin_transmittal_number' => $request->input('clear_admin_transmittal_number'),
+            'has_clear_checkbox' => $request->has('clear_admin_transmittal_number'),
+            'admin_transmittal_number' => $request->input('admin_transmittal_number'),
+            'request_method' => $request->method(),
+            'request_url' => $request->fullUrl()
+        ]);
         
         $record = Record::findOrFail($id);
+        Log::info('Record found', ['id' => $id, 'current_admin_transmittal' => $record->admin_transmittal_number]);
 
         // Validate the incoming request data
         $validatedData = $request->validate([
@@ -239,57 +305,71 @@ class RecordsController extends Controller
             unset($updateData['transmittal_number']);
         }
 
-        if ($request->filled('clear_admin_transmittal_number')) {
+        // Handle admin transmittal number clearing or setting
+        if ($request->has('clear_admin_transmittal_number') && $request->input('clear_admin_transmittal_number') == '1') {
             $updateData['admin_transmittal_number'] = null;
             $updateData['admin_transmittal_assigned_at'] = null;
+            Log::info('Clearing admin transmittal number', ['record_id' => $id]);
         } elseif ($request->filled('admin_transmittal_number')) {
             $updateData['admin_transmittal_number'] = $request->input('admin_transmittal_number');
             $updateData['admin_transmittal_assigned_at'] = now();
+            Log::info('Setting admin transmittal number', ['record_id' => $id, 'transmittal_number' => $request->input('admin_transmittal_number')]);
         } else {
+            // Don't change admin transmittal number if not specified
             unset($updateData['admin_transmittal_number']);
+            unset($updateData['admin_transmittal_assigned_at']);
         }
 
         // Check for potential duplicate records (excluding current record)
-        $potentialDuplicates = Record::where('farmerName', 'LIKE', '%' . $request->farmerName . '%')
-            ->where('municipality', $request->municipality)
-            ->where('barangay', $request->barangay)
-            ->where('causeOfDamage', $request->causeOfDamage)
-            ->where('line', $request->line)
-            ->when($request->date_occurrence, function ($query) use ($request) {
-                return $query->where('date_occurrence', $request->date_occurrence);
-            })
-            ->where('id', '!=', $record->id) // Exclude current record
-            ->get();
+        // But only if not just clearing admin transmittal number
+        if (!($request->has('clear_admin_transmittal_number') && $request->input('clear_admin_transmittal_number') == '1')) {
+            $potentialDuplicates = Record::where('farmerName', 'LIKE', '%' . $request->farmerName . '%')
+                ->where('municipality', $request->municipality)
+                ->where('barangay', $request->barangay)
+                ->where('causeOfDamage', $request->causeOfDamage)
+                ->where('line', $request->line)
+                ->when($request->date_occurrence, function ($query) use ($request) {
+                    return $query->where('date_occurrence', $request->date_occurrence);
+                })
+                ->where('id', '!=', $record->id) // Exclude current record
+                ->get();
 
-        if ($potentialDuplicates->isNotEmpty()) {
-            // Create a detailed error message with duplicate information
-            $duplicateInfo = [];
-            foreach ($potentialDuplicates as $duplicate) {
-                $duplicateInfo[] = sprintf(
-                    "Name: %s, Address: %s, Cause: %s, Line: %s, Date: %s",
-                    $duplicate->farmerName,
-                    $duplicate->address,
-                    $duplicate->causeOfDamage,
-                    $duplicate->line,
-                    $duplicate->date_occurrence ?: 'Not specified'
-                );
+            if ($potentialDuplicates->isNotEmpty()) {
+                // Create a detailed error message with duplicate information
+                $duplicateInfo = [];
+                foreach ($potentialDuplicates as $duplicate) {
+                    $duplicateInfo[] = sprintf(
+                        "Name: %s, Address: %s, Cause: %s, Line: %s, Date: %s",
+                        $duplicate->farmerName,
+                        $duplicate->address,
+                        $duplicate->causeOfDamage,
+                        $duplicate->line,
+                        $duplicate->date_occurrence ?: 'Not specified'
+                    );
+                }
+                
+                $errorMessage = "Potential duplicate record(s) found:\n\n" . implode("\n", $duplicateInfo) . 
+                               "\n\nPlease review the existing records before updating.";
+                
+                return redirect()->back()
+                    ->with('error', $errorMessage)
+                    ->withInput();
             }
-            
-            $errorMessage = "Potential duplicate record(s) found:\n\n" . implode("\n", $duplicateInfo) . 
-                           "\n\nPlease review the existing records before updating.";
-            
-            return redirect()->back()
-                ->with('error', $errorMessage)
-                ->withInput();
         }
 
         try {
             // Use database transaction to ensure data consistency
             DB::beginTransaction();
             
+            Log::info('About to update record', ['id' => $id, 'updateData' => $updateData]);
+            
             $record->update($updateData);
             
+            Log::info('Record updated successfully', ['id' => $id, 'updated_record' => $record->fresh()]);
+            
             DB::commit();
+            
+            Log::info('Transaction committed, returning success');
             
             return redirect()->back()->with('success', 'Record updated successfully!');
             

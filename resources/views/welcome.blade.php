@@ -42,7 +42,7 @@
                 <div class="absolute -bottom-16 -right-16 w-56 h-56 bg-harvest-500/20 rounded-full blur-3xl"></div>
 
                 <div class="relative flex items-center gap-4">
-                    <div class="w-16 h-16 rounded-2xl bg-gradient-to-br from-pcic-400 to-harvest-400 flex items-center justify-center shadow-lg shrink-0"><img src="/images/icon.svg" alt="PCIC" width="32" height="32"></div>
+                    <img src="/images/PCIC_RO3A_LOGO.jpg" alt="PCIC" width="64" height="64" class="rounded-full">
                     <div>
                         <div class="text-[11px] font-bold tracking-widest uppercase text-pcic-300">PCIC</div>
                         <div class="text-2xl font-black text-white mt-1 leading-tight">NL Records Monitoring</div>
@@ -87,15 +87,16 @@
                         <div class="text-gray-300 text-lg group-hover:text-pcic-600 group-hover:translate-x-0.5 transition-all">›</div>
                     </a>
 
-                    <a href="{{ route('facebook-handler') }}" class="flex items-center gap-3 p-3 rounded-xl border border-gray-100 bg-white hover:border-pcic-300 hover:shadow-md transition-all duration-150 group">
-                        <div class="w-10 h-10 rounded-lg bg-pcic-50 text-pcic-600 flex items-center justify-center border border-pcic-100 shrink-0"><img src="/images/facebook.svg" alt="" width="22" height="22"></div>
+                    <a href="{{ route('facebook-handler') }}" class="flex items-center gap-3 p-3 rounded-xl border border-gray-100 bg-white hover:border-pcic-300 hover:shadow-md transition-all duration-150 group mb-2.5">
+                        <div class="w-10 h-10 rounded-lg bg-blue-50 text-blue-600 flex items-center justify-center border border-blue-50 shrink-0"><img src="/images/facebook.svg" alt="" width="22" height="22"></div>
                         <div class="flex-1 min-w-0">
                             <div class="font-bold text-gray-900 text-sm">Facebook</div>
-                            <div class="text-xs text-gray-500 font-medium">Encode from Facebook monitoring entries.</div>
+                            <div class="text-xs text-gray-500 font-medium">Encode from Facebook submissions (approval required).</div>
                         </div>
                         <div class="text-gray-300 text-lg group-hover:text-pcic-600 group-hover:translate-x-0.5 transition-all">›</div>
                     </a>
-                </div>
+
+                                    </div>
 
                 <div class="bg-white rounded-2xl shadow-lg border border-gray-100/80 p-5">
                     <div class="text-[11px] font-black tracking-widest uppercase text-gray-400 mb-3">Administration</div>

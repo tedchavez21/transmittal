@@ -1477,8 +1477,22 @@ Zarah,San Luis,Aurora`;
     // Function to initialize form submission handlers
     function initializeFormHandlers() {
         const addRecordForms = document.querySelectorAll('form[action*="records"]');
-        console.log('Found add record forms:', addRecordForms.length);
-        addRecordForms.forEach((form, index) => {
+        const editRecordForm = document.getElementById('recordEditForm');
+        
+        // Completely exclude the edit record form from any JavaScript handling
+        // Let it submit naturally without any interference
+        if (editRecordForm) {
+            console.log('Excluding edit record form from JavaScript handling');
+            // Remove any existing event listeners
+            const newEditForm = editRecordForm.cloneNode(true);
+            editRecordForm.parentNode.replaceChild(newEditForm, editRecordForm);
+        }
+        
+        // Filter out the edit record form from the forms to handle
+        const formsToHandle = Array.from(addRecordForms).filter(form => form.id !== 'recordEditForm');
+        
+        console.log('Found forms to handle:', formsToHandle.length);
+        formsToHandle.forEach((form, index) => {
             // Skip if already initialized
             if (form.formHandlerInitialized) {
                 console.log(`Form ${index + 1} already initialized, skipping`);
@@ -1491,6 +1505,9 @@ Zarah,San Luis,Aurora`;
             form.formHandlerInitialized = true;
             
             form.addEventListener('submit', function (e) {
+                console.log('Form submit event triggered');
+                console.log('Form isSubmitting:', form.isSubmitting);
+                
                 // Prevent multiple submissions
                 if (form.isSubmitting) {
                     e.preventDefault();
@@ -1498,7 +1515,34 @@ Zarah,San Luis,Aurora`;
                     return false;
                 }
                 
+                // Check if this is an edit record form (multiple detection methods)
+                const isEditForm = (form.method && form.method.toUpperCase() === 'PUT') ||
+                                  (form.id && form.id === 'recordEditForm') ||
+                                  (form.action && form.action.includes('/records/') && form.action.match(/\/records\/\d+/));
+                
+                if (isEditForm) {
+                    // For edit forms, just capitalize inputs and submit directly
+                    console.log('Edit form detected, submitting directly without confirmation');
+                    console.log('Form action:', form.action);
+                    console.log('Form method:', form.method);
+                    console.log('Form ID:', form.id);
+                    console.log('Form data before submission:');
+                    const formData = new FormData(form);
+                    for (let [key, value] of formData.entries()) {
+                        console.log(`${key}: ${value}`);
+                    }
+                    capitalizeInputs(form);
+                    console.log('Capitalize inputs completed, allowing default submission');
+                    
+                    // Remove the event listener to prevent any interference
+                    form.removeEventListener('submit', arguments.callee);
+                    return; // Allow default form submission
+                }
+                
+                console.log('Preventing default form submission');
                 e.preventDefault();
+                e.stopPropagation();
+                
                 form.isSubmitting = true;
                 console.log('Form submission started, isSubmitting set to true');
                 
@@ -1637,16 +1681,199 @@ Zarah,San Luis,Aurora`;
                 console.log('Duplicates found, showing modal');
                 showDuplicateModal(data.duplicates, form);
             } else {
-                // No duplicates found, submit form directly
-                console.log('No duplicates found, submitting form');
-                form.submit();
+                // No duplicates found, submit form via AJAX
+                console.log('No duplicates found, submitting form via AJAX');
+                submitFormViaAjax(form);
             }
         })
         .catch(error => {
             console.error('Error checking duplicates:', error);
-            // If duplicate check fails, proceed with submission
-            form.submit();
+            // If duplicate check fails, proceed with AJAX submission
+            submitFormViaAjax(form);
         });
+    }
+
+    // Function to submit form via AJAX and show notification
+    function submitFormViaAjax(form) {
+        console.log('submitFormViaAjax called');
+        const formData = new FormData(form);
+        const submitButton = form.querySelector('button[type="submit"]');
+        const addRecordDialog = form.closest('.addRecordDialog');
+        
+        console.log('Add record dialog found:', !!addRecordDialog);
+        console.log('Dialog open state:', addRecordDialog ? addRecordDialog.open : 'N/A');
+        
+        // Disable submit button during submission
+        if (submitButton) {
+            submitButton.disabled = true;
+            submitButton.textContent = 'Submitting...';
+        }
+
+        // Submit form via AJAX
+        fetch(form.action, {
+            method: form.method || 'POST',
+            body: formData,
+            headers: {
+                'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content')
+            }
+        })
+        .then(response => {
+            console.log('Submit response status:', response.status);
+            return response.json();
+        })
+        .then(data => {
+            console.log('Submit response data:', data);
+            console.log('Dialog open state after response:', addRecordDialog ? addRecordDialog.open : 'N/A');
+            
+            if (data.success) {
+                // Show success notification
+                showNotification('Record added successfully!', 'success');
+                
+                // Reset form fields for continuous encoding
+                form.reset();
+                
+                // Reset dependent dropdowns
+                const municipalitySelect = form.querySelector('#municipality');
+                const barangaySelect = form.querySelector('#barangay');
+                if (municipalitySelect) {
+                    municipalitySelect.disabled = true;
+                    municipalitySelect.innerHTML = '<option value="">Select Municipality</option>';
+                }
+                if (barangaySelect) {
+                    barangaySelect.disabled = true;
+                    barangaySelect.innerHTML = '<option value="">Select Barangay</option>';
+                }
+                
+                // Focus on first input field
+                const firstInput = form.querySelector('input:not([type="hidden"]):not([type="checkbox"])');
+                if (firstInput) {
+                    firstInput.focus();
+                }
+                
+                // Update records table if it exists
+                console.log('About to update records table...');
+                updateRecordsTable();
+                console.log('Records table updated');
+                console.log('Dialog open state after table update:', addRecordDialog ? addRecordDialog.open : 'N/A');
+                
+            } else {
+                // Show error notification
+                showNotification(data.message || 'Error adding record. Please try again.', 'error');
+            }
+        })
+        .catch(error => {
+            console.error('Error submitting form:', error);
+            showNotification('Error adding record. Please try again.', 'error');
+        })
+        .finally(() => {
+            // Re-enable submit button
+            if (submitButton) {
+                submitButton.disabled = false;
+                submitButton.textContent = 'Add Record';
+            }
+            
+            // Reset form submission state
+            form.isSubmitting = false;
+            console.log('Form submission reset, dialog open state:', addRecordDialog ? addRecordDialog.open : 'N/A');
+        });
+    }
+
+    // Function to show notification
+    function showNotification(message, type = 'success') {
+        // Create notification element
+        const notification = document.createElement('div');
+        notification.className = `notification notification-${type}`;
+        notification.style.cssText = `
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            z-index: 9999;
+            padding: 12px 20px;
+            border-radius: 8px;
+            font-weight: 600;
+            font-size: 14px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+            transform: translateX(100%);
+            transition: transform 0.3s ease;
+            max-width: 400px;
+        `;
+        
+        // Set background and text color based on type
+        if (type === 'success') {
+            notification.style.backgroundColor = '#10b981';
+            notification.style.color = 'white';
+        } else if (type === 'error') {
+            notification.style.backgroundColor = '#ef4444';
+            notification.style.color = 'white';
+        }
+        
+        notification.textContent = message;
+        
+        // Add to page
+        document.body.appendChild(notification);
+        
+        // Animate in
+        setTimeout(() => {
+            notification.style.transform = 'translateX(0)';
+        }, 100);
+        
+        // Remove after 3 seconds
+        setTimeout(() => {
+            notification.style.transform = 'translateX(100%)';
+            setTimeout(() => {
+                if (notification.parentNode) {
+                    notification.parentNode.removeChild(notification);
+                }
+            }, 300);
+        }, 3000);
+    }
+
+    // Function to update records table (if it exists)
+    function updateRecordsTable() {
+        console.log('updateRecordsTable called');
+        // Try to refresh the records table without page reload
+        const tableContainer = document.querySelector('.table-wrapper');
+        console.log('Table container found:', !!tableContainer);
+        
+        if (tableContainer) {
+            // Get current URL parameters
+            const urlParams = new URLSearchParams(window.location.search);
+            const currentUrl = window.location.pathname + '?' + urlParams.toString();
+            console.log('Fetching table from:', currentUrl);
+            
+            // Fetch updated table content
+            fetch(currentUrl, {
+                headers: {
+                    'X-Requested-With': 'XMLHttpRequest'
+                }
+            })
+            .then(response => {
+                console.log('Table update response status:', response.status);
+                return response.text();
+            })
+            .then(html => {
+                console.log('Table update HTML received, length:', html.length);
+                // Create a temporary element to parse the HTML
+                const tempDiv = document.createElement('div');
+                tempDiv.innerHTML = html;
+                
+                // Find the new table content
+                const newTableContainer = tempDiv.querySelector('.table-wrapper');
+                if (newTableContainer) {
+                    console.log('New table container found, updating...');
+                    tableContainer.innerHTML = newTableContainer.innerHTML;
+                    console.log('Table updated successfully');
+                } else {
+                    console.log('New table container not found in response');
+                }
+            })
+            .catch(error => {
+                console.error('Error updating table:', error);
+                // If table update fails, it's okay - the record was still added
+            });
+        } else {
+            console.log('No table container found, skipping table update');
+        }
     }
 
     // Function to show duplicate modal
@@ -1694,7 +1921,7 @@ Zarah,San Luis,Aurora`;
         newContinueBtn.addEventListener('click', function() {
             duplicateModal.close();
             // User chose to continue despite duplicates
-            form.submit();
+            submitFormViaAjax(form);
         });
         
         newCancelBtn.addEventListener('click', function() {

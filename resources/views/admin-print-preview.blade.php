@@ -268,41 +268,17 @@
                 page-break-inside: avoid !important;
             }
 
-            /* Column widths optimized for 7-column layout */
-            .print-preview-table th:nth-child(1),
-            .print-preview-table td:nth-child(1) {
-                width: 4% !important;
-                text-align: center !important;
+            /* Dynamic table layout - respect inline styles for column widths */
+            .print-preview-table {
+                table-layout: fixed !important;
+                width: 100% !important;
+                border-collapse: collapse !important;
             }
 
-            .print-preview-table th:nth-child(2),
-            .print-preview-table td:nth-child(2) {
-                width: 20% !important;
-            }
-
-            .print-preview-table th:nth-child(3),
-            .print-preview-table td:nth-child(3) {
-                width: 25% !important;
-            }
-
-            .print-preview-table th:nth-child(4),
-            .print-preview-table td:nth-child(4) {
-                width: 13% !important;
-            }
-
-            .print-preview-table th:nth-child(5),
-            .print-preview-table td:nth-child(5) {
-                width: 11% !important;
-            }
-
-            .print-preview-table th:nth-child(6),
-            .print-preview-table td:nth-child(6) {
-                width: 15% !important;
-            }
-
-            .print-preview-table th:nth-child(7),
-            .print-preview-table td:nth-child(7) {
-                width: 12% !important;
+            /* Don't override inline width styles */
+            .print-preview-table th[style],
+            .print-preview-table td[style] {
+                /* Width controlled by inline styles */
             }
 
             .print-preview-table th {
@@ -311,7 +287,7 @@
                 background-color: #006c35 !important;
                 font-weight: 700 !important;
                 text-align: left !important;
-                font-size: 9px !important;
+                font-size: 10px !important;
                 display: table-cell !important;
                 height: 12px !important;
                 margin: 0 !important;
@@ -327,10 +303,14 @@
                 text-overflow: ellipsis !important;
             }
 
+            .print-preview-table th:nth-child(1) {
+                text-align: center !important;
+            }
+
             .print-preview-table td {
                 padding: 1px 3px !important;
                 border: 1px solid #000 !important;
-                font-size: 9px !important;
+                font-size: 10px !important;
                 display: table-cell !important;
                 height: 10px !important;
                 margin: 0 !important;
@@ -387,6 +367,74 @@
             <div class="app-alert app-alert--warning">No records found for this preview.</div>
         @else
             @php
+                // Dynamic column width calculation based on content
+                $maxTextLengths = [
+                    'no' => 2,
+                    'farmerName' => strlen('Farmer Name'),
+                    'address' => strlen('Address'),
+                    'program' => strlen('Program'),
+                    'line' => strlen('Line'),
+                    'causeOfDamage' => strlen('Cause of Damage'),
+                    'remarks' => strlen('Remarks')
+                ];
+                
+                // Calculate maximum text length for each column
+                foreach ($records as $index => $record) {
+                    $maxTextLengths['no'] = max($maxTextLengths['no'], strlen((string)($index + 1)));
+                    $maxTextLengths['farmerName'] = max($maxTextLengths['farmerName'], strlen($record->farmerName));
+                    $maxTextLengths['address'] = max($maxTextLengths['address'], strlen($record->barangay . ', ' . $record->municipality));
+                    $maxTextLengths['program'] = max($maxTextLengths['program'], strlen($record->program));
+                    $maxTextLengths['line'] = max($maxTextLengths['line'], strlen($record->line));
+                    $maxTextLengths['causeOfDamage'] = max($maxTextLengths['causeOfDamage'], strlen($record->causeOfDamage));
+                    $maxTextLengths['remarks'] = max($maxTextLengths['remarks'], strlen($record->remarks ?: ''));
+                }
+                
+                // Calculate character-based widths (rough approximation)
+                $charWidths = [
+                    'no' => $maxTextLengths['no'] * 0.6, // Narrow numbers
+                    'farmerName' => $maxTextLengths['farmerName'] * 0.5, // Names
+                    'address' => $maxTextLengths['address'] * 0.45, // Addresses
+                    'program' => $maxTextLengths['program'] * 0.55, // Programs
+                    'line' => $maxTextLengths['line'] * 0.6, // Lines
+                    'causeOfDamage' => $maxTextLengths['causeOfDamage'] * 0.4, // Causes
+                    'remarks' => $maxTextLengths['remarks'] * 0.5 // Remarks
+                ];
+                
+                // Set minimum widths for readability
+                $minWidths = [
+                    'no' => 4,
+                    'farmerName' => 15,
+                    'address' => 20,
+                    'program' => 8,
+                    'line' => 6,
+                    'causeOfDamage' => 10,
+                    'remarks' => 8
+                ];
+                
+                // Apply minimum widths
+                foreach ($charWidths as $col => $width) {
+                    $charWidths[$col] = max($width, $minWidths[$col]);
+                }
+                
+                // Calculate total and normalize to 100%
+                $totalWidth = array_sum($charWidths);
+                $columnWidths = [];
+                foreach ($charWidths as $col => $width) {
+                    $columnWidths[$col] = round(($width / $totalWidth) * 100, 1);
+                }
+                
+                // Adjust to ensure exactly 100%
+                $currentTotal = array_sum($columnWidths);
+                $diff = 100 - $currentTotal;
+                if ($diff != 0) {
+                    $columnWidths['farmerName'] += $diff; // Adjust largest column
+                }
+                
+                // Calculate dynamic font size based on content density
+                $avgTextLength = array_sum($maxTextLengths) / count($maxTextLengths);
+                $baseFontSize = 10;
+                $fontSize = max(8, min(12, $baseFontSize - ($avgTextLength * 0.05)));
+                
                 $chunks = $records->chunk($perPage);
             @endphp
 
@@ -403,27 +451,27 @@
                             <table class="print-preview-table">
                                 <thead>
                                     <tr>
-                                        <th>No.</th>
-                                        <th>Farmer Name</th>
-                                        <th>Address</th>
-                                        <th>Program</th>
-                                        <th>Line</th>
-                                        <th>Cause of Damage</th>
-                                        <th>Remarks</th>
+                                        <th style="width: {{ $columnWidths['no'] }}%; font-size: {{ $fontSize }}px; height: {{ $fontSize + 2 }}px;">No.</th>
+                                        <th style="width: {{ $columnWidths['farmerName'] }}%; font-size: {{ $fontSize }}px; height: {{ $fontSize + 2 }}px;">Farmer Name</th>
+                                        <th style="width: {{ $columnWidths['address'] }}%; font-size: {{ $fontSize }}px; height: {{ $fontSize + 2 }}px;">Address</th>
+                                        <th style="width: {{ $columnWidths['program'] }}%; font-size: {{ $fontSize }}px; height: {{ $fontSize + 2 }}px;">Program</th>
+                                        <th style="width: {{ $columnWidths['line'] }}%; font-size: {{ $fontSize }}px; height: {{ $fontSize + 2 }}px;">Line</th>
+                                        <th style="width: {{ $columnWidths['causeOfDamage'] }}%; font-size: {{ $fontSize }}px; height: {{ $fontSize + 2 }}px;">Cause of Damage</th>
+                                        <th style="width: {{ $columnWidths['remarks'] }}%; font-size: {{ $fontSize }}px; height: {{ $fontSize + 2 }}px;">Remarks</th>
                                     </tr>
                                 </thead>
                                 <tbody>
                                     @foreach($pageRecords as $index => $record)
                                         <tr>
-                                            <td>{{ $index + 1 }}</td>
-                                            <td>{{ $record->farmerName }}</td>
-                                            <td class="address-cell">
+                                            <td style="font-size: {{ $fontSize }}px; height: {{ $fontSize }}px;">{{ $index + 1 }}</td>
+                                            <td style="font-size: {{ $fontSize }}px; height: {{ $fontSize }}px;">{{ $record->farmerName }}</td>
+                                            <td class="address-cell" style="font-size: {{ $fontSize }}px; height: {{ $fontSize }}px;">
                                                 {{ trim(implode(', ', array_filter([$record->barangay, $record->municipality]))) ?: '—' }}
                                             </td>
-                                            <td>{{ $record->program }}</td>
-                                            <td>{{ $record->line }}</td>
-                                            <td>{{ $record->causeOfDamage }}</td>
-                                            <td>{{ $record->remarks ?: '—' }}</td>
+                                            <td style="font-size: {{ $fontSize }}px; height: {{ $fontSize }}px;">{{ $record->program }}</td>
+                                            <td style="font-size: {{ $fontSize }}px; height: {{ $fontSize }}px;">{{ $record->line }}</td>
+                                            <td style="font-size: {{ $fontSize }}px; height: {{ $fontSize }}px;">{{ $record->causeOfDamage }}</td>
+                                            <td style="font-size: {{ $fontSize }}px; height: {{ $fontSize }}px;">{{ $record->remarks ?: '—' }}</td>
                                         </tr>
                                     @endforeach
                                 </tbody>

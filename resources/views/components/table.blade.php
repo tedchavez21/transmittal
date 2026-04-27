@@ -1,5 +1,584 @@
 @props(['records', 'showDelete' => true, 'showEncoder' => false, 'showApproval' => false, 'showAction' => false, 'showCheckbox' => true, 'showFilters' => false, 'showSortableHeaders' => true, 'showAdminTransmittal' => false, 'hideAccountsColumn' => false, 'hideSourceColumn' => false, 'hideProvinceColumn' => false, 'hideDateReceivedColumn' => false, 'useDateEncodedAsDateReceived' => false, 'allPrograms' => [], 'allLines' => [], 'allSources' => [], 'allModes' => []])
 
+<style>
+/* Default account field color - blue */
+.account-field {
+    color: #0066CC !important;
+}
+
+/* Make account text bold only when it's a link */
+.account-field:link,
+.account-field:visited {
+    font-weight: bold !important;
+}
+
+/* Style account field when row is selected with green background */
+tr.selected .account-field {
+    color: white !important;
+    font-weight: bold !important;
+}
+
+/* Also target rows with green background (any selected state) */
+tr[style*="background-color: rgb(0, 108, 53)"] .account-field,
+tr[style*="background-color: #006c35"] .account-field,
+tr.bg-green-600 .account-field,
+tr.bg-green-700 .account-field {
+    color: white !important;
+    font-weight: bold !important;
+}
+
+/* JavaScript-based sticky headers with improved alignment */
+.table-wrapper {
+    position: relative;
+    max-height: calc(100vh - 250px);
+    overflow-y: auto;
+    overflow-x: auto;
+    border: none;
+}
+
+.fixed-table-header {
+    position: sticky;
+    top: 0;
+    z-index: 100;
+    background-color: #006c35;
+    overflow: hidden;
+    border: none;
+}
+
+.fixed-table-header table {
+    margin: 0;
+    border-collapse: separate;
+    border-spacing: 0;
+    width: 100%;
+    table-layout: auto;
+}
+
+.table-wrapper table {
+    border-collapse: separate;
+    border-spacing: 0;
+    width: 100%;
+    table-layout: auto;
+    margin-top: -1px; /* Prevent double border */
+}
+
+.fixed-table-header th {
+    background-color: #006c35 !important;
+    color: white !important;
+    font-weight: bold !important;
+    padding: 8px 12px;
+    text-align: left;
+    white-space: nowrap;
+    border: none;
+    box-sizing: border-box;
+    min-width: 80px;
+}
+
+/* Specific column widths to prevent wrapping */
+.fixed-table-header .col-checkbox,
+.fixed-table-header .col-checkbox-transmit {
+    min-width: 60px;
+    width: 60px;
+}
+
+.fixed-table-header .col-edit,
+.fixed-table-header .col-delete {
+    min-width: 50px;
+    width: 50px;
+}
+
+.fixed-table-header .col-line {
+    min-width: 120px;
+    width: 120px;
+}
+
+.fixed-table-header .col-name {
+    min-width: 180px;
+    width: 180px;
+}
+
+.fixed-table-header .col-source {
+    min-width: 80px;
+    width: 80px;
+}
+
+.fixed-table-header .col-account {
+    min-width: 140px;
+    width: 140px;
+}
+
+.fixed-table-header .col-mode {
+    min-width: 130px;
+    width: 130px;
+}
+
+.fixed-table-header .col-remarks {
+    min-width: 200px;
+    width: 200px;
+}
+
+.fixed-table-header .col-control-number {
+    min-width: 140px;
+    width: 140px;
+}
+
+.fixed-table-header .col-encoder {
+    min-width: 120px;
+    width: 120px;
+}
+
+.fixed-table-header .col-date-encoded {
+    min-width: 120px;
+    width: 120px;
+}
+
+.fixed-table-header .col-transmittal-number {
+    min-width: 140px;
+    width: 140px;
+}
+
+.fixed-table-header .col-admin-transmittal {
+    min-width: 140px;
+    width: 140px;
+}
+
+.fixed-table-header .col-status {
+    min-width: 100px;
+    width: 100px;
+}
+
+/* Missing column classes */
+.fixed-table-header .col-farmer-name {
+    min-width: 180px;
+    width: 180px;
+}
+
+.fixed-table-header .col-municipality {
+    min-width: 140px;
+    width: 140px;
+}
+
+.fixed-table-header .col-barangay {
+    min-width: 140px;
+    width: 140px;
+}
+
+.fixed-table-header .col-province {
+    min-width: 120px;
+    width: 120px;
+}
+
+.fixed-table-header .col-program {
+    min-width: 120px;
+    width: 120px;
+}
+
+.fixed-table-header .col-date-occurrence {
+    min-width: 140px;
+    width: 140px;
+}
+
+.fixed-table-header .col-causeOfDamage {
+    min-width: 160px;
+    width: 160px;
+}
+
+.fixed-table-header .col-date-received {
+    min-width: 120px;
+    width: 120px;
+}
+
+.fixed-table-header .col-accounts {
+    min-width: 140px;
+    width: 140px;
+}
+
+.fixed-table-header .col-modeOfPayment {
+    min-width: 130px;
+    width: 130px;
+}
+
+.fixed-table-header .col-admin-transmittal-number {
+    min-width: 140px;
+    width: 140px;
+}
+
+.fixed-table-header th:last-child {
+    border-right: none;
+}
+
+.table-wrapper td {
+    padding: 8px 12px;
+    border-bottom: 1px solid #dee2e6;
+    border-right: 1px solid #f0f0f0;
+    box-sizing: border-box;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+/* Match header minimum widths for data cells */
+.table-wrapper .col-checkbox,
+.table-wrapper .col-checkbox-transmit {
+    min-width: 60px;
+    width: 60px;
+}
+
+.table-wrapper .col-edit,
+.table-wrapper .col-delete {
+    min-width: 50px;
+    width: 50px;
+}
+
+.table-wrapper .col-line {
+    min-width: 120px;
+    width: 120px;
+}
+
+.table-wrapper .col-name {
+    min-width: 180px;
+    width: 180px;
+}
+
+.table-wrapper .col-source {
+    min-width: 80px;
+    width: 80px;
+}
+
+.table-wrapper .col-account {
+    min-width: 140px;
+    width: 140px;
+}
+
+.table-wrapper .col-mode {
+    min-width: 130px;
+    width: 130px;
+}
+
+.table-wrapper .col-remarks {
+    min-width: 200px;
+    width: 200px;
+}
+
+.table-wrapper .col-control-number {
+    min-width: 140px;
+    width: 140px;
+}
+
+.table-wrapper .col-encoder {
+    min-width: 120px;
+    width: 120px;
+}
+
+.table-wrapper .col-date-encoded {
+    min-width: 120px;
+    width: 120px;
+}
+
+.table-wrapper .col-transmittal-number {
+    min-width: 140px;
+    width: 140px;
+}
+
+.table-wrapper .col-admin-transmittal {
+    min-width: 140px;
+    width: 140px;
+}
+
+.table-wrapper .col-status {
+    min-width: 100px;
+    width: 100px;
+}
+
+/* Missing table wrapper column classes */
+.table-wrapper .col-farmer-name {
+    min-width: 180px;
+    width: 180px;
+}
+
+.table-wrapper .col-municipality {
+    min-width: 140px;
+    width: 140px;
+}
+
+.table-wrapper .col-barangay {
+    min-width: 140px;
+    width: 140px;
+}
+
+.table-wrapper .col-province {
+    min-width: 120px;
+    width: 120px;
+}
+
+.table-wrapper .col-program {
+    min-width: 120px;
+    width: 120px;
+}
+
+.table-wrapper .col-date-occurrence {
+    min-width: 140px;
+    width: 140px;
+}
+
+.table-wrapper .col-causeOfDamage {
+    min-width: 160px;
+    width: 160px;
+}
+
+.table-wrapper .col-date-received {
+    min-width: 120px;
+    width: 120px;
+}
+
+.table-wrapper .col-accounts {
+    min-width: 140px;
+    width: 140px;
+}
+
+.table-wrapper .col-modeOfPayment {
+    min-width: 130px;
+    width: 130px;
+}
+
+.table-wrapper .col-admin-transmittal-number {
+    min-width: 140px;
+    width: 140px;
+}
+
+.table-wrapper td:last-child {
+    border-right: none;
+}
+
+/* Ensure checkbox columns have proper width in fixed header */
+.fixed-table-header .col-checkbox,
+.fixed-table-header .col-checkbox-transmit {
+    width: 50px;
+    min-width: 50px;
+    text-align: center;
+    padding: 8px 4px;
+}
+
+/* Ensure checkbox columns are visible when they should be */
+.fixed-table-header .col-checkbox[style*="display: none"],
+.fixed-table-header .col-checkbox-transmit[style*="display: none"] {
+    display: none !important;
+}
+
+.fixed-table-header .col-checkbox:not([style*="display: none"]),
+.fixed-table-header .col-checkbox-transmit:not([style*="display: none"]) {
+    display: table-cell !important;
+    width: 50px !important;
+    min-width: 50px !important;
+}
+
+.table-wrapper table {
+    border-collapse: separate;
+    border-spacing: 0;
+    margin-top: -1px; /* Prevent double border */
+}
+
+.table-wrapper th {
+    visibility: hidden;
+    height: 0;
+    padding: 0;
+    border: none;
+}
+</style>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Create fixed table header
+    function createFixedHeader() {
+        const tableWrapper = document.querySelector('.table-wrapper');
+        if (!tableWrapper) return;
+        
+        const table = tableWrapper.querySelector('table');
+        if (!table) return;
+        
+        const thead = table.querySelector('thead');
+        if (!thead) return;
+        
+        // Create fixed header container
+        const fixedHeader = document.createElement('div');
+        fixedHeader.className = 'fixed-table-header';
+        
+        // Clone the header table
+        const headerTable = table.cloneNode(false);
+        headerTable.appendChild(thead.cloneNode(true));
+        fixedHeader.appendChild(headerTable);
+        
+        // Insert before the table wrapper
+        tableWrapper.parentNode.insertBefore(fixedHeader, tableWrapper);
+        
+        // Sync horizontal scrolling
+        tableWrapper.addEventListener('scroll', function() {
+            fixedHeader.scrollLeft = this.scrollLeft;
+        });
+        
+        // Sync column widths with more robust method
+        function syncColumnWidths() {
+            const headerTable = fixedHeader.querySelector('table');
+            const bodyTable = tableWrapper.querySelector('table');
+            const headerCells = headerTable.querySelectorAll('th');
+            const bodyCells = bodyTable.querySelectorAll('thead th');
+            
+            // Force layout recalculation
+            bodyTable.style.display = 'none';
+            bodyTable.offsetHeight; // Trigger reflow
+            bodyTable.style.display = '';
+            
+            // Get computed widths from first data row for more accurate measurements
+            const firstDataRow = bodyTable.querySelector('tbody tr');
+            const dataCells = firstDataRow ? firstDataRow.querySelectorAll('td') : [];
+            
+            // Use body header cells as fallback if no data rows
+            const referenceCells = dataCells.length > 0 ? dataCells : bodyCells;
+            
+            // Apply precise widths to header cells
+            referenceCells.forEach((refCell, index) => {
+                const headerCell = headerCells[index];
+                if (headerCell && refCell) {
+                    const computedWidth = refCell.getBoundingClientRect().width;
+                    headerCell.style.width = computedWidth + 'px';
+                    headerCell.style.minWidth = computedWidth + 'px';
+                    headerCell.style.maxWidth = computedWidth + 'px';
+                }
+            });
+            
+            // Ensure both tables have same width
+            const bodyWidth = bodyTable.getBoundingClientRect().width;
+            headerTable.style.width = bodyWidth + 'px';
+            headerTable.style.minWidth = bodyWidth + 'px';
+        }
+        
+        // Initial sync
+        setTimeout(syncColumnWidths, 100);
+        
+        // Sync on window resize
+        window.addEventListener('resize', syncColumnWidths);
+        
+        // Hide original thead
+        thead.style.display = 'none';
+    }
+    
+    // Initialize fixed header
+    setTimeout(createFixedHeader, 100);
+    
+    // Sync checkbox column visibility between original table and fixed header
+    function syncCheckboxVisibility() {
+        const fixedHeader = document.querySelector('.fixed-table-header');
+        const tableWrapper = document.querySelector('.table-wrapper');
+        
+        if (!fixedHeader || !tableWrapper) return;
+        
+        const originalCheckboxCols = tableWrapper.querySelectorAll('th.col-checkbox, th.col-checkbox-transmit');
+        const fixedCheckboxCols = fixedHeader.querySelectorAll('th.col-checkbox, th.col-checkbox-transmit');
+        
+        originalCheckboxCols.forEach((originalCol, index) => {
+            const fixedCol = fixedCheckboxCols[index];
+            if (fixedCol) {
+                const originalDisplay = window.getComputedStyle(originalCol).display;
+                fixedCol.style.display = originalDisplay;
+            }
+        });
+        
+        // Also sync column widths after visibility changes
+        setTimeout(() => {
+            const headerTable = fixedHeader.querySelector('table');
+            const bodyTable = tableWrapper.querySelector('table');
+            const headerCells = headerTable.querySelectorAll('th');
+            const bodyCells = bodyTable.querySelectorAll('thead th');
+            
+            // Force layout recalculation
+            bodyTable.style.display = 'none';
+            bodyTable.offsetHeight; // Trigger reflow
+            bodyTable.style.display = '';
+            
+            // Get computed widths from first data row for more accurate measurements
+            const firstDataRow = bodyTable.querySelector('tbody tr');
+            const dataCells = firstDataRow ? firstDataRow.querySelectorAll('td') : [];
+            
+            // Use body header cells as fallback if no data rows
+            const referenceCells = dataCells.length > 0 ? dataCells : bodyCells;
+            
+            // Apply precise widths to header cells
+            referenceCells.forEach((refCell, index) => {
+                const headerCell = headerCells[index];
+                if (headerCell && refCell) {
+                    const computedWidth = refCell.getBoundingClientRect().width;
+                    headerCell.style.width = computedWidth + 'px';
+                    headerCell.style.minWidth = computedWidth + 'px';
+                    headerCell.style.maxWidth = computedWidth + 'px';
+                }
+            });
+            
+            // Ensure both tables have same width
+            const bodyWidth = bodyTable.getBoundingClientRect().width;
+            headerTable.style.width = bodyWidth + 'px';
+            headerTable.style.minWidth = bodyWidth + 'px';
+        }, 50);
+    }
+    
+    // Monitor for checkbox visibility changes
+    const observer = new MutationObserver(function(mutations) {
+        mutations.forEach(function(mutation) {
+            if (mutation.type === 'attributes' && mutation.attributeName === 'style') {
+                syncCheckboxVisibility();
+            }
+        });
+    });
+    
+    // Observe checkbox columns for style changes
+    setTimeout(() => {
+        const checkboxCols = document.querySelectorAll('.col-checkbox, .col-checkbox-transmit');
+        checkboxCols.forEach(col => {
+            observer.observe(col, { attributes: true, attributeFilter: ['style'] });
+        });
+        syncCheckboxVisibility();
+    }, 200);
+    
+    // Handle checkbox changes to style account fields
+    function updateAccountStyling() {
+        const checkboxes = document.querySelectorAll('input[type="checkbox"].record-checkbox, input[type="checkbox"].record-checkbox-transmit');
+        
+        checkboxes.forEach(checkbox => {
+            const row = checkbox.closest('tr');
+            if (row) {
+                if (checkbox.checked) {
+                    row.classList.add('selected');
+                } else {
+                    row.classList.remove('selected');
+                }
+            }
+        });
+    }
+    
+    // Initial styling
+    updateAccountStyling();
+    
+    // Add event listeners to checkboxes
+    document.addEventListener('change', function(e) {
+        if (e.target.type === 'checkbox' && (e.target.classList.contains('record-checkbox') || e.target.classList.contains('record-checkbox-transmit'))) {
+            const row = e.target.closest('tr');
+            if (row) {
+                if (e.target.checked) {
+                    row.classList.add('selected');
+                } else {
+                    row.classList.remove('selected');
+                }
+            }
+        }
+    });
+    
+    // Handle select all checkboxes
+    document.addEventListener('change', function(e) {
+        if (e.target.id === 'select-all' || e.target.id === 'select-all-transmit') {
+            setTimeout(updateAccountStyling, 10);
+        }
+    });
+});
+</script>
+
 @php
 $currentSort = request('sort_by', 'id');
 $currentOrder = request('sort_order', 'desc');
@@ -181,7 +760,7 @@ function getSortIndicator($column, $currentSort, $currentOrder) {
 </div>
 @endif
 
-<table class="records-table" style="width: 100%; border-collapse: collapse; border: 1px solid #ccc;">
+<table class="records-table" style="width: 100%; border-collapse: separate; border-spacing: 0;">
     <thead>
         <tr>
             @if($showCheckbox)
@@ -229,7 +808,7 @@ function getSortIndicator($column, $currentSort, $currentOrder) {
             
             <!-- 4. Municipality -->
             @if(!$hideProvinceColumn)
-            <th class="col-municipality" class="col-municipality">
+            <th class="col-municipality">
                 @if($showSortableHeaders)
                 <a href="{{ getSortUrl('municipality', $currentSort, $currentOrder, $oppositeOrder) }}" style="color: inherit; text-decoration: none; cursor: pointer;">Municipality{{ getSortIndicator('municipality', $currentSort, $currentOrder) }}</a>
                 @else
@@ -239,7 +818,7 @@ function getSortIndicator($column, $currentSort, $currentOrder) {
             @endif
             
             <!-- 5. Barangay -->
-            <th class="col-barangay" class="col-barangay">
+            <th class="col-barangay">
                 @if($showSortableHeaders)
                 <a href="{{ getSortUrl('barangay', $currentSort, $currentOrder, $oppositeOrder) }}" style="color: inherit; text-decoration: none; cursor: pointer;">{{ $hideProvinceColumn ? 'Address' : 'Barangay' }}{{ getSortIndicator('barangay', $currentSort, $currentOrder) }}</a>
                 @else
@@ -249,7 +828,7 @@ function getSortIndicator($column, $currentSort, $currentOrder) {
             
             <!-- 6. Province -->
             @if(!$hideProvinceColumn)
-            <th class="col-province" class="col-province">
+            <th class="col-province">
                 @if($showSortableHeaders)
                 <a href="{{ getSortUrl('province', $currentSort, $currentOrder, $oppositeOrder) }}" style="color: inherit; text-decoration: none; cursor: pointer;">Province{{ getSortIndicator('province', $currentSort, $currentOrder) }}</a>
                 @else
@@ -259,7 +838,7 @@ function getSortIndicator($column, $currentSort, $currentOrder) {
             @endif
             
             <!-- 7. Line -->
-            <th class="col-line" class="col-line">
+            <th class="col-line">
                 @if($showSortableHeaders)
                 <a href="{{ getSortUrl('line', $currentSort, $currentOrder, $oppositeOrder) }}" style="color: inherit; text-decoration: none; cursor: pointer;">Line{{ getSortIndicator('line', $currentSort, $currentOrder) }}</a>
                 @else
@@ -268,7 +847,7 @@ function getSortIndicator($column, $currentSort, $currentOrder) {
             </th>
             
             <!-- 8. Program -->
-            <th class="col-program" class="col-program">
+            <th class="col-program">
                 @if($showSortableHeaders)
                 <a href="{{ getSortUrl('program', $currentSort, $currentOrder, $oppositeOrder) }}" style="color: inherit; text-decoration: none; cursor: pointer;">Program{{ getSortIndicator('program', $currentSort, $currentOrder) }}</a>
                 @else
@@ -286,7 +865,7 @@ function getSortIndicator($column, $currentSort, $currentOrder) {
             </th>
             
             <!-- 10. Cause of Damage -->
-            <th class="col-causeOfDamage" class="col-causeOfDamage">
+            <th class="col-causeOfDamage">
                 @if($showSortableHeaders)
                 <a href="{{ getSortUrl('causeOfDamage', $currentSort, $currentOrder, $oppositeOrder) }}" style="color: inherit; text-decoration: none; cursor: pointer;">Cause of Damage{{ getSortIndicator('causeOfDamage', $currentSort, $currentOrder) }}</a>
                 @else
@@ -326,7 +905,7 @@ function getSortIndicator($column, $currentSort, $currentOrder) {
             </th>
             
             <!-- 14. Remarks -->
-            <th class="col-remarks" class="col-remarks">
+            <th class="col-remarks">
                 @if($showSortableHeaders)
                 <a href="{{ getSortUrl('remarks', $currentSort, $currentOrder, $oppositeOrder) }}" style="color: inherit; text-decoration: none; cursor: pointer;">Remarks{{ getSortIndicator('remarks', $currentSort, $currentOrder) }}</a>
                 @else
@@ -466,11 +1045,11 @@ function getSortIndicator($column, $currentSort, $currentOrder) {
                     $href = $fbUrl && filter_var($fbUrl, FILTER_VALIDATE_URL) ? $fbUrl : null;
                 @endphp
                 @if($isFacebook && $href && $accountLabel)
-                    <a href="{{ e($href) }}" target="_blank" rel="noopener noreferrer">{{ e($accountLabel) }}</a>
+                    <a href="{{ e($href) }}" target="_blank" rel="noopener noreferrer" class="account-field">{{ e($accountLabel) }}</a>
                 @elseif($accountLabel)
-                    {{ $accountLabel }}
+                    <span class="account-field">{{ $accountLabel }}</span>
                 @else
-                    —
+                    <span class="account-field">—</span>
                 @endif
             </td>
             @endif
@@ -586,7 +1165,7 @@ function getSortIndicator($column, $currentSort, $currentOrder) {
 }
 
 .record-row:hover {
-    background-color: #f5f5f5;
+    background-color: #e8e8e8;
 }
 
 .record-row.highlighted {

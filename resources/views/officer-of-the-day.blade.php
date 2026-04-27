@@ -178,6 +178,8 @@
                 <option value="CFITF">CFITF</option>
                 <option value="CFITF-CIP">CFITF-CIP</option>
             </select>
+            <label for="date_occurrence" class="text-xs font-bold text-gray-600 text-right">Date occurrence:</label>
+            <input type="text" id="date_occurrence" name="date_occurrence" class="h-9 px-3 rounded-lg border border-gray-200 focus:border-pcic-500 focus:ring-2 focus:ring-pcic-100 outline-none text-sm w-full">
             <label for="causeOfDamage" class="text-xs font-bold text-gray-600 text-right">Cause of Damage:</label>
             <input type="text" id="causeOfDamage" name="causeOfDamage" required class="h-9 px-3 rounded-lg border border-gray-200 focus:border-pcic-500 focus:ring-2 focus:ring-pcic-100 outline-none text-sm w-full auto-caps">
             <label for="modeOfPayment" class="text-xs font-bold text-gray-600 text-right">Mode of payment:</label>
@@ -188,8 +190,6 @@
                 <option value="gcash">GCash</option>
                 <option value="not_indicated">Not indicated</option>
             </select>
-            <label for="date_occurrence" class="text-xs font-bold text-gray-600 text-right">Date occurrence:</label>
-            <input type="text" id="date_occurrence" name="date_occurrence" class="h-9 px-3 rounded-lg border border-gray-200 focus:border-pcic-500 focus:ring-2 focus:ring-pcic-100 outline-none text-sm w-full">
             <label for="remarks" class="text-xs font-bold text-gray-600 text-right">Remarks - Care of:</label>
             <input type="text" id="remarks" name="remarks" class="h-9 px-3 rounded-lg border border-gray-200 focus:border-pcic-500 focus:ring-2 focus:ring-pcic-100 outline-none text-sm w-full auto-caps">
             <div></div>
@@ -315,6 +315,8 @@
                 <option value="SELF-FINANCED">SELF-FINANCED</option>
                 <option value="CFITF">CFITF</option>
             </select>
+            <label for="date_occurrence" class="text-xs font-bold text-gray-600 text-right">Date occurrence:</label>
+            <input type="text" id="date_occurrence" name="date_occurrence" class="h-9 px-3 rounded-lg border border-gray-200 focus:border-pcic-500 focus:ring-2 focus:ring-pcic-100 outline-none text-sm w-full">
             <label for="causeOfDamage" class="text-xs font-bold text-gray-600 text-right">Cause of Damage:</label>
             <input type="text" id="causeOfDamage" name="causeOfDamage" class="h-9 px-3 rounded-lg border border-gray-200 focus:border-pcic-500 focus:ring-2 focus:ring-pcic-100 outline-none text-sm w-full">
             <label for="modeOfPayment" class="text-xs font-bold text-gray-600 text-right">Mode of payment:</label>
@@ -328,8 +330,6 @@
             <label for="accounts" class="text-xs font-bold text-gray-600 text-right">Account (if recorded):</label>
             <input type="text" id="accounts" name="accounts" placeholder="Optional" class="h-9 px-3 rounded-lg border border-gray-200 focus:border-pcic-500 focus:ring-2 focus:ring-pcic-100 outline-none text-sm w-full">
             <input type="hidden" name="facebook_page_url" value="">
-            <label for="date_occurrence" class="text-xs font-bold text-gray-600 text-right">Date occurrence:</label>
-            <input type="text" id="date_occurrence" name="date_occurrence" class="h-9 px-3 rounded-lg border border-gray-200 focus:border-pcic-500 focus:ring-2 focus:ring-pcic-100 outline-none text-sm w-full">
             <label for="remarks" class="text-xs font-bold text-gray-600 text-right">Remarks - Care of:</label>
             <input type="text" id="remarks" name="remarks" class="h-9 px-3 rounded-lg border border-gray-200 focus:border-pcic-500 focus:ring-2 focus:ring-pcic-100 outline-none text-sm w-full">
             <label for="transmittal_number" class="text-xs font-bold text-gray-600 text-right">Control number:</label>

@@ -475,7 +475,7 @@ class RoutesController extends Controller
             ->whereNotNull('municipality')
             ->where('municipality', '!=', '')
             ->groupBy('province', 'municipality')
-            ->orderBy('municipality', 'asc')
+            ->orderByRaw('count(*) desc')
             ->get();
 
         $dashCountMap = [];
@@ -496,6 +496,10 @@ class RoutesController extends Controller
                     'count' => $dashCountMap[$province][$municipality] ?? 0,
                 ];
             }
+            // Sort each province's municipalities by count in descending order
+            usort($dashCountsByProvince[$province], function($a, $b) {
+                return $b['count'] - $a['count'];
+            });
         }
 
         $dashBarangayRows = (clone $dashQuery)
@@ -519,10 +523,13 @@ class RoutesController extends Controller
             ];
         }
 
-        $totalRecords = $statsQuery->count();
-        $recordsByProgram = $statsQuery->selectRaw('program, count(*) as count')->groupBy('program')->pluck('count', 'program');
-        $recordsByLine = $statsQuery->selectRaw('line, count(*) as count')->groupBy('line')->pluck('count', 'line');
-        $recordsBySource = (clone $statsQuery)->selectRaw('source, count(*) as count')->groupBy('source')->pluck('count', 'source');
+        // Total records should be unfiltered to show accurate count
+        $totalRecords = Record::count();
+        $recordsByProgram = $statsQuery->selectRaw('program, count(*) as count')->groupBy('program')->orderByRaw('count(*) desc')->pluck('count', 'program');
+        $recordsByLine = $statsQuery->selectRaw('line, count(*) as count')->groupBy('line')->orderByRaw('count(*) desc')->pluck('count', 'line');
+        
+        // Source counts should be unfiltered to show total records by source
+        $recordsBySource = Record::selectRaw('source, count(*) as count')->groupBy('source')->orderByRaw('count(*) desc')->pluck('count', 'source');
         $recordsByMunicipality = $statsQuery
             ->selectRaw('municipality, count(*) as count')
             ->whereNotNull('municipality')

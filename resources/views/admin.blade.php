@@ -40,17 +40,23 @@
             <div class="admin-sidebar-section-label">Tools</div>
             <div class="admin-sidebar-actions">
                 <button type="button" class="admin-sidebar-tool" id="openUserApprovalsModal" title="Pending user approvals (Email and OD)">
-                    <span class="icon" aria-hidden="true"><img src="/images/user.svg" alt="" width="18" height="18"></span>
-                    <span class="label">User approvals</span>
+                    <div class="tool-content">
+                        <span class="icon" aria-hidden="true"><img src="/images/user.svg" alt="" width="18" height="18"></span>
+                        <span class="label">User approvals</span>
+                    </div>
                     <span id="pendingBadge" class="pending-badge" style="display:none;"></span>
                 </button>
                 <button type="button" class="admin-sidebar-tool" id="openActiveUsersModal" title="View active users">
-                    <span class="icon" aria-hidden="true"><img src="/images/active-users.svg" alt="" width="18" height="18"></span>
-                    <span class="label">Active users</span>
+                    <div class="tool-content">
+                        <span class="icon" aria-hidden="true"><img src="/images/active-users.svg" alt="" width="18" height="18"></span>
+                        <span class="label">Active users</span>
+                    </div>
                 </button>
                 <button type="button" class="admin-sidebar-tool" id="openAdminUsersModal" title="Admin Users">
-                    <span class="icon" aria-hidden="true"><img src="/images/admin.svg" alt="" width="18" height="18"></span>
-                    <span class="label">Admin users</span>
+                    <div class="tool-content">
+                        <span class="icon" aria-hidden="true"><img src="/images/admin.svg" alt="" width="18" height="18"></span>
+                        <span class="label">Admin users</span>
+                    </div>
                 </button>
             </div>
         </aside>
@@ -542,21 +548,21 @@
     <div id="nl-records-section" style="display: none;">
 
     <!-- Transmittal Management -->
-    <div class="admin-card no-print" style="margin-bottom: 14px;">
-        <div class="card-body">
-            <label class="admin-toggle">
+    <div class="admin-card" style="margin-bottom: 5px;">
+        <div class="card-body" style="padding: 8px 12px;">
+            <label class="admin-toggle" style="font-size: 12px; margin: 0;">
                 <input type="checkbox" id="unassigned-toggle" {{ request('unassigned_only') ? 'checked' : '' }}>
-                <span>Show only records without admin transmittal numbers</span>
+                <span style="font-size: 12px;">Show only records without admin transmittal numbers</span>
             </label>
         </div>
     </div>
 
     <!-- TABLE FILTERS -->
-    <div class="no-print table-filters" style="margin-bottom: 20px; padding: 15px; border: 1px solid #ccc; background: #fff;">
-        <h3 style="margin-top: 0; margin-bottom: 15px;">TABLE FILTERS</h3>
+    <div class="no-print table-filters" style="margin-bottom: 5px; padding: 8px 12px; border: 1px solid #ccc; background: #fff;">
+        <h3 style="margin: 0 0 8px 0; font-size: 14px;">TABLE FILTERS</h3>
         <form method="GET" action="{{ route('admin') }}" style="margin: 0;">
             <input type="hidden" name="tab" value="nl-records">
-            <div style="display: flex; flex-wrap: wrap; gap: 10px; align-items: end;">
+            <div style="display: flex; flex-wrap: wrap; gap: 8px; align-items: center;">
                 <div style="display: flex; flex-direction: column; gap: 4px;">
                     <label style="font-size: 12px; font-weight: bold;">Search Farmer</label>
                     <input type="text" name="farmerName" value="{{ request('farmerName') }}" style="padding: 6px; font-size: 12px; border: 1px solid #ccc; border-radius: 3px;">
@@ -730,8 +736,17 @@
         @method('DELETE')
         <input type="hidden" name="record_ids" id="selected-record-ids">
         <div id="table-loading-indicator" style="display: none; margin-bottom: 10px; color: #1565C0; font-weight: 600;">Loading records...</div>
-        <div style="overflow-x: auto; width: 100%; margin-bottom: 20px; border: 1px solid #ccc; position: relative; padding: 0 10px;">
-            <x-table :records="$records" :showEncoder="true" :showFilters="false" :showAdminTransmittal="true" :allPrograms="$allPrograms" :allLines="$allLines" :allSources="$allSources" :allModes="$allModes" :showCheckbox="true" />
+        
+        <!-- Horizontal scrollbar container - sticky position -->
+        <div id="horizontal-scrollbar-container" style="position: sticky; top: 0; width: 100%; height: 20px; overflow-x: scroll; overflow-y: hidden; margin-bottom: 10px; background: #f5f5f5; border: 1px solid #ddd; z-index: 10;">
+            <div id="horizontal-scrollbar-content" style="height: 1px; width: 2000px;"></div>
+        </div>
+        
+        <!-- Main table container with proper sticky header support -->
+        <div id="table-container" style="width: 100%; margin-bottom: 20px; border: 1px solid #ccc; position: relative; padding: 0;">
+            <div id="table-wrapper" class="table-wrapper" style="width: 100%;">
+                <x-table :records="$records" :showEncoder="true" :showFilters="false" :showAdminTransmittal="true" :allPrograms="$allPrograms" :allLines="$allLines" :allSources="$allSources" :allModes="$allModes" :showCheckbox="true" />
+            </div>
         </div>
         @if($records->isEmpty())
             <div style="padding: 16px; margin-bottom: 12px; border: 1px solid #e0e0e0; background: #fafafa; color: #555;">
@@ -834,10 +849,6 @@
                 <option value="gcash">GCash</option>
                 <option value="not_indicated">Not indicated</option>
             </select>
-            <label for="accounts" class="text-xs font-bold text-gray-600 text-right">Account (sender):</label>
-            <input type="text" id="accounts" name="accounts" class="h-9 px-3 rounded-lg border border-gray-200 focus:border-pcic-500 focus:ring-2 focus:ring-pcic-100 outline-none text-sm w-full auto-caps">
-            <label for="facebook_page_url" class="text-xs font-bold text-gray-600 text-right">FB page link:</label>
-            <input type="url" id="facebook_page_url" name="facebook_page_url" placeholder="https://www.facebook.com/..." class="h-9 px-3 rounded-lg border border-gray-200 focus:border-pcic-500 focus:ring-2 focus:ring-pcic-100 outline-none text-sm w-full">
             <label for="date_occurrence" class="text-xs font-bold text-gray-600 text-right">Date occurrence:</label>
             <input type="text" id="date_occurrence" name="date_occurrence" class="h-9 px-3 rounded-lg border border-gray-200 focus:border-pcic-500 focus:ring-2 focus:ring-pcic-100 outline-none text-sm w-full">
             
@@ -852,7 +863,10 @@
             
             <label for="admin_transmittal_number" class="text-xs font-bold text-gray-600 text-right">Admin Transmittal #:</label>
             <input type="text" id="admin_transmittal_number" name="admin_transmittal_number" placeholder="e.g., 001, 002, 003..." class="h-9 px-3 rounded-lg border border-gray-200 focus:border-pcic-500 focus:ring-2 focus:ring-pcic-100 outline-none text-sm w-full">
-
+            <label for="accounts" class="text-xs font-bold text-gray-600 text-right">Account (sender):</label>
+            <input type="text" id="accounts" name="accounts" class="h-9 px-3 rounded-lg border border-gray-200 focus:border-pcic-500 focus:ring-2 focus:ring-pcic-100 outline-none text-sm w-full auto-caps">
+            <label for="facebook_page_url" class="text-xs font-bold text-gray-600 text-right">FB page link:</label>
+            <input type="url" id="facebook_page_url" name="facebook_page_url" placeholder="https://www.facebook.com/..." class="h-9 px-3 rounded-lg border border-gray-200 focus:border-pcic-500 focus:ring-2 focus:ring-pcic-100 outline-none text-sm w-full">
             <div></div>
             <label for="clear_admin_transmittal_number" class="flex items-center gap-2 text-xs font-bold text-gray-600">
                 <input type="checkbox" id="clear_admin_transmittal_number" name="clear_admin_transmittal_number" value="1" class="w-4 h-4 accent-pcic-700">
@@ -2521,12 +2535,17 @@ Zabali,San Luis,Aurora`;
                 transmitCheckboxes.forEach(cb => cb.checked = false);
                 if(transmitAllBox) transmitAllBox.checked = false;
                 if(transmitActionBtn) transmitActionBtn.disabled = true;
+                if (bulkSelectedCount) bulkSelectedCount.textContent = '';
             }
         });
 
         const updateTransmitButtonState = () => {
             let anyChecked = Array.from(transmitCheckboxes).some(cb => cb.checked);
             if (transmitActionBtn) transmitActionBtn.disabled = !anyChecked;
+            if (bulkSelectedCount) {
+                const selectedCount = Array.from(transmitCheckboxes).filter(cb => cb.checked).length;
+                bulkSelectedCount.textContent = selectedCount > 0 ? `${selectedCount} selected` : '';
+            }
         };
         transmitCheckboxes.forEach(cb => {
             cb.addEventListener('change', updateTransmitButtonState);
@@ -2636,6 +2655,53 @@ Zabali,San Luis,Aurora`;
         });
         
     });
+    </script>
+
+    <script>
+        // Synchronize horizontal scrolling between dedicated scrollbar and table
+        document.addEventListener('DOMContentLoaded', function() {
+            const scrollbarContainer = document.getElementById('horizontal-scrollbar-container');
+            const tableWrapper = document.getElementById('table-wrapper');
+            
+            if (scrollbarContainer && tableWrapper) {
+                // Sync scrollbar to table scroll
+                tableWrapper.addEventListener('scroll', function() {
+                    scrollbarContainer.scrollLeft = this.scrollLeft;
+                });
+                
+                // Sync table to scrollbar scroll
+                scrollbarContainer.addEventListener('scroll', function() {
+                    tableWrapper.scrollLeft = this.scrollLeft;
+                });
+                
+                // Update scrollbar content width to match table width
+                function updateScrollbarWidth() {
+                    const table = tableWrapper.querySelector('table');
+                    if (table) {
+                        const scrollbarContent = document.getElementById('horizontal-scrollbar-content');
+                        if (scrollbarContent) {
+                            scrollbarContent.style.width = table.offsetWidth + 'px';
+                        }
+                    }
+                }
+                
+                // Initial update and update on table changes
+                updateScrollbarWidth();
+                
+                // Monitor for table changes (pagination, filtering, etc.)
+                const observer = new MutationObserver(function(mutations) {
+                    updateScrollbarWidth();
+                });
+                
+                if (tableWrapper) {
+                    observer.observe(tableWrapper, {
+                        childList: true,
+                        subtree: true,
+                        attributes: true
+                    });
+                }
+            }
+        });
     </script>
 
     <script>

@@ -142,7 +142,6 @@ select.shake-invalid {
     font-size: 11px;
     font-weight: 900;
     line-height: 1;
-    margin-left: 6px;
     animation: badge-pulse 2s ease-in-out infinite;
 }
 @keyframes badge-pulse {
@@ -482,8 +481,7 @@ dialog.closing::backdrop {
     width: 100%;
     display: flex;
     align-items: center;
-    justify-content: flex-start;
-    gap: 10px;
+    justify-content: space-between;
     height: 48px;
     min-height: 48px;
     max-height: 48px;
@@ -524,6 +522,13 @@ dialog.closing::backdrop {
 .admin-sidebar-tool:hover .icon img {
     filter: brightness(0) invert(52%) sepia(60%) saturate(750%) hue-rotate(90deg) brightness(110%);
     opacity: 1;
+}
+
+.admin-sidebar-tool .tool-content {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    flex: 1;
 }
 
 .admin-shell:not(.sidebar-expanded) .admin-sidebar-actions {
