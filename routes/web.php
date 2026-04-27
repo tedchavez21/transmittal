@@ -40,3 +40,4 @@ Route::get('/facebook/export-csv', [RoutesController::class, 'exportFacebookCsv'
 
 Route::put('/records/{id}', [RecordsController::class, 'updateRecord'])->name('records.update');
 Route::delete('/records/{id}', [RecordsController::class, 'destroyRecord'])->name('records.destroy');
+Route::post('/records/check-duplicates', [RecordsController::class, 'checkDuplicates'])->name('records.check-duplicates');

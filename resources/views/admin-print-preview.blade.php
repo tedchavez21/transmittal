@@ -72,7 +72,7 @@
             padding: 10px 12px;
             border-bottom: 1px solid rgba(15, 23, 42, 0.1);
             vertical-align: top;
-            font-size: 12px;
+            font-size: 16px;
         }
 
         /* Alternating row colors for screen */
@@ -254,41 +254,36 @@
                 page-break-inside: avoid !important;
             }
 
-            /* Column widths optimized for 7-column layout */
+            /* Column widths optimized for 6-column layout */
             .print-preview-table th:nth-child(1),
             .print-preview-table td:nth-child(1) {
-                width: 8% !important;
+                width: 5% !important;
                 text-align: center !important;
             }
 
             .print-preview-table th:nth-child(2),
             .print-preview-table td:nth-child(2) {
-                width: 20% !important;
+                width: 23% !important;
             }
 
             .print-preview-table th:nth-child(3),
             .print-preview-table td:nth-child(3) {
-                width: 25% !important;
+                width: 29% !important;
             }
 
             .print-preview-table th:nth-child(4),
             .print-preview-table td:nth-child(4) {
-                width: 12% !important;
+                width: 15% !important;
             }
 
             .print-preview-table th:nth-child(5),
             .print-preview-table td:nth-child(5) {
-                width: 10% !important;
+                width: 13% !important;
             }
 
             .print-preview-table th:nth-child(6),
             .print-preview-table td:nth-child(6) {
                 width: 15% !important;
-            }
-
-            .print-preview-table th:nth-child(7),
-            .print-preview-table td:nth-child(7) {
-                width: 10% !important;
             }
 
             .print-preview-table th {
@@ -392,7 +387,6 @@
                                         <th>Program</th>
                                         <th>Line</th>
                                         <th>Cause of Damage</th>
-                                        <th>Date of Occurrence</th>
                                     </tr>
                                 </thead>
                                 <tbody>
@@ -406,7 +400,6 @@
                                             <td>{{ $record->program }}</td>
                                             <td>{{ $record->line }}</td>
                                             <td>{{ $record->causeOfDamage }}</td>
-                                            <td>{{ $record->date_occurrence ? $record->date_occurrence : '—' }}</td>
                                         </tr>
                                     @endforeach
                                 </tbody>
@@ -444,20 +437,94 @@
             })
             .then(response => response.json())
             .then(data => {
+                const assignModal = document.getElementById('assignTransmittalModal');
+                const messageElement = document.getElementById('assignTransmittalMessage');
+                
                 if (data.success) {
-                    // Show success message
-                    alert('Transmittal numbers assigned successfully!');
-                    
-                    // Refresh the page to update the transmittal numbers in headers
-                    window.location.reload();
+                    // Show success message in modal
+                    if (assignModal && messageElement) {
+                        messageElement.textContent = 'Transmittal numbers assigned successfully!';
+                        messageElement.className = 'text-sm text-green-600 mb-4';
+                        assignModal.showModal();
+                        
+                        // Handle modal buttons
+                        const continueBtn = document.getElementById('assignTransmittalContinue');
+                        const cancelBtn = document.getElementById('assignTransmittalCancel');
+                        
+                        // Remove existing event listeners
+                        const newContinueBtn = continueBtn.cloneNode(true);
+                        const newCancelBtn = cancelBtn.cloneNode(true);
+                        continueBtn.parentNode.replaceChild(newContinueBtn, continueBtn);
+                        cancelBtn.parentNode.replaceChild(newCancelBtn, cancelBtn);
+                        
+                        // Add event listeners
+                        newContinueBtn.addEventListener('click', function() {
+                            assignModal.close();
+                            // Refresh the page to update the transmittal numbers in headers
+                            window.location.reload();
+                        });
+                        
+                        newCancelBtn.addEventListener('click', function() {
+                            assignModal.close();
+                        });
+                    }
                 } else {
-                    // Show error message
-                    alert('Error: ' + (data.message || 'Failed to assign transmittal numbers'));
+                    // Show error message in modal
+                    if (assignModal && messageElement) {
+                        messageElement.textContent = 'Error: ' + (data.message || 'Failed to assign transmittal numbers');
+                        messageElement.className = 'text-sm text-red-600 mb-4';
+                        assignModal.showModal();
+                        
+                        // Handle modal buttons
+                        const continueBtn = document.getElementById('assignTransmittalContinue');
+                        const cancelBtn = document.getElementById('assignTransmittalCancel');
+                        
+                        // Remove existing event listeners
+                        const newContinueBtn = continueBtn.cloneNode(true);
+                        const newCancelBtn = cancelBtn.cloneNode(true);
+                        continueBtn.parentNode.replaceChild(newContinueBtn, continueBtn);
+                        cancelBtn.parentNode.replaceChild(newCancelBtn, cancelBtn);
+                        
+                        // Add event listeners
+                        newContinueBtn.addEventListener('click', function() {
+                            assignModal.close();
+                        });
+                        
+                        newCancelBtn.addEventListener('click', function() {
+                            assignModal.close();
+                        });
+                    }
                 }
             })
             .catch(error => {
                 console.error('Error:', error);
-                alert('An error occurred while assigning transmittal numbers');
+                const assignModal = document.getElementById('assignTransmittalModal');
+                const messageElement = document.getElementById('assignTransmittalMessage');
+                
+                if (assignModal && messageElement) {
+                    messageElement.textContent = 'An error occurred while assigning transmittal numbers';
+                    messageElement.className = 'text-sm text-red-600 mb-4';
+                    assignModal.showModal();
+                    
+                    // Handle modal buttons
+                    const continueBtn = document.getElementById('assignTransmittalContinue');
+                    const cancelBtn = document.getElementById('assignTransmittalCancel');
+                    
+                    // Remove existing event listeners
+                    const newContinueBtn = continueBtn.cloneNode(true);
+                    const newCancelBtn = cancelBtn.cloneNode(true);
+                    continueBtn.parentNode.replaceChild(newContinueBtn, continueBtn);
+                    cancelBtn.parentNode.replaceChild(newCancelBtn, cancelBtn);
+                    
+                    // Add event listeners
+                    newContinueBtn.addEventListener('click', function() {
+                        assignModal.close();
+                    });
+                    
+                    newCancelBtn.addEventListener('click', function() {
+                        assignModal.close();
+                    });
+                }
             });
         }
     </script>

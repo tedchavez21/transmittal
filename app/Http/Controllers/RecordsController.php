@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\Rule;
 use App\Models\Record;
 use App\Models\EmailHandler;
@@ -24,7 +25,7 @@ class RecordsController extends Controller
             'program' => 'required|string|max:255',
             'causeOfDamage' => 'required|string|max:255',
             'modeOfPayment' => 'required|string|max:255',
-            'accounts' => ['required_if:source,Facebook', 'nullable', 'string', 'max:255'],
+            'accounts' => ['required_if:source,Facebook', 'string', 'max:255'],
             'facebook_page_url' => [
                 'nullable',
                 'string',
@@ -82,15 +83,108 @@ class RecordsController extends Controller
             $request->province,
         ])));
 
-        Record::create(array_merge($validatedData, [
-            'address' => $address,
-            'encoderName' => $encoderName,
-            'source' => $request->source ?? 'OD',
-            'approved' => true,
-            'approved_at' => now(),
-        ]));
+        // Check for potential duplicate records
+        $potentialDuplicates = Record::where('farmerName', 'LIKE', '%' . $request->farmerName . '%')
+            ->where('municipality', $request->municipality)
+            ->where('barangay', $request->barangay)
+            ->where('causeOfDamage', $request->causeOfDamage)
+            ->where('line', $request->line)
+            ->when($request->date_occurrence, function ($query) use ($request) {
+                return $query->where('date_occurrence', $request->date_occurrence);
+            })
+            ->get();
 
-        return redirect()->back()->with('success', 'Record stored successfully.');
+        if ($potentialDuplicates->isNotEmpty()) {
+            // Create a detailed error message with duplicate information
+            $duplicateInfo = [];
+            foreach ($potentialDuplicates as $duplicate) {
+                $duplicateInfo[] = sprintf(
+                    "Name: %s, Address: %s, Cause: %s, Line: %s, Date: %s",
+                    $duplicate->farmerName,
+                    $duplicate->address,
+                    $duplicate->causeOfDamage,
+                    $duplicate->line,
+                    $duplicate->date_occurrence ?: 'Not specified'
+                );
+            }
+            
+            $errorMessage = "Potential duplicate record(s) found:\n\n" . implode("\n", $duplicateInfo) . 
+                           "\n\nPlease review the existing records before submitting a new one.";
+            
+            return redirect()->back()
+                ->with('error', $errorMessage)
+                ->withInput();
+        }
+
+        try {
+            // Validate address before proceeding
+            if (empty(trim($address))) {
+                throw new \Exception('Address cannot be empty. Please select valid municipality and barangay.');
+            }
+            
+            // Use database transaction to ensure data consistency
+            DB::beginTransaction();
+            
+            $record = Record::create(array_merge($validatedData, [
+                'address' => $address,
+                'encoderName' => $encoderName,
+                'source' => $request->source ?? 'OD',
+                'approved' => true,
+                'approved_at' => now(),
+            ]));
+            
+            DB::commit();
+            
+            return redirect()->back()->with('success', 'Record stored successfully.');
+            
+        } catch (\Illuminate\Validation\ValidationException $e) {
+            // Handle validation exceptions specifically
+            DB::rollBack();
+            Log::error('Validation failed during record creation', [
+                'error' => $e->getMessage(),
+                'errors' => $e->errors(),
+                'user' => $encoderName,
+                'source' => $request->source ?? 'OD',
+                'data' => $request->all()
+            ]);
+            
+            return redirect()->back()
+                ->withErrors($e->errors())
+                ->withInput();
+                
+        } catch (\Illuminate\Database\QueryException $e) {
+            // Handle database query exceptions specifically
+            DB::rollBack();
+            Log::error('Database error during record creation', [
+                'error' => $e->getMessage(),
+                'code' => $e->getCode(),
+                'user' => $encoderName,
+                'source' => $request->source ?? 'OD',
+                'data' => $validatedData
+            ]);
+            
+            return redirect()->back()
+                ->with('error', 'Database error occurred. Please try again. If the problem persists, contact an administrator.')
+                ->withInput();
+                
+        } catch (\Exception $e) {
+            // Handle all other exceptions
+            DB::rollBack();
+            
+            // Log the error for debugging
+            Log::error('Record creation failed', [
+                'error' => $e->getMessage(),
+                'trace' => $e->getTraceAsString(),
+                'user' => $encoderName,
+                'source' => $request->source ?? 'OD',
+                'data' => $validatedData
+            ]);
+            
+            // Return user-friendly error message
+            return redirect()->back()
+                ->with('error', 'Unable to save record. Please try again. If the problem persists, contact an administrator.')
+                ->withInput();
+        }
     }
 
     public function updateRecord(Request $request, $id)
@@ -155,9 +249,66 @@ class RecordsController extends Controller
             unset($updateData['admin_transmittal_number']);
         }
 
-        $record->update($updateData);
+        // Check for potential duplicate records (excluding current record)
+        $potentialDuplicates = Record::where('farmerName', 'LIKE', '%' . $request->farmerName . '%')
+            ->where('municipality', $request->municipality)
+            ->where('barangay', $request->barangay)
+            ->where('causeOfDamage', $request->causeOfDamage)
+            ->where('line', $request->line)
+            ->when($request->date_occurrence, function ($query) use ($request) {
+                return $query->where('date_occurrence', $request->date_occurrence);
+            })
+            ->where('id', '!=', $record->id) // Exclude current record
+            ->get();
 
-        return redirect()->back()->with('success', 'Record updated successfully!');
+        if ($potentialDuplicates->isNotEmpty()) {
+            // Create a detailed error message with duplicate information
+            $duplicateInfo = [];
+            foreach ($potentialDuplicates as $duplicate) {
+                $duplicateInfo[] = sprintf(
+                    "Name: %s, Address: %s, Cause: %s, Line: %s, Date: %s",
+                    $duplicate->farmerName,
+                    $duplicate->address,
+                    $duplicate->causeOfDamage,
+                    $duplicate->line,
+                    $duplicate->date_occurrence ?: 'Not specified'
+                );
+            }
+            
+            $errorMessage = "Potential duplicate record(s) found:\n\n" . implode("\n", $duplicateInfo) . 
+                           "\n\nPlease review the existing records before updating.";
+            
+            return redirect()->back()
+                ->with('error', $errorMessage)
+                ->withInput();
+        }
+
+        try {
+            // Use database transaction to ensure data consistency
+            DB::beginTransaction();
+            
+            $record->update($updateData);
+            
+            DB::commit();
+            
+            return redirect()->back()->with('success', 'Record updated successfully!');
+            
+        } catch (\Exception $e) {
+            DB::rollBack();
+            
+            // Log the error for debugging
+            Log::error('Record update failed', [
+                'error' => $e->getMessage(),
+                'record_id' => $id,
+                'user' => $request->session()->get('email_user_name') ?? $request->session()->get('facebook_user_name') ?? $request->session()->get('officer_name') ?? 'admin',
+                'data' => $updateData
+            ]);
+            
+            // Return user-friendly error message
+            return redirect()->back()
+                ->with('error', 'Unable to update record. Please try again. If the problem persists, contact an administrator.')
+                ->withInput();
+        }
     }
 
     public function destroyRecord($id)
@@ -166,5 +317,57 @@ class RecordsController extends Controller
         $record->delete();
 
         return redirect()->back()->with('success', 'Record deleted successfully!');
+    }
+
+    public function checkDuplicates(Request $request)
+    {
+        $validatedData = $request->validate([
+            'farmerName' => 'required|string|max:255',
+            'municipality' => 'required|string|max:255',
+            'barangay' => 'required|string|max:255',
+            'causeOfDamage' => 'required|string|max:255',
+            'line' => 'required|string|max:255',
+            'date_occurrence' => 'nullable|string|max:500',
+        ]);
+
+        // Check for potential duplicate records
+        $potentialDuplicates = Record::where('farmerName', 'LIKE', '%' . $request->farmerName . '%')
+            ->where('municipality', $request->municipality)
+            ->where('barangay', $request->barangay)
+            ->where('causeOfDamage', $request->causeOfDamage)
+            ->where('line', $request->line)
+            ->when($request->date_occurrence, function ($query) use ($request) {
+                return $query->where('date_occurrence', $request->date_occurrence);
+            })
+            ->get();
+
+        if ($potentialDuplicates->isEmpty()) {
+            return response()->json([
+                'success' => true,
+                'duplicates' => []
+            ]);
+        }
+
+        // Format duplicate records for display
+        $duplicateRecords = [];
+        foreach ($potentialDuplicates as $duplicate) {
+            $duplicateRecords[] = [
+                'id' => $duplicate->id,
+                'farmerName' => $duplicate->farmerName,
+                'address' => $duplicate->address,
+                'causeOfDamage' => $duplicate->causeOfDamage,
+                'line' => $duplicate->line,
+                'date_occurrence' => $duplicate->date_occurrence ?: 'Not specified',
+                'program' => $duplicate->program,
+                'source' => $duplicate->source,
+                'created_at' => $duplicate->created_at->format('M d, Y'),
+            ];
+        }
+
+        return response()->json([
+            'success' => true,
+            'duplicates' => $duplicateRecords,
+            'message' => 'Potential duplicate records found'
+        ]);
     }
 }

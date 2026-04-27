@@ -1460,25 +1460,257 @@ Zarah,San Luis,Aurora`;
         });
     }
 
-    // Add form submission handlers for all add record forms
-    const addRecordForms = document.querySelectorAll('form[action*="records"]');
-    addRecordForms.forEach(form => {
-        form.addEventListener('submit', function (e) {
-            e.preventDefault();
-            
-            // Capitalize inputs first
-            capitalizeInputs(form);
-            
-            // Show confirmation dialog
-            const isConfirmed = confirm('Are you sure you want to add this record? Please review all the data before continuing.\n\nClick "OK" to continue or "Cancel" to go back and edit.');
-            
-            if (isConfirmed) {
-                // If confirmed, submit the form
-                form.submit();
+    // Global function to reset all form submission states
+    function resetAllFormSubmissionStates() {
+        const addRecordForms = document.querySelectorAll('form[action*="records"]');
+        addRecordForms.forEach(form => {
+            form.isSubmitting = false;
+            const submitButtons = form.querySelectorAll('button[type="submit"]');
+            submitButtons.forEach(btn => {
+                btn.disabled = false;
+                btn.classList.remove('disabled', 'opacity-50');
+            });
+        });
+        console.log('All form submission states reset');
+    }
+
+    // Function to initialize form submission handlers
+    function initializeFormHandlers() {
+        const addRecordForms = document.querySelectorAll('form[action*="records"]');
+        console.log('Found add record forms:', addRecordForms.length);
+        addRecordForms.forEach((form, index) => {
+            // Skip if already initialized
+            if (form.formHandlerInitialized) {
+                console.log(`Form ${index + 1} already initialized, skipping`);
+                return;
             }
-            // If not confirmed, do nothing - user can continue editing
+            
+            console.log(`Form ${index + 1}:`, form.action, form.id);
+            // Add a flag to track submission state
+            form.isSubmitting = false;
+            form.formHandlerInitialized = true;
+            
+            form.addEventListener('submit', function (e) {
+                // Prevent multiple submissions
+                if (form.isSubmitting) {
+                    e.preventDefault();
+                    console.log('Form already submitting, preventing submission');
+                    return false;
+                }
+                
+                e.preventDefault();
+                form.isSubmitting = true;
+                console.log('Form submission started, isSubmitting set to true');
+                
+                // Capitalize inputs first
+                capitalizeInputs(form);
+                
+                // Show confirmation modal
+                const confirmModal = document.getElementById('confirmModal');
+                if (confirmModal) {
+                    confirmModal.showModal();
+                    
+                    // Handle modal buttons
+                    const continueBtn = document.getElementById('confirmModalContinue');
+                    const cancelBtn = document.getElementById('confirmModalCancel');
+                    
+                    // Remove existing event listeners
+                    const newContinueBtn = continueBtn.cloneNode(true);
+                    const newCancelBtn = cancelBtn.cloneNode(true);
+                    continueBtn.parentNode.replaceChild(newContinueBtn, continueBtn);
+                    cancelBtn.parentNode.replaceChild(newCancelBtn, cancelBtn);
+                    
+                    // Add event listeners
+                    newContinueBtn.addEventListener('click', function() {
+                        confirmModal.close();
+                        console.log('Continue clicked, proceeding with submission');
+                        // Check for duplicates before submitting
+                        checkForDuplicatesAndSubmit(form);
+                    });
+                    
+                    newCancelBtn.addEventListener('click', function() {
+                        confirmModal.close();
+                        console.log('Cancel clicked, resetting form state');
+                        // Reset form submission state to allow re-submission
+                        setTimeout(() => {
+                            form.isSubmitting = false;
+                            console.log('Form isSubmitting reset to false');
+                            // Remove any disabled attributes from submit buttons
+                            const submitButtons = form.querySelectorAll('button[type="submit"]');
+                            submitButtons.forEach(btn => {
+                                btn.disabled = false;
+                                btn.classList.remove('disabled', 'opacity-50');
+                            });
+                        }, 100);
+                    });
+                    
+                    // Also reset form state when modal is closed by other means (ESC key, backdrop click)
+                    confirmModal.addEventListener('close', function() {
+                        if (form.isSubmitting) {
+                            console.log('Modal closed, resetting form state');
+                            form.isSubmitting = false;
+                            const submitButtons = form.querySelectorAll('button[type="submit"]');
+                            submitButtons.forEach(btn => {
+                                btn.disabled = false;
+                                btn.classList.remove('disabled', 'opacity-50');
+                            });
+                        }
+                    }, { once: true });
+                    
+                    // Additional fix for email handler - also reset when the add record dialog is closed
+                    const addRecordDialog = form.closest('.addRecordDialog');
+                    if (addRecordDialog) {
+                        addRecordDialog.addEventListener('close', function() {
+                            console.log('Add record dialog closed, resetting form state');
+                            form.isSubmitting = false;
+                            const submitButtons = form.querySelectorAll('button[type="submit"]');
+                            submitButtons.forEach(btn => {
+                                btn.disabled = false;
+                                btn.classList.remove('disabled', 'opacity-50');
+                            });
+                        }, { once: true });
+                    }
+                }
+            });
+        });
+    }
+
+    // Initialize form handlers on page load
+    initializeFormHandlers();
+
+    // Also initialize when dialogs are opened (for dynamic content)
+    const observer = new MutationObserver(function(mutations) {
+        mutations.forEach(function(mutation) {
+            if (mutation.type === 'childList' && mutation.addedNodes.length > 0) {
+                mutation.addedNodes.forEach(function(node) {
+                    if (node.nodeType === 1) { // Element node
+                        // Check if this is a dialog that contains forms
+                        if (node.tagName === 'DIALOG' || node.querySelector('dialog')) {
+                            console.log('Dialog detected, re-initializing form handlers');
+                            setTimeout(initializeFormHandlers, 100);
+                        }
+                    }
+                });
+            }
         });
     });
+
+    // Start observing the document body for changes
+    observer.observe(document.body, {
+        childList: true,
+        subtree: true
+    });
+
+    // Function to check for duplicates and handle submission
+    function checkForDuplicatesAndSubmit(form) {
+        const formData = new FormData(form);
+        
+        // Prepare data for duplicate check
+        const duplicateCheckData = {
+            farmerName: formData.get('farmerName'),
+            municipality: formData.get('municipality'),
+            barangay: formData.get('barangay'),
+            causeOfDamage: formData.get('causeOfDamage'),
+            line: formData.get('line'),
+            date_occurrence: formData.get('date_occurrence')
+        };
+
+        console.log('Checking duplicates for:', duplicateCheckData);
+
+        // Make AJAX request to check for duplicates
+        fetch('/records/check-duplicates', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content')
+            },
+            body: JSON.stringify(duplicateCheckData)
+        })
+        .then(response => {
+            console.log('Response status:', response.status);
+            return response.json();
+        })
+        .then(data => {
+            console.log('Response data:', data);
+            if (data.success && data.duplicates.length > 0) {
+                // Show duplicate modal with existing records
+                console.log('Duplicates found, showing modal');
+                showDuplicateModal(data.duplicates, form);
+            } else {
+                // No duplicates found, submit form directly
+                console.log('No duplicates found, submitting form');
+                form.submit();
+            }
+        })
+        .catch(error => {
+            console.error('Error checking duplicates:', error);
+            // If duplicate check fails, proceed with submission
+            form.submit();
+        });
+    }
+
+    // Function to show duplicate modal
+    function showDuplicateModal(duplicates, form) {
+        const duplicateModal = document.getElementById('duplicateModal');
+        const duplicatesList = document.getElementById('duplicateRecordsList');
+        
+        // Clear existing content
+        duplicatesList.innerHTML = '';
+        
+        // Add duplicate records to the modal
+        duplicates.forEach(duplicate => {
+            const duplicateElement = document.createElement('div');
+            duplicateElement.className = 'bg-gray-50 border border-gray-200 rounded-lg p-3';
+            duplicateElement.innerHTML = `
+                <div class="text-sm font-medium text-gray-900 mb-1">Record #${duplicate.id}</div>
+                <div class="text-xs text-gray-600 space-y-1">
+                    <div><strong>Name:</strong> ${duplicate.farmerName}</div>
+                    <div><strong>Address:</strong> ${duplicate.address}</div>
+                    <div><strong>Cause:</strong> ${duplicate.causeOfDamage}</div>
+                    <div><strong>Line:</strong> ${duplicate.line}</div>
+                    <div><strong>Date:</strong> ${duplicate.date_occurrence}</div>
+                    <div><strong>Program:</strong> ${duplicate.program}</div>
+                    <div><strong>Source:</strong> ${duplicate.source}</div>
+                    <div><strong>Created:</strong> ${duplicate.created_at}</div>
+                </div>
+            `;
+            duplicatesList.appendChild(duplicateElement);
+        });
+        
+        // Show modal
+        duplicateModal.showModal();
+        
+        // Handle modal buttons
+        const continueBtn = document.getElementById('duplicateModalContinue');
+        const cancelBtn = document.getElementById('duplicateModalCancel');
+        
+        // Remove existing event listeners
+        const newContinueBtn = continueBtn.cloneNode(true);
+        const newCancelBtn = cancelBtn.cloneNode(true);
+        continueBtn.parentNode.replaceChild(newContinueBtn, continueBtn);
+        cancelBtn.parentNode.replaceChild(newCancelBtn, cancelBtn);
+        
+        // Add event listeners
+        newContinueBtn.addEventListener('click', function() {
+            duplicateModal.close();
+            // User chose to continue despite duplicates
+            form.submit();
+        });
+        
+        newCancelBtn.addEventListener('click', function() {
+            duplicateModal.close();
+            // Reset form submission state to allow re-submission
+            setTimeout(() => {
+                form.isSubmitting = false;
+                // Remove any disabled attributes from submit buttons
+                const submitButtons = form.querySelectorAll('button[type="submit"]');
+                submitButtons.forEach(btn => {
+                    btn.disabled = false;
+                    btn.classList.remove('disabled', 'opacity-50');
+                });
+            }, 100);
+        });
+    }
 
     // Table Search Button Functionality
     const tableSearchBtn = document.getElementById('table-search-btn');
