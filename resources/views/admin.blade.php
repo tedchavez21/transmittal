@@ -1083,27 +1083,6 @@
             });
         }
 
-        // Transmit Selected Records - open print preview in new tab
-        const transmitSelectedButton = document.getElementById('transmit-selected-records');
-        if (transmitSelectedButton) {
-            transmitSelectedButton.addEventListener('click', function(e) {
-                // Prevent default form submission
-                e.preventDefault();
-                e.stopImmediatePropagation();
-                
-                // Get actually selected transmit checkboxes
-                const selectedIds = Array.from(document.querySelectorAll('.record-checkbox-transmit:checked'))
-                                        .map(cb => cb.value);
-                
-                if (selectedIds.length > 0) {
-                    // Open admin print preview page in new tab with selected records
-                    window.open('{{ route("admin.print-preview") }}?ids=' + encodeURIComponent(selectedIds.join(',')), '_blank');
-                }
-                
-                return false;
-            });
-        }
-
         // Cascading Dropdowns for Dashboard Filters
         const dashProvince = document.querySelector('select[name="dash_province"]');
         const dashMunicipality = document.querySelector('select[name="dash_municipality"]');
@@ -1123,17 +1102,49 @@
         const transmitCheckboxes = document.querySelectorAll('.record-checkbox-transmit');
         const bulkSelectedCount = document.getElementById('bulk-selected-count');
 
+        // Get selected IDs from URL parameter
+        function getSelectedIdsFromUrl() {
+            const params = new URLSearchParams(window.location.search);
+            const selectedIds = params.get('selected_transmit_ids');
+            return selectedIds ? selectedIds.split(',').filter(id => id) : [];
+        }
+
+        // Update URL with selected IDs
+        function updateUrlWithSelectedIds(selectedIds) {
+            const url = new URL(window.location);
+            if (selectedIds.length > 0) {
+                url.searchParams.set('selected_transmit_ids', selectedIds.join(','));
+            } else {
+                url.searchParams.delete('selected_transmit_ids');
+            }
+            window.history.replaceState({}, '', url);
+        }
+
         const updateTransmitButtonState = () => {
-            const currentCheckboxes = document.querySelectorAll('.record-checkbox-transmit');
-            let anyChecked = Array.from(currentCheckboxes).some(cb => cb.checked);
-            if (transmitActionBtn) transmitActionBtn.disabled = !anyChecked;
+            const selectedIds = getSelectedIdsFromUrl();
+            const totalSelected = selectedIds.length;
+            if (transmitActionBtn) transmitActionBtn.disabled = totalSelected === 0;
             if (bulkSelectedCount) {
-                const selectedCount = Array.from(currentCheckboxes).filter(cb => cb.checked).length;
-                bulkSelectedCount.textContent = selectedCount > 0 ? `${selectedCount} selected` : '';
+                bulkSelectedCount.textContent = totalSelected > 0 ? `${totalSelected} selected` : '';
             }
         };
         transmitCheckboxes.forEach(cb => {
-            cb.addEventListener('change', updateTransmitButtonState);
+            cb.addEventListener('change', function() {
+                const selectedIds = getSelectedIdsFromUrl();
+                const checkboxValue = cb.value;
+                if (this.checked) {
+                    if (!selectedIds.includes(checkboxValue)) {
+                        selectedIds.push(checkboxValue);
+                    }
+                } else {
+                    const index = selectedIds.indexOf(checkboxValue);
+                    if (index > -1) {
+                        selectedIds.splice(index, 1);
+                    }
+                }
+                updateUrlWithSelectedIds(selectedIds);
+                updateTransmitButtonState();
+            });
         });
 
         function populateSelect(selectElement, options, placeholder) {
@@ -1311,11 +1322,9 @@
             if (isHidden) {
                 this.textContent = 'Cancel Selection';
                 this.style.backgroundColor = '#6c757d'; // Gray out
-                localStorage.setItem('transmit_checkboxes_visible', 'true');
             } else {
                 this.textContent = 'Select Records for Transmit';
                 this.style.backgroundColor = ''; // Reset color
-                localStorage.setItem('transmit_checkboxes_visible', 'false');
                 
                 // Reset state when canceling
                 const currentCheckboxes = document.querySelectorAll('.record-checkbox-transmit');
@@ -1328,82 +1337,74 @@
 
         transmitAllBox?.addEventListener('change', function() {
             const currentCheckboxes = document.querySelectorAll('.record-checkbox-transmit');
-            currentCheckboxes.forEach(cb => cb.checked = this.checked);
+            let selectedIds = getSelectedIdsFromUrl();
+            
+            if (this.checked) {
+                // Add all current checkboxes to selection
+                currentCheckboxes.forEach(cb => {
+                    cb.checked = true;
+                    if (!selectedIds.includes(cb.value)) {
+                        selectedIds.push(cb.value);
+                    }
+                });
+            } else {
+                // Remove all current checkboxes from selection
+                currentCheckboxes.forEach(cb => {
+                    cb.checked = false;
+                    const index = selectedIds.indexOf(cb.value);
+                    if (index > -1) {
+                        selectedIds.splice(index, 1);
+                    }
+                });
+            }
+            updateUrlWithSelectedIds(selectedIds);
             updateTransmitButtonState();
-            saveSelectedTransmitIds();
         });
 
-        // Persistent checkbox selections across pagination
-        const STORAGE_KEY = 'selected_transmit_ids';
-        
-        function saveSelectedTransmitIds() {
-            const currentCheckboxes = document.querySelectorAll('.record-checkbox-transmit');
-            const selectedIds = Array.from(currentCheckboxes).filter(cb => cb.checked).map(cb => cb.value);
-            localStorage.setItem(STORAGE_KEY, JSON.stringify(selectedIds));
-            updateSelectedRecordIdsInput();
-        }
-        
         function loadSelectedTransmitIds() {
-            const stored = localStorage.getItem(STORAGE_KEY);
-            if (stored) {
-                const selectedIds = JSON.parse(stored);
-                // Use current checkboxes from the DOM (after AJAX replacement)
-                const currentCheckboxes = document.querySelectorAll('.record-checkbox-transmit');
-                currentCheckboxes.forEach(cb => {
-                    cb.checked = selectedIds.includes(cb.value);
-                });
-                updateTransmitButtonState();
-                updateSelectedRecordIdsInput();
-            }
+            const selectedIds = getSelectedIdsFromUrl();
+            // Use current checkboxes from the DOM (after AJAX replacement)
+            const currentCheckboxes = document.querySelectorAll('.record-checkbox-transmit');
+            currentCheckboxes.forEach(cb => {
+                // Handle both string and number comparison
+                cb.checked = selectedIds.includes(cb.value) || selectedIds.includes(String(cb.value)) || selectedIds.includes(parseInt(cb.value));
+            });
+            updateTransmitButtonState();
         }
         
         function updateSelectedRecordIdsInput() {
-            const currentCheckboxes = document.querySelectorAll('.record-checkbox-transmit');
-            const selectedIds = Array.from(currentCheckboxes).filter(cb => cb.checked).map(cb => cb.value);
+            const selectedIds = getSelectedIdsFromUrl();
             if (selectedRecordIdsInput) {
                 selectedRecordIdsInput.value = selectedIds.join(',');
             }
         }
         
         function clearSelectedTransmitIds() {
-            localStorage.removeItem(STORAGE_KEY);
-            localStorage.removeItem('transmit_checkboxes_visible');
+            updateUrlWithSelectedIds([]);
             const currentCheckboxes = document.querySelectorAll('.record-checkbox-transmit');
             currentCheckboxes.forEach(cb => cb.checked = false);
             if (transmitAllBox) transmitAllBox.checked = false;
             updateTransmitButtonState();
             updateSelectedRecordIdsInput();
         }
-        
+
         // Load saved selections on page load
         loadSelectedTransmitIds();
-        
-        // Restore checkbox visibility state from localStorage
-        const checkboxesVisible = localStorage.getItem('transmit_checkboxes_visible') === 'true';
-        if (checkboxesVisible) {
-            transmitCheckboxElements.forEach(el => {
-                el.style.display = 'table-cell';
-            });
-            transmitCheckboxes.forEach(cb => {
-                cb.style.display = 'block';
-            });
-            const selectAllTransmitBoxes = document.querySelectorAll('#select-all-transmit');
-            selectAllTransmitBoxes.forEach(box => {
-                box.style.display = 'block';
-            });
-            if (transmitToggleBtn) {
-                transmitToggleBtn.textContent = 'Cancel Selection';
-                transmitToggleBtn.style.backgroundColor = '#6c757d';
-            }
-        }
-        
+
         // AJAX Pagination - prevent page refresh
         const paginationLinks = document.querySelectorAll('.pagination-link');
         
         paginationLinks.forEach(link => {
             link.addEventListener('click', function(e) {
                 e.preventDefault();
-                const url = this.href;
+                let url = this.href;
+                // Preserve selected IDs in URL
+                const selectedIds = getSelectedIdsFromUrl();
+                if (selectedIds.length > 0) {
+                    const urlObj = new URL(url, window.location.origin);
+                    urlObj.searchParams.set('selected_transmit_ids', selectedIds.join(','));
+                    url = urlObj.toString();
+                }
                 showLoadingIndicator();
                 
                 fetch(url, {
@@ -1433,21 +1434,20 @@
                     
                     // Update URL without reload
                     window.history.pushState({}, '', url);
-                    
+
                     // Re-attach event listeners and restore checkbox state
                     reinitializeTableElements();
                     loadSelectedTransmitIds();
-                    
-                    // Restore checkbox visibility
-                    const stillVisible = localStorage.getItem('transmit_checkboxes_visible') === 'true';
+
+                    // Restore checkbox visibility based on toggle button state
                     const toggleBtn = document.getElementById('select-records-transmit');
                     const isCancelSelection = toggleBtn && toggleBtn.textContent.includes('Cancel');
-                    
-                    if (stillVisible || isCancelSelection) {
+
+                    if (isCancelSelection) {
                         const colCheckboxes = document.querySelectorAll('.col-checkbox-transmit');
                         const recordCheckboxes = document.querySelectorAll('.record-checkbox-transmit');
                         const selectAllBoxes = document.querySelectorAll('#select-all-transmit');
-                        
+
                         colCheckboxes.forEach(el => {
                             el.style.display = 'table-cell';
                         });
@@ -1478,17 +1478,50 @@
             const newTransmitActionBtn = document.getElementById('transmit-selected-records');
             const newBulkSelectedCount = document.getElementById('bulk-selected-count');
             const newTransmitToggleBtn = document.getElementById('select-records-transmit');
-            
+
             // Re-attach event listeners
             newTransmitCheckboxes.forEach(cb => {
-                cb.addEventListener('change', updateTransmitButtonState);
-                cb.addEventListener('change', saveSelectedTransmitIds);
+                cb.addEventListener('change', function() {
+                    const selectedIds = getSelectedIdsFromUrl();
+                    const checkboxValue = cb.value;
+                    if (this.checked) {
+                        if (!selectedIds.includes(checkboxValue)) {
+                            selectedIds.push(checkboxValue);
+                        }
+                    } else {
+                        const index = selectedIds.indexOf(checkboxValue);
+                        if (index > -1) {
+                            selectedIds.splice(index, 1);
+                        }
+                    }
+                    updateUrlWithSelectedIds(selectedIds);
+                    updateTransmitButtonState();
+                });
             });
-            
+
             newTransmitAllBox?.addEventListener('change', function() {
-                newTransmitCheckboxes.forEach(cb => cb.checked = this.checked);
+                let selectedIds = getSelectedIdsFromUrl();
+
+                if (this.checked) {
+                    // Add all current checkboxes to selection
+                    newTransmitCheckboxes.forEach(cb => {
+                        cb.checked = true;
+                        if (!selectedIds.includes(cb.value)) {
+                            selectedIds.push(cb.value);
+                        }
+                    });
+                } else {
+                    // Remove all current checkboxes from selection
+                    newTransmitCheckboxes.forEach(cb => {
+                        cb.checked = false;
+                        const index = selectedIds.indexOf(cb.value);
+                        if (index > -1) {
+                            selectedIds.splice(index, 1);
+                        }
+                    });
+                }
+                updateUrlWithSelectedIds(selectedIds);
                 updateTransmitButtonState();
-                saveSelectedTransmitIds();
             });
             
             newTransmitToggleBtn?.addEventListener('click', function() {
@@ -1513,11 +1546,9 @@
                 if (isHidden) {
                     this.textContent = 'Cancel Selection';
                     this.style.backgroundColor = '#6c757d';
-                    localStorage.setItem('transmit_checkboxes_visible', 'true');
                 } else {
                     this.textContent = 'Select Records for Transmit';
                     this.style.backgroundColor = '';
-                    localStorage.setItem('transmit_checkboxes_visible', 'false');
                     newTransmitCheckboxes.forEach(cb => cb.checked = false);
                     if(newTransmitAllBox) newTransmitAllBox.checked = false;
                     if(newTransmitActionBtn) newTransmitActionBtn.disabled = true;
@@ -1525,13 +1556,7 @@
                 }
             });
         }
-        
-        // Save selections when checkboxes change
-        const currentCheckboxes = document.querySelectorAll('.record-checkbox-transmit');
-        currentCheckboxes.forEach(cb => {
-            cb.addEventListener('change', saveSelectedTransmitIds);
-        });
-        
+
         // Clear selections when canceling
         transmitToggleBtn?.addEventListener('click', function() {
             const currentCheckboxElements = document.querySelectorAll('.col-checkbox-transmit');
@@ -1546,35 +1571,16 @@
         transmitActionBtn?.addEventListener('click', function(e) {
             e.preventDefault();
             e.stopImmediatePropagation();
-            
-            const selectedIds = Array.from(document.querySelectorAll('.record-checkbox-transmit:checked'))
-                                    .map(cb => cb.value);
-            
+
+            const selectedIds = getSelectedIdsFromUrl();
+
             if (selectedIds.length > 0) {
-                // Clear localStorage selections and visibility state before transmitting
-                localStorage.removeItem(STORAGE_KEY);
-                localStorage.removeItem('transmit_checkboxes_visible');
-                
-                // First send to addToPrintPreview to store in session
-                const form = document.createElement('form');
-                form.method = 'POST';
-                form.action = "{{ route('admin.add-to-print-preview') }}";
-                form.target = '_blank';
-                
-                const csrfInput = document.createElement('input');
-                csrfInput.type = 'hidden';
-                csrfInput.name = '_token';
-                csrfInput.value = "{{ csrf_token() }}";
-                form.appendChild(csrfInput);
-                
-                const idsInput = document.createElement('input');
-                idsInput.type = 'hidden';
-                idsInput.name = 'record_ids';
-                idsInput.value = JSON.stringify(selectedIds);
-                form.appendChild(idsInput);
-                
-                document.body.appendChild(form);
-                form.submit();
+                // Clear URL selections before transmitting
+                updateUrlWithSelectedIds([]);
+
+                // Open print preview in new tab with IDs as URL parameter
+                const printPreviewUrl = "{{ route('admin.print-preview') }}?ids=" + encodeURIComponent(selectedIds.join(','));
+                window.open(printPreviewUrl, '_blank');
                 this.style.backgroundColor = '#6c757d'; // Gray out
             } else {
                 this.textContent = 'Delete Multiple';

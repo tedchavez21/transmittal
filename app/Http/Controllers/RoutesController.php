@@ -753,7 +753,7 @@ class RoutesController extends Controller
         // Clear existing preview and start fresh with selected records
         $request->session()->put('admin_print_preview_record_ids', $recordIds);
 
-        return redirect()->back()->with('success', 'Added '.count($recordIds).' records to print preview.');
+        return redirect()->route('admin.print-preview')->with('success', 'Added '.count($recordIds).' records to print preview.');
     }
 
     public function assignTransmittals(Request $request)
