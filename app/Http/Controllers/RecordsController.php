@@ -13,8 +13,8 @@ class RecordsController extends Controller
 {
     public function storeRecord(Request $request)
     {
-        // Check if this is an AJAX request
-        $isAjax = $request->ajax() || $request->header('X-Requested-With') === 'XMLHttpRequest';
+        // Always return JSON for this endpoint since it's used by AJAX forms
+        $isAjax = true;
         
         // Validate the incoming request data
         $source = $request->input('source', 'OD');
@@ -113,7 +113,8 @@ class RecordsController extends Controller
             // Return duplicates as JSON for AJAX requests
             if ($isAjax) {
                 return response()->json([
-                    'success' => true,
+                    'success' => false,
+                    'message' => 'Potential duplicate record(s) found. Please review before submitting.',
                     'duplicates' => $potentialDuplicates->toArray()
                 ]);
             }
@@ -158,14 +159,18 @@ class RecordsController extends Controller
             
             DB::commit();
             
+            Log::info('Record created successfully', ['record_id' => $record->id, 'isAjax' => $isAjax]);
+            
             // Return success response
             $successMessage = 'Record stored successfully.';
             if ($isAjax) {
-                return response()->json([
+                $response = response()->json([
                     'success' => true,
                     'message' => $successMessage,
                     'record' => $record
                 ]);
+                Log::info('Returning JSON response', ['response' => $response->getContent()]);
+                return $response;
             }
             
             return redirect()->back()->with('success', $successMessage);

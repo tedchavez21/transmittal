@@ -1568,8 +1568,8 @@ Zarah,San Luis,Aurora`;
                     newContinueBtn.addEventListener('click', function() {
                         confirmModal.close();
                         console.log('Continue clicked, proceeding with submission');
-                        // Check for duplicates before submitting
-                        checkForDuplicatesAndSubmit(form);
+                        // Submit directly without duplicate check
+                        submitFormViaAjax(form);
                     });
                     
                     newCancelBtn.addEventListener('click', function() {
@@ -1645,54 +1645,6 @@ Zarah,San Luis,Aurora`;
         subtree: true
     });
 
-    // Function to check for duplicates and handle submission
-    function checkForDuplicatesAndSubmit(form) {
-        const formData = new FormData(form);
-        
-        // Prepare data for duplicate check
-        const duplicateCheckData = {
-            farmerName: formData.get('farmerName'),
-            municipality: formData.get('municipality'),
-            barangay: formData.get('barangay'),
-            causeOfDamage: formData.get('causeOfDamage'),
-            line: formData.get('line'),
-            date_occurrence: formData.get('date_occurrence')
-        };
-
-        console.log('Checking duplicates for:', duplicateCheckData);
-
-        // Make AJAX request to check for duplicates
-        fetch('/records/check-duplicates', {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-                'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content')
-            },
-            body: JSON.stringify(duplicateCheckData)
-        })
-        .then(response => {
-            console.log('Response status:', response.status);
-            return response.json();
-        })
-        .then(data => {
-            console.log('Response data:', data);
-            if (data.success && data.duplicates.length > 0) {
-                // Show duplicate modal with existing records
-                console.log('Duplicates found, showing modal');
-                showDuplicateModal(data.duplicates, form);
-            } else {
-                // No duplicates found, submit form via AJAX
-                console.log('No duplicates found, submitting form via AJAX');
-                submitFormViaAjax(form);
-            }
-        })
-        .catch(error => {
-            console.error('Error checking duplicates:', error);
-            // If duplicate check fails, proceed with AJAX submission
-            submitFormViaAjax(form);
-        });
-    }
-
     // Function to submit form via AJAX and show notification
     function submitFormViaAjax(form) {
         console.log('submitFormViaAjax called');
@@ -1714,11 +1666,26 @@ Zarah,San Luis,Aurora`;
             method: form.method || 'POST',
             body: formData,
             headers: {
-                'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content')
+                'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content'),
+                'X-Requested-With': 'XMLHttpRequest',
+                'Accept': 'application/json'
             }
         })
         .then(response => {
             console.log('Submit response status:', response.status);
+            console.log('Submit response headers:', response.headers.get('content-type'));
+            
+            // Check if response is OK
+            if (!response.ok) {
+                throw new Error(`HTTP error! status: ${response.status}`);
+            }
+            
+            // Check if response is JSON
+            const contentType = response.headers.get('content-type');
+            if (!contentType || !contentType.includes('application/json')) {
+                throw new Error('Response is not JSON');
+            }
+            
             return response.json();
         })
         .then(data => {
@@ -1726,35 +1693,49 @@ Zarah,San Luis,Aurora`;
             console.log('Dialog open state after response:', addRecordDialog ? addRecordDialog.open : 'N/A');
             
             if (data.success) {
-                // Show success notification
-                showNotification('Record added successfully!', 'success');
-                
-                // Reset form fields for continuous encoding
-                form.reset();
-                
-                // Reset dependent dropdowns
-                const municipalitySelect = form.querySelector('#municipality');
-                const barangaySelect = form.querySelector('#barangay');
-                if (municipalitySelect) {
-                    municipalitySelect.disabled = true;
-                    municipalitySelect.innerHTML = '<option value="">Select Municipality</option>';
+                // Show success modal
+                const successModal = document.getElementById('successModal');
+                console.log('Success modal element found:', !!successModal);
+                if (successModal) {
+                    console.log('Showing success modal');
+                    successModal.showModal();
+                    
+                    // Add event listener to OK button
+                    const successModalOk = document.getElementById('successModalOk');
+                    if (successModalOk) {
+                        successModalOk.addEventListener('click', function() {
+                            successModal.close();
+                            
+                            // Reset form fields for continuous encoding
+                            form.reset();
+                            
+                            // Reset dependent dropdowns
+                            const municipalitySelect = form.querySelector('#municipality');
+                            const barangaySelect = form.querySelector('#barangay');
+                            if (municipalitySelect) {
+                                municipalitySelect.disabled = true;
+                                municipalitySelect.innerHTML = '<option value="">Select Municipality</option>';
+                            }
+                            if (barangaySelect) {
+                                barangaySelect.disabled = true;
+                                barangaySelect.innerHTML = '<option value="">Select Barangay</option>';
+                            }
+                            
+                            // Focus on first input field
+                            const firstInput = form.querySelector('input:not([type="hidden"]):not([type="checkbox"])');
+                            if (firstInput) {
+                                firstInput.focus();
+                            }
+                            
+                            // Update records table if it exists
+                            console.log('About to update records table...');
+                            updateRecordsTable();
+                            console.log('Records table updated');
+                        }, { once: true });
+                    }
                 }
-                if (barangaySelect) {
-                    barangaySelect.disabled = true;
-                    barangaySelect.innerHTML = '<option value="">Select Barangay</option>';
-                }
                 
-                // Focus on first input field
-                const firstInput = form.querySelector('input:not([type="hidden"]):not([type="checkbox"])');
-                if (firstInput) {
-                    firstInput.focus();
-                }
-                
-                // Update records table if it exists
-                console.log('About to update records table...');
-                updateRecordsTable();
-                console.log('Records table updated');
-                console.log('Dialog open state after table update:', addRecordDialog ? addRecordDialog.open : 'N/A');
+                console.log('Dialog open state after success:', addRecordDialog ? addRecordDialog.open : 'N/A');
                 
             } else {
                 // Show error notification
@@ -1763,7 +1744,14 @@ Zarah,San Luis,Aurora`;
         })
         .catch(error => {
             console.error('Error submitting form:', error);
+            console.error('Error details:', error.message);
             showNotification('Error adding record. Please try again.', 'error');
+            
+            // Re-open the dialog if it was closed
+            if (addRecordDialog && !addRecordDialog.open) {
+                console.log('Re-opening dialog after error');
+                addRecordDialog.showModal();
+            }
         })
         .finally(() => {
             // Re-enable submit button
@@ -1874,69 +1862,6 @@ Zarah,San Luis,Aurora`;
         } else {
             console.log('No table container found, skipping table update');
         }
-    }
-
-    // Function to show duplicate modal
-    function showDuplicateModal(duplicates, form) {
-        const duplicateModal = document.getElementById('duplicateModal');
-        const duplicatesList = document.getElementById('duplicateRecordsList');
-        
-        // Clear existing content
-        duplicatesList.innerHTML = '';
-        
-        // Add duplicate records to the modal
-        duplicates.forEach(duplicate => {
-            const duplicateElement = document.createElement('div');
-            duplicateElement.className = 'bg-gray-50 border border-gray-200 rounded-lg p-3';
-            duplicateElement.innerHTML = `
-                <div class="text-sm font-medium text-gray-900 mb-1">Record #${duplicate.id}</div>
-                <div class="text-xs text-gray-600 space-y-1">
-                    <div><strong>Name:</strong> ${duplicate.farmerName}</div>
-                    <div><strong>Address:</strong> ${duplicate.address}</div>
-                    <div><strong>Cause:</strong> ${duplicate.causeOfDamage}</div>
-                    <div><strong>Line:</strong> ${duplicate.line}</div>
-                    <div><strong>Date:</strong> ${duplicate.date_occurrence}</div>
-                    <div><strong>Program:</strong> ${duplicate.program}</div>
-                    <div><strong>Source:</strong> ${duplicate.source}</div>
-                    <div><strong>Created:</strong> ${duplicate.created_at}</div>
-                </div>
-            `;
-            duplicatesList.appendChild(duplicateElement);
-        });
-        
-        // Show modal
-        duplicateModal.showModal();
-        
-        // Handle modal buttons
-        const continueBtn = document.getElementById('duplicateModalContinue');
-        const cancelBtn = document.getElementById('duplicateModalCancel');
-        
-        // Remove existing event listeners
-        const newContinueBtn = continueBtn.cloneNode(true);
-        const newCancelBtn = cancelBtn.cloneNode(true);
-        continueBtn.parentNode.replaceChild(newContinueBtn, continueBtn);
-        cancelBtn.parentNode.replaceChild(newCancelBtn, cancelBtn);
-        
-        // Add event listeners
-        newContinueBtn.addEventListener('click', function() {
-            duplicateModal.close();
-            // User chose to continue despite duplicates
-            submitFormViaAjax(form);
-        });
-        
-        newCancelBtn.addEventListener('click', function() {
-            duplicateModal.close();
-            // Reset form submission state to allow re-submission
-            setTimeout(() => {
-                form.isSubmitting = false;
-                // Remove any disabled attributes from submit buttons
-                const submitButtons = form.querySelectorAll('button[type="submit"]');
-                submitButtons.forEach(btn => {
-                    btn.disabled = false;
-                    btn.classList.remove('disabled', 'opacity-50');
-                });
-            }, 100);
-        });
     }
 
     // Table Search Button Functionality

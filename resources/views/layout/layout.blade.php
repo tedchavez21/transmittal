@@ -222,20 +222,18 @@
         </div>
     </dialog>
 
-    <!-- Duplicate Detection Modal -->
-    <dialog id="duplicateModal" class="rounded-2xl shadow-2xl bg-white backdrop:bg-black/40 p-0 w-[min(500px,calc(100vw-2rem))]">
+    <!-- Success Modal -->
+    <dialog id="successModal" class="rounded-2xl shadow-2xl bg-white backdrop:bg-black/40 p-0 w-[min(400px,calc(100vw-2rem))]" style="z-index: 10000;">
         <div class="px-5 pt-5 pb-3 border-b border-gray-100">
-            <h3 class="text-base font-black text-gray-900">Potential Duplicate Records Found</h3>
+            <h3 class="text-base font-black text-gray-900">Success</h3>
         </div>
         <div class="px-5 py-4">
-            <p class="text-sm text-gray-600 mb-4">The following similar records were found in the database:</p>
-            <div id="duplicateRecordsList" class="max-h-60 overflow-y-auto mb-4 space-y-2"></div>
-            <p class="text-sm text-amber-600 font-medium mb-4">Do you want to continue adding this record despite the potential duplicates?</p>
+            <p class="text-sm text-gray-600 mb-4">Record added successfully!</p>
         </div>
         <div class="px-5 py-3 border-t border-gray-100 flex gap-2 justify-end">
-            <button type="button" id="duplicateModalCancel" class="h-9 px-4 rounded-lg border border-gray-200 text-xs font-bold text-gray-600 hover:bg-gray-50 transition-colors cursor-pointer">Cancel</button>
-            <button type="button" id="duplicateModalContinue" class="h-9 px-4 rounded-lg bg-amber-600 text-white text-xs font-bold hover:bg-amber-700 transition-colors cursor-pointer">Continue Anyway</button>
+            <button type="button" id="successModalOk" class="h-9 px-4 rounded-lg bg-pcic-700 text-white text-xs font-bold hover:bg-pcic-800 transition-colors cursor-pointer">OK</button>
         </div>
     </dialog>
-</body>
+
+    </body>
 </html>

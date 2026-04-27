@@ -6,6 +6,19 @@
     color: #0066CC !important;
 }
 
+/* Sticky table header using CSS */
+.records-table thead th {
+    position: sticky;
+    top: 0;
+    z-index: 10;
+    background-color: #006c35;
+    color: white;
+    font-weight: bold;
+    padding: 8px 12px;
+    text-align: left;
+    white-space: nowrap;
+}
+
 /* Make account text bold only when it's a link */
 .account-field:link,
 .account-field:visited {
@@ -27,30 +40,12 @@ tr.bg-green-700 .account-field {
     font-weight: bold !important;
 }
 
-/* JavaScript-based sticky headers with improved alignment */
+/* Table wrapper with scroll */
 .table-wrapper {
-    position: relative;
-    max-height: calc(100vh - 250px);
-    overflow-y: auto;
     overflow-x: auto;
+    overflow-y: auto;
+    max-height: calc(100vh - 250px);
     border: none;
-}
-
-.fixed-table-header {
-    position: sticky;
-    top: 0;
-    z-index: 100;
-    background-color: #006c35;
-    overflow: hidden;
-    border: none;
-}
-
-.fixed-table-header table {
-    margin: 0;
-    border-collapse: separate;
-    border-spacing: 0;
-    width: 100%;
-    table-layout: auto;
 }
 
 .table-wrapper table {
@@ -58,7 +53,31 @@ tr.bg-green-700 .account-field {
     border-spacing: 0;
     width: 100%;
     table-layout: auto;
-    margin-top: -1px; /* Prevent double border */
+}
+
+/* JavaScript-based sticky headers with improved alignment */
+.fixed-table-header {
+    position: sticky;
+    top: 0;
+    z-index: 100;
+    background-color: #006c35;
+    overflow-x: auto;
+    overflow-y: hidden;
+    border: none;
+    scrollbar-width: none; /* Firefox */
+    -ms-overflow-style: none; /* IE and Edge */
+}
+
+.fixed-table-header::-webkit-scrollbar {
+    display: none; /* Chrome, Safari, Opera */
+}
+
+.fixed-table-header table {
+    margin: 0;
+    border-collapse: separate;
+    border-spacing: 0;
+    width: 100%;
+    table-layout: fixed;
 }
 
 .fixed-table-header th {
@@ -73,133 +92,9 @@ tr.bg-green-700 .account-field {
     min-width: 80px;
 }
 
-/* Specific column widths to prevent wrapping */
-.fixed-table-header .col-checkbox,
-.fixed-table-header .col-checkbox-transmit {
-    min-width: 60px;
-    width: 60px;
-}
-
-.fixed-table-header .col-edit,
-.fixed-table-header .col-delete {
-    min-width: 50px;
-    width: 50px;
-}
-
-.fixed-table-header .col-line {
-    min-width: 120px;
-    width: 120px;
-}
-
-.fixed-table-header .col-name {
-    min-width: 180px;
-    width: 180px;
-}
-
-.fixed-table-header .col-source {
-    min-width: 80px;
-    width: 80px;
-}
-
-.fixed-table-header .col-account {
-    min-width: 140px;
-    width: 140px;
-}
-
-.fixed-table-header .col-mode {
-    min-width: 130px;
-    width: 130px;
-}
-
+/* Allow header columns to adjust dynamically based on content */
 .fixed-table-header .col-remarks {
-    min-width: 200px;
-    width: 200px;
-}
-
-.fixed-table-header .col-control-number {
-    min-width: 140px;
-    width: 140px;
-}
-
-.fixed-table-header .col-encoder {
-    min-width: 120px;
-    width: 120px;
-}
-
-.fixed-table-header .col-date-encoded {
-    min-width: 120px;
-    width: 120px;
-}
-
-.fixed-table-header .col-transmittal-number {
-    min-width: 140px;
-    width: 140px;
-}
-
-.fixed-table-header .col-admin-transmittal {
-    min-width: 140px;
-    width: 140px;
-}
-
-.fixed-table-header .col-status {
-    min-width: 100px;
-    width: 100px;
-}
-
-/* Missing column classes */
-.fixed-table-header .col-farmer-name {
-    min-width: 180px;
-    width: 180px;
-}
-
-.fixed-table-header .col-municipality {
-    min-width: 140px;
-    width: 140px;
-}
-
-.fixed-table-header .col-barangay {
-    min-width: 140px;
-    width: 140px;
-}
-
-.fixed-table-header .col-province {
-    min-width: 120px;
-    width: 120px;
-}
-
-.fixed-table-header .col-program {
-    min-width: 120px;
-    width: 120px;
-}
-
-.fixed-table-header .col-date-occurrence {
-    min-width: 140px;
-    width: 140px;
-}
-
-.fixed-table-header .col-causeOfDamage {
-    min-width: 160px;
-    width: 160px;
-}
-
-.fixed-table-header .col-date-received {
-    min-width: 120px;
-    width: 120px;
-}
-
-.fixed-table-header .col-accounts {
-    min-width: 140px;
-    width: 140px;
-}
-
-.fixed-table-header .col-modeOfPayment {
-    min-width: 130px;
-    width: 130px;
-}
-
-.fixed-table-header .col-admin-transmittal-number {
-    min-width: 140px;
-    width: 140px;
+    max-width: 300px;
 }
 
 .fixed-table-header th:last-child {
@@ -212,138 +107,16 @@ tr.bg-green-700 .account-field {
     border-right: 1px solid #f0f0f0;
     box-sizing: border-box;
     white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
-}
-
-/* Match header minimum widths for data cells */
-.table-wrapper .col-checkbox,
-.table-wrapper .col-checkbox-transmit {
-    min-width: 60px;
-    width: 60px;
-}
-
-.table-wrapper .col-edit,
-.table-wrapper .col-delete {
-    min-width: 50px;
-    width: 50px;
-}
-
-.table-wrapper .col-line {
-    min-width: 120px;
-    width: 120px;
-}
-
-.table-wrapper .col-name {
-    min-width: 180px;
-    width: 180px;
-}
-
-.table-wrapper .col-source {
-    min-width: 80px;
-    width: 80px;
-}
-
-.table-wrapper .col-account {
-    min-width: 140px;
-    width: 140px;
-}
-
-.table-wrapper .col-mode {
-    min-width: 130px;
-    width: 130px;
 }
 
 .table-wrapper .col-remarks {
-    min-width: 200px;
-    width: 200px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    max-width: 300px;
 }
 
-.table-wrapper .col-control-number {
-    min-width: 140px;
-    width: 140px;
-}
-
-.table-wrapper .col-encoder {
-    min-width: 120px;
-    width: 120px;
-}
-
-.table-wrapper .col-date-encoded {
-    min-width: 120px;
-    width: 120px;
-}
-
-.table-wrapper .col-transmittal-number {
-    min-width: 140px;
-    width: 140px;
-}
-
-.table-wrapper .col-admin-transmittal {
-    min-width: 140px;
-    width: 140px;
-}
-
-.table-wrapper .col-status {
-    min-width: 100px;
-    width: 100px;
-}
-
-/* Missing table wrapper column classes */
-.table-wrapper .col-farmer-name {
-    min-width: 180px;
-    width: 180px;
-}
-
-.table-wrapper .col-municipality {
-    min-width: 140px;
-    width: 140px;
-}
-
-.table-wrapper .col-barangay {
-    min-width: 140px;
-    width: 140px;
-}
-
-.table-wrapper .col-province {
-    min-width: 120px;
-    width: 120px;
-}
-
-.table-wrapper .col-program {
-    min-width: 120px;
-    width: 120px;
-}
-
-.table-wrapper .col-date-occurrence {
-    min-width: 140px;
-    width: 140px;
-}
-
-.table-wrapper .col-causeOfDamage {
-    min-width: 160px;
-    width: 160px;
-}
-
-.table-wrapper .col-date-received {
-    min-width: 120px;
-    width: 120px;
-}
-
-.table-wrapper .col-accounts {
-    min-width: 140px;
-    width: 140px;
-}
-
-.table-wrapper .col-modeOfPayment {
-    min-width: 130px;
-    width: 130px;
-}
-
-.table-wrapper .col-admin-transmittal-number {
-    min-width: 140px;
-    width: 140px;
-}
+/* Allow columns to adjust dynamically based on content */
 
 .table-wrapper td:last-child {
     border-right: none;
@@ -378,165 +151,14 @@ tr.bg-green-700 .account-field {
 }
 
 .table-wrapper th {
-    visibility: hidden;
-    height: 0;
-    padding: 0;
-    border: none;
+    visibility: visible;
 }
 </style>
 
 <script>
 document.addEventListener('DOMContentLoaded', function() {
-    // Create fixed table header
-    function createFixedHeader() {
-        const tableWrapper = document.querySelector('.table-wrapper');
-        if (!tableWrapper) return;
-        
-        const table = tableWrapper.querySelector('table');
-        if (!table) return;
-        
-        const thead = table.querySelector('thead');
-        if (!thead) return;
-        
-        // Create fixed header container
-        const fixedHeader = document.createElement('div');
-        fixedHeader.className = 'fixed-table-header';
-        
-        // Clone the header table
-        const headerTable = table.cloneNode(false);
-        headerTable.appendChild(thead.cloneNode(true));
-        fixedHeader.appendChild(headerTable);
-        
-        // Insert before the table wrapper
-        tableWrapper.parentNode.insertBefore(fixedHeader, tableWrapper);
-        
-        // Sync horizontal scrolling
-        tableWrapper.addEventListener('scroll', function() {
-            fixedHeader.scrollLeft = this.scrollLeft;
-        });
-        
-        // Sync column widths with more robust method
-        function syncColumnWidths() {
-            const headerTable = fixedHeader.querySelector('table');
-            const bodyTable = tableWrapper.querySelector('table');
-            const headerCells = headerTable.querySelectorAll('th');
-            const bodyCells = bodyTable.querySelectorAll('thead th');
-            
-            // Force layout recalculation
-            bodyTable.style.display = 'none';
-            bodyTable.offsetHeight; // Trigger reflow
-            bodyTable.style.display = '';
-            
-            // Get computed widths from first data row for more accurate measurements
-            const firstDataRow = bodyTable.querySelector('tbody tr');
-            const dataCells = firstDataRow ? firstDataRow.querySelectorAll('td') : [];
-            
-            // Use body header cells as fallback if no data rows
-            const referenceCells = dataCells.length > 0 ? dataCells : bodyCells;
-            
-            // Apply precise widths to header cells
-            referenceCells.forEach((refCell, index) => {
-                const headerCell = headerCells[index];
-                if (headerCell && refCell) {
-                    const computedWidth = refCell.getBoundingClientRect().width;
-                    headerCell.style.width = computedWidth + 'px';
-                    headerCell.style.minWidth = computedWidth + 'px';
-                    headerCell.style.maxWidth = computedWidth + 'px';
-                }
-            });
-            
-            // Ensure both tables have same width
-            const bodyWidth = bodyTable.getBoundingClientRect().width;
-            headerTable.style.width = bodyWidth + 'px';
-            headerTable.style.minWidth = bodyWidth + 'px';
-        }
-        
-        // Initial sync
-        setTimeout(syncColumnWidths, 100);
-        
-        // Sync on window resize
-        window.addEventListener('resize', syncColumnWidths);
-        
-        // Hide original thead
-        thead.style.display = 'none';
-    }
-    
-    // Initialize fixed header
-    setTimeout(createFixedHeader, 100);
-    
-    // Sync checkbox column visibility between original table and fixed header
-    function syncCheckboxVisibility() {
-        const fixedHeader = document.querySelector('.fixed-table-header');
-        const tableWrapper = document.querySelector('.table-wrapper');
-        
-        if (!fixedHeader || !tableWrapper) return;
-        
-        const originalCheckboxCols = tableWrapper.querySelectorAll('th.col-checkbox, th.col-checkbox-transmit');
-        const fixedCheckboxCols = fixedHeader.querySelectorAll('th.col-checkbox, th.col-checkbox-transmit');
-        
-        originalCheckboxCols.forEach((originalCol, index) => {
-            const fixedCol = fixedCheckboxCols[index];
-            if (fixedCol) {
-                const originalDisplay = window.getComputedStyle(originalCol).display;
-                fixedCol.style.display = originalDisplay;
-            }
-        });
-        
-        // Also sync column widths after visibility changes
-        setTimeout(() => {
-            const headerTable = fixedHeader.querySelector('table');
-            const bodyTable = tableWrapper.querySelector('table');
-            const headerCells = headerTable.querySelectorAll('th');
-            const bodyCells = bodyTable.querySelectorAll('thead th');
-            
-            // Force layout recalculation
-            bodyTable.style.display = 'none';
-            bodyTable.offsetHeight; // Trigger reflow
-            bodyTable.style.display = '';
-            
-            // Get computed widths from first data row for more accurate measurements
-            const firstDataRow = bodyTable.querySelector('tbody tr');
-            const dataCells = firstDataRow ? firstDataRow.querySelectorAll('td') : [];
-            
-            // Use body header cells as fallback if no data rows
-            const referenceCells = dataCells.length > 0 ? dataCells : bodyCells;
-            
-            // Apply precise widths to header cells
-            referenceCells.forEach((refCell, index) => {
-                const headerCell = headerCells[index];
-                if (headerCell && refCell) {
-                    const computedWidth = refCell.getBoundingClientRect().width;
-                    headerCell.style.width = computedWidth + 'px';
-                    headerCell.style.minWidth = computedWidth + 'px';
-                    headerCell.style.maxWidth = computedWidth + 'px';
-                }
-            });
-            
-            // Ensure both tables have same width
-            const bodyWidth = bodyTable.getBoundingClientRect().width;
-            headerTable.style.width = bodyWidth + 'px';
-            headerTable.style.minWidth = bodyWidth + 'px';
-        }, 50);
-    }
-    
-    // Monitor for checkbox visibility changes
-    const observer = new MutationObserver(function(mutations) {
-        mutations.forEach(function(mutation) {
-            if (mutation.type === 'attributes' && mutation.attributeName === 'style') {
-                syncCheckboxVisibility();
-            }
-        });
-    });
-    
-    // Observe checkbox columns for style changes
-    setTimeout(() => {
-        const checkboxCols = document.querySelectorAll('.col-checkbox, .col-checkbox-transmit');
-        checkboxCols.forEach(col => {
-            observer.observe(col, { attributes: true, attributeFilter: ['style'] });
-        });
-        syncCheckboxVisibility();
-    }, 200);
-    
+    // Using CSS sticky positioning for table headers - no JavaScript needed
+    // The CSS .records-table thead th { position: sticky; top: 0; } handles both vertical and horizontal scrolling
     // Handle checkbox changes to style account fields
     function updateAccountStyling() {
         const checkboxes = document.querySelectorAll('input[type="checkbox"].record-checkbox, input[type="checkbox"].record-checkbox-transmit');
@@ -760,6 +382,7 @@ function getSortIndicator($column, $currentSort, $currentOrder) {
 </div>
 @endif
 
+<div class="table-wrapper">
 <table class="records-table" style="width: 100%; border-collapse: separate; border-spacing: 0;">
     <thead>
         <tr>
@@ -1085,6 +708,7 @@ function getSortIndicator($column, $currentSort, $currentOrder) {
     @if($records->isEmpty())
     </tbody>
 </table>
+</div>
 <div class="empty-state" style="display:flex;flex-direction:column;align-items:center;justify-content:center;padding:48px 20px;text-align:center;">
     <svg width="80" height="80" viewBox="0 0 80 80" fill="none" xmlns="http://www.w3.org/2000/svg" style="margin-bottom:16px;opacity:0.5;">
         <rect x="18" y="8" width="44" height="56" rx="6" stroke="#006c35" stroke-width="2.5" fill="#f0fdf4"/>
@@ -1101,6 +725,7 @@ function getSortIndicator($column, $currentSort, $currentOrder) {
     @else
     </tbody>
 </table>
+</div>
     @endif
 
 <style>
