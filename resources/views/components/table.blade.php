@@ -1,8 +1,8 @@
 @props(['records', 'showDelete' => true, 'showEncoder' => false, 'showApproval' => false, 'showAction' => false, 'showCheckbox' => true, 'showFilters' => false, 'showSortableHeaders' => true, 'showAdminTransmittal' => false, 'hideAccountsColumn' => false, 'hideSourceColumn' => false, 'hideProvinceColumn' => false, 'hideDateReceivedColumn' => false, 'allPrograms' => [], 'allLines' => [], 'allSources' => [], 'allModes' => []])
 
 @php
-$currentSort = request('sort_by', 'created_at');
-$currentOrder = request('sort_order', 'asc');
+$currentSort = request('sort_by', 'id');
+$currentOrder = request('sort_order', 'desc');
 $oppositeOrder = $currentOrder === 'asc' ? 'desc' : 'asc';
 
 // Helper to generate sort URL
@@ -111,7 +111,6 @@ function getSortIndicator($column, $currentSort, $currentOrder) {
                 <input type="text" placeholder="Damage" name="causeOfDamage" value="{{ request('causeOfDamage') }}" style="width: 100%; padding: 5px;">
             </div>
             
-            @if(!$hideDateReceivedColumn)
             <!-- 11. Date Received Filter -->
             <div>
                 <label style="display: block; margin-bottom: 5px; font-weight: 600;">Date Received</label>
@@ -128,7 +127,6 @@ function getSortIndicator($column, $currentSort, $currentOrder) {
                     <input type="date" name="date_received_to" value="{{ request('date_received_to') }}" placeholder="To" style="width: 100%; padding: 5px;">
                 </div>
             </div>
-            @endif
             
             <!-- 12. Account Filter -->
             @if(!$hideAccountsColumn)
@@ -382,6 +380,7 @@ function getSortIndicator($column, $currentSort, $currentOrder) {
                 data-accounts="{{ e($record->accounts) }}"
                 data-fb-page-url="{{ e($record->facebook_page_url ?? '') }}"
                 data-date-occurrence="{{ e($record->date_occurrence ?? '') }}"
+                data-date-received="{{ e($record->date_received ?? '') }}"
                 data-remarks="{{ e($record->remarks) }}"
                 data-source="{{ e($record->source) }}"
                 data-transmittal-number="{{ e($record->transmittal_number) }}"

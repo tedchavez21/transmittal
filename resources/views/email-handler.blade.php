@@ -2,6 +2,14 @@
 
 @section('title', 'Email')
 
+@push('styles')
+<style>
+.auto-caps {
+    text-transform: capitalize;
+}
+</style>
+@endpush
+
 @section('page-styles')
 <style>
     html, body {
@@ -112,7 +120,7 @@
                 @csrf
                 <input type="hidden" name="source" value="Email">
             <label for="farmerName" class="text-xs font-bold text-gray-600 text-right">Farmer Name:</label>
-            <input type="text" id="farmerName" name="farmerName" required class="h-9 px-3 rounded-lg border border-gray-200 focus:border-pcic-500 focus:ring-2 focus:ring-pcic-100 outline-none text-sm w-full">
+            <input type="text" id="farmerName" name="farmerName" required class="h-9 px-3 rounded-lg border border-gray-200 focus:border-pcic-500 focus:ring-2 focus:ring-pcic-100 outline-none text-sm w-full auto-caps">
             <label for="province" class="text-xs font-bold text-gray-600 text-right">Province:</label>
             <select name="province" id="province" required class="h-9 px-3 rounded-lg border border-gray-200 focus:border-pcic-500 focus:ring-2 focus:ring-pcic-100 outline-none text-sm w-full bg-white">
                 <option value="">Select Province</option>
@@ -152,22 +160,23 @@
                 <option value="SELF-FINANCED">SELF-FINANCED</option>
             </select>
             <label for="causeOfDamage" class="text-xs font-bold text-gray-600 text-right">Cause of Damage:</label>
-            <input type="text" id="causeOfDamage" name="causeOfDamage" required class="h-9 px-3 rounded-lg border border-gray-200 focus:border-pcic-500 focus:ring-2 focus:ring-pcic-100 outline-none text-sm w-full">
+            <input type="text" id="causeOfDamage" name="causeOfDamage" required class="h-9 px-3 rounded-lg border border-gray-200 focus:border-pcic-500 focus:ring-2 focus:ring-pcic-100 outline-none text-sm w-full auto-caps">
             <label for="modeOfPayment" class="text-xs font-bold text-gray-600 text-right">Mode of payment:</label>
             <select name="modeOfPayment" id="modeOfPayment" required class="h-9 px-3 rounded-lg border border-gray-200 focus:border-pcic-500 focus:ring-2 focus:ring-pcic-100 outline-none text-sm w-full bg-white">
                 <option value="">Select Mode of payment</option>
                 <option value="check">Check</option>
                 <option value="palawan">Palawan Pay</option>
+                <option value="gcash">GCash</option>
                 <option value="not_indicated">Not indicated</option>
             </select>
             <label for="accounts" class="text-xs font-bold text-gray-600 text-right">Account (email):</label>
-            <input type="text" id="accounts" name="accounts" placeholder="Email address or username" class="h-9 px-3 rounded-lg border border-gray-200 focus:border-pcic-500 focus:ring-2 focus:ring-pcic-100 outline-none text-sm w-full">
+            <input type="text" id="accounts" name="accounts" placeholder="Email address or username" class="h-9 px-3 rounded-lg border border-gray-200 focus:border-pcic-500 focus:ring-2 focus:ring-pcic-100 outline-none text-sm w-full auto-caps">
             <label for="date_occurrence" class="text-xs font-bold text-gray-600 text-right">Date occurrence:</label>
             <input type="text" id="date_occurrence" name="date_occurrence" class="h-9 px-3 rounded-lg border border-gray-200 focus:border-pcic-500 focus:ring-2 focus:ring-pcic-100 outline-none text-sm w-full">
             <label for="date_received" class="text-xs font-bold text-gray-600 text-right">Date received:</label>
-            <input type="text" id="date_received" name="date_received" class="h-9 px-3 rounded-lg border border-gray-200 focus:border-pcic-500 focus:ring-2 focus:ring-pcic-100 outline-none text-sm w-full">
+            <input type="date" id="date_received" name="date_received" class="h-9 px-3 rounded-lg border border-gray-200 focus:border-pcic-500 focus:ring-2 focus:ring-pcic-100 outline-none text-sm w-full">
             <label for="remarks" class="text-xs font-bold text-gray-600 text-right">Remarks - Care of:</label>
-            <input type="text" id="remarks" name="remarks" class="h-9 px-3 rounded-lg border border-gray-200 focus:border-pcic-500 focus:ring-2 focus:ring-pcic-100 outline-none text-sm w-full">
+            <input type="text" id="remarks" name="remarks" class="h-9 px-3 rounded-lg border border-gray-200 focus:border-pcic-500 focus:ring-2 focus:ring-pcic-100 outline-none text-sm w-full auto-caps">
             <div></div>
             <div class="flex gap-2 pt-1">
                 <button type="submit" class="h-9 px-4 rounded-lg bg-pcic-700 text-white text-xs font-bold hover:bg-pcic-800 transition-colors cursor-pointer">Add Record</button>
@@ -231,6 +240,7 @@
                 <option value="">Select Mode of payment</option>
                 <option value="check">Check</option>
                 <option value="palawan">Palawan Pay</option>
+                <option value="gcash">GCash</option>
                 <option value="not_indicated">Not indicated</option>
             </select>
             <label for="accounts" class="text-xs font-bold text-gray-600 text-right">Account (email):</label>
@@ -240,7 +250,7 @@
             <label for="date_occurrence" class="text-xs font-bold text-gray-600 text-right">Date occurrence:</label>
             <input type="text" id="date_occurrence" name="date_occurrence" class="h-9 px-3 rounded-lg border border-gray-200 focus:border-pcic-500 focus:ring-2 focus:ring-pcic-100 outline-none text-sm w-full">
             <label for="remarks" class="text-xs font-bold text-gray-600 text-right">Remarks - Care of:</label>
-            <input type="text" id="remarks" name="remarks" class="h-9 px-3 rounded-lg border border-gray-200 focus:border-pcic-500 focus:ring-2 focus:ring-pcic-100 outline-none text-sm w-full">
+            <input type="text" id="remarks" name="remarks" class="h-9 px-3 rounded-lg border border-gray-200 focus:border-pcic-500 focus:ring-2 focus:ring-pcic-100 outline-none text-sm w-full auto-caps">
             <label for="transmittal_number" class="text-xs font-bold text-gray-600 text-right">Control number:</label>
             <input type="text" id="transmittal_number" name="transmittal_number" readonly class="h-9 px-3 rounded-lg border border-gray-200 bg-gray-50 text-sm w-full">
             <label for="admin_transmittal_number" class="text-xs font-bold text-gray-600 text-right">Admin transmittal #:</label>

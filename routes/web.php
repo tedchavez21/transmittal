@@ -17,6 +17,7 @@ Route::post('/officer/logout', [RoutesController::class, 'logoutOfficer'])->name
 Route::get('/admin', [RoutesController::class, 'showAdmin'])->name('admin');
 Route::post('/admin/login', [RoutesController::class, 'loginAdmin'])->name('admin.login');
 Route::post('/admin/logout', [RoutesController::class, 'logoutAdmin'])->name('admin.logout');
+Route::get('/admin/active-users', [RoutesController::class, 'getActiveUsers'])->name('admin.active-users');
 Route::put('/admin/users/{id}', [RoutesController::class, 'updateAdmin'])->name('admin.users.update');
 Route::post('/admin/users', [RoutesController::class, 'createAdmin'])->name('admin.users.create');
 Route::get('/admin/records/{id}/approve', [RoutesController::class, 'approveRecord'])->name('admin.records.approve');

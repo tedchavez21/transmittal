@@ -1302,6 +1302,7 @@ Zarah,San Luis,Aurora`;
         const accounts = ds.accounts != null ? String(ds.accounts) : '';
         const fbPageUrl = ds.fbPageUrl != null ? String(ds.fbPageUrl) : '';
         const dateOccurrence = ds.dateOccurrence != null ? String(ds.dateOccurrence) : '';
+        const dateReceived = ds.dateReceived != null ? String(ds.dateReceived) : '';
         const remarks = ds.remarks != null ? String(ds.remarks) : '';
         const source = ds.source != null ? String(ds.source) : '';
         const transmittalNumber = ds.transmittalNumber != null ? String(ds.transmittalNumber) : '';
@@ -1388,6 +1389,9 @@ Zarah,San Luis,Aurora`;
         const dateOccurrenceField = formRoot.querySelector('[name="date_occurrence"]');
         if (dateOccurrenceField) dateOccurrenceField.value = dateOccurrence;
 
+        const dateReceivedField = formRoot.querySelector('[name="date_received"]');
+        if (dateReceivedField) dateReceivedField.value = dateReceived;
+
         const transmittalInput = formRoot.querySelector('input[name="transmittal_number"]');
         if (transmittalInput) transmittalInput.value = transmittalNumber;
 
@@ -1441,8 +1445,17 @@ Zarah,San Luis,Aurora`;
     if (editRecordForm) {
         editRecordForm.addEventListener('submit', function () {
             setHiddenAddress(editProvinceInput, editMunicipalityInput, editBarangayInput, editRecordAddressInput);
+            capitalizeInputs(editRecordForm);
         });
     }
+
+    // Add form submission handlers for all add record forms
+    const addRecordForms = document.querySelectorAll('form[action*="records"]');
+    addRecordForms.forEach(form => {
+        form.addEventListener('submit', function (e) {
+            capitalizeInputs(form);
+        });
+    });
 
     // Table Search Button Functionality
     const tableSearchBtn = document.getElementById('table-search-btn');
@@ -1523,6 +1536,17 @@ Zarah,San Luis,Aurora`;
             recordCheckboxes.forEach(checkbox => {
                 checkbox.checked = this.checked;
             });
+        });
+    }
+
+    // Auto-caps functionality for text inputs
+    function capitalizeInputs(form) {
+        const autoCapsInputs = form.querySelectorAll('.auto-caps');
+        autoCapsInputs.forEach(input => {
+            if (input.value) {
+                // Capitalize each word in the input
+                input.value = input.value.replace(/\b\w/g, char => char.toUpperCase());
+            }
         });
     }
 

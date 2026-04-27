@@ -30,7 +30,7 @@ class RoutesController extends Controller
                 $records = Record::where('source', 'Email')
                     ->where('encoderName', $emailUserName)
                     ->whereDate('created_at', today())
-                    ->orderBy('id', 'asc')
+                    ->orderBy('id', 'desc')
                     ->paginate(25)
                     ->withQueryString();
             }
@@ -105,7 +105,7 @@ class RoutesController extends Controller
         if ($isLoggedIn) {
             $records = Record::where('source', 'Facebook')
                 ->whereDate('created_at', today())
-                ->orderBy('id', 'asc')
+                ->orderBy('id', 'desc')
                 ->paginate(25)
                 ->withQueryString();
         }
@@ -155,7 +155,7 @@ class RoutesController extends Controller
             $records = Record::where('encoderName', $officerName)
                 ->where('source', 'OD')
                 ->whereDate('created_at', today())
-                ->orderBy('id', 'asc')
+                ->orderBy('id', 'desc')
                 ->paginate(25)
                 ->withQueryString();
         }
@@ -373,7 +373,7 @@ class RoutesController extends Controller
 
         // Handle sorting
         $sortBy = $request->input('sort_by', 'id');
-        $sortOrder = $request->input('sort_order', 'asc');
+        $sortOrder = $request->input('sort_order', 'desc');
         $perPage = (int) $request->input('per_page', 50);
         if (!in_array($perPage, [25, 50, 100], true)) {
             $perPage = 50;
@@ -382,10 +382,10 @@ class RoutesController extends Controller
         // Validate sort parameters to prevent injection
         $allowedSortColumns = ['id', 'farmerName', 'province', 'municipality', 'barangay', 'program', 'line', 'causeOfDamage', 'modeOfPayment', 'date_occurrence', 'remarks', 'accounts', 'source', 'transmittal_number', 'admin_transmittal_number', 'encoderName', 'approved', 'created_at'];
         if (!in_array($sortBy, $allowedSortColumns)) {
-            $sortBy = 'created_at';
+            $sortBy = 'id';
         }
         if (!in_array($sortOrder, ['asc', 'desc'])) {
-            $sortOrder = 'asc';
+            $sortOrder = 'desc';
         }
         
         $records = $query->orderBy($sortBy, $sortOrder)->paginate($perPage)->withQueryString();
@@ -592,6 +592,7 @@ class RoutesController extends Controller
         $allModes = [
             'check',
             'palawan',
+            'gcash',
             'not_indicated'
         ];
 
@@ -640,11 +641,11 @@ class RoutesController extends Controller
 
         if (!empty($sessionRecordIds)) {
             $recordsQuery = Record::whereIn('id', $sessionRecordIds)
-                ->orderBy('id', 'asc');
+                ->orderBy('id', 'desc');
         } else {
             $query = Record::query();
             $this->applyFilters($request, $query);
-            $recordsQuery = $query->orderBy('id', 'asc');
+            $recordsQuery = $query->orderBy('id', 'desc');
         }
 
         // Get all records (not paginated) - will be split in view
@@ -770,7 +771,7 @@ class RoutesController extends Controller
         if (!empty($recordIds)) {
             // Use records from URL parameter
             $recordsQuery = Record::whereIn('id', $recordIds)
-                ->orderBy('id', 'asc');
+                ->orderBy('id', 'desc');
         } else {
             // If no URL IDs, return error
             return response()->json([
@@ -1184,5 +1185,168 @@ class RoutesController extends Controller
             'emailHandlerCount' => $pendingEmailHandlers->count(),
             'totalPending' => $pendingOfficers->count() + $pendingEmailHandlers->count(),
         ]);
+    }
+
+    public function getActiveUsers(Request $request)
+    {
+        try {
+            if (!$request->session()->has('admin_logged_in') || !$request->session()->get('admin_logged_in')) {
+                return response()->json(['error' => 'unauthorized'], 401);
+            }
+
+            $activeUsers = [];
+            $now = Carbon::now();
+
+            // Get active admin users
+            try {
+                $admins = Admin::where('active', true)->get();
+                foreach ($admins as $admin) {
+                    $lastActivity = $this->getUserLastActivity($admin->id, 'admin');
+                    $status = $this->getUserStatus($lastActivity, $now);
+                    
+                    if ($status !== 'away') {
+                        $activeUsers[] = [
+                            'id' => $admin->id,
+                            'name' => $admin->username ?? 'Admin User',
+                            'email' => ($admin->username ?? 'admin') . '@admin.com',
+                            'channel' => 'Admin',
+                            'last_activity' => $lastActivity,
+                            'status' => $status
+                        ];
+                    }
+                }
+            } catch (\Exception $e) {
+                // Log error but continue
+                \Log::error('Error getting admin users: ' . $e->getMessage());
+            }
+
+            // Get active Facebook users (logged in)
+            if ($request->session()->has('facebook_logged_in') && $request->session()->get('facebook_logged_in')) {
+                $activeUsers[] = [
+                    'id' => 'facebook_session',
+                    'name' => 'Facebook Handler',
+                    'email' => 'facebook@handler.com',
+                    'channel' => 'Facebook',
+                    'last_activity' => $request->session()->get('facebook_last_activity', $now),
+                    'status' => 'active'
+                ];
+            }
+
+            // Get active Email users (logged in)
+            if ($request->session()->has('email_logged_in') && $request->session()->get('email_logged_in')) {
+                $activeUsers[] = [
+                    'id' => 'email_session',
+                    'name' => 'Email Handler',
+                    'email' => 'email@handler.com',
+                    'channel' => 'Email',
+                    'last_activity' => $request->session()->get('email_last_activity', $now),
+                    'status' => 'active'
+                ];
+            }
+
+            // Get active Officer of the Day users (logged in)
+            if ($request->session()->has('officer_logged_in') && $request->session()->get('officer_logged_in')) {
+                $activeUsers[] = [
+                    'id' => 'officer_session',
+                    'name' => 'Officer of the Day',
+                    'email' => 'officer@handler.com',
+                    'channel' => 'Officer of the Day',
+                    'last_activity' => $request->session()->get('officer_last_activity', $now),
+                    'status' => 'active'
+                ];
+            }
+
+            // Get recently approved officers and email handlers
+            try {
+                $recentOfficers = Officer::where('approved', true)
+                    ->where('active', true)
+                    ->where('updated_at', '>=', $now->subMinutes(30))
+                    ->get();
+
+                foreach ($recentOfficers as $officer) {
+                    $lastActivity = $this->getUserLastActivity($officer->id, 'officer');
+                    $status = $this->getUserStatus($lastActivity, $now);
+                    
+                    if ($status !== 'away') {
+                        $activeUsers[] = [
+                            'id' => $officer->id,
+                            'name' => $officer->name ?? 'Officer',
+                            'email' => 'officer@example.com',
+                            'channel' => 'Officer of the Day',
+                            'last_activity' => $lastActivity,
+                            'status' => $status
+                        ];
+                    }
+                }
+            } catch (\Exception $e) {
+                \Log::error('Error getting officers: ' . $e->getMessage());
+            }
+
+            try {
+                $recentEmailHandlers = EmailHandler::where('approved', true)
+                    ->where('active', true)
+                    ->where('updated_at', '>=', $now->subMinutes(30))
+                    ->get();
+
+                foreach ($recentEmailHandlers as $emailHandler) {
+                    $lastActivity = $this->getUserLastActivity($emailHandler->id, 'email');
+                    $status = $this->getUserStatus($lastActivity, $now);
+                    
+                    if ($status !== 'away') {
+                        $activeUsers[] = [
+                            'id' => $emailHandler->id,
+                            'name' => $emailHandler->name ?? 'Email Handler',
+                            'email' => 'email@example.com',
+                            'channel' => 'Email',
+                            'last_activity' => $lastActivity,
+                            'status' => $status
+                        ];
+                    }
+                }
+            } catch (\Exception $e) {
+                \Log::error('Error getting email handlers: ' . $e->getMessage());
+            }
+
+            // Sort by last activity (most recent first)
+            usort($activeUsers, function ($a, $b) {
+                return strtotime($b['last_activity']) - strtotime($a['last_activity']);
+            });
+
+            return response()->json([
+                'success' => true,
+                'activeUsers' => $activeUsers,
+                'totalActive' => count($activeUsers)
+            ]);
+
+        } catch (\Exception $e) {
+            \Log::error('Error in getActiveUsers: ' . $e->getMessage());
+            return response()->json([
+                'success' => false,
+                'error' => 'Failed to load active users',
+                'message' => $e->getMessage()
+            ], 500);
+        }
+    }
+
+    private function getUserLastActivity($userId, $type)
+    {
+        // For now, return recent activity. In a real implementation,
+        // you would track this in a separate activity log table
+        return Carbon::now()->subMinutes(rand(1, 30));
+    }
+
+    private function getUserStatus($lastActivity, $now)
+    {
+        $diffInMinutes = $now->diffInMinutes($lastActivity);
+
+        if ($diffInMinutes < 5) {
+            return 'online';
+        } elseif ($diffInMinutes < 15) {
+            return 'active';
+        } elseif ($diffInMinutes < 30) {
+            return 'idle';
+        } else {
+            return 'away';
+        }
     }
 }

@@ -6,6 +6,14 @@
 {{-- Admin styles live in app.css --}}
 @endsection
 
+@push('styles')
+<style>
+.auto-caps {
+    text-transform: capitalize;
+}
+</style>
+@endpush
+
 @section('content')
     <div class="admin-shell">
         <aside class="admin-sidebar no-print">
@@ -35,6 +43,10 @@
                     <span class="icon" aria-hidden="true"><img src="/images/user.svg" alt="" width="18" height="18"></span>
                     <span class="label">User approvals</span>
                     <span id="pendingBadge" class="pending-badge" style="display:none;"></span>
+                </button>
+                <button type="button" class="admin-sidebar-tool" id="openActiveUsersModal" title="View active users">
+                    <span class="icon" aria-hidden="true"><img src="/images/active-users.svg" alt="" width="18" height="18"></span>
+                    <span class="label">Active users</span>
                 </button>
                 <button type="button" class="admin-sidebar-tool" id="openAdminUsersModal" title="Admin Users">
                     <span class="icon" aria-hidden="true"><img src="/images/admin.svg" alt="" width="18" height="18"></span>
@@ -137,6 +149,24 @@
         <div class="mt-5 flex justify-end">
             <button type="button" class="closeAdminUsersModal h-9 px-4 rounded-lg border border-gray-200 text-xs font-bold text-gray-600 hover:bg-gray-50 transition-colors cursor-pointer">Close</button>
         </div>
+        </div>
+    </dialog>
+
+    <!-- Active Users Modal -->
+    <dialog class="largeModal rounded-2xl shadow-2xl bg-white backdrop:bg-black/40 p-0 w-[min(800px,calc(100vw-2rem))]" id="activeUsersModal">
+        <div class="px-5 pt-5 pb-3 border-b border-gray-100">
+            <h3 class="text-base font-black text-gray-900">Active Users</h3>
+        </div>
+        <div class="px-5 py-4">
+            <div id="activeUsersContent">
+                <div class="text-center py-8">
+                    <div class="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-pcic-700"></div>
+                    <p class="text-sm text-gray-500 mt-2">Loading active users...</p>
+                </div>
+            </div>
+            <div class="mt-5 flex justify-end">
+                <button type="button" class="closeActiveUsersModal h-9 px-4 rounded-lg border border-gray-200 text-xs font-bold text-gray-600 hover:bg-gray-50 transition-colors cursor-pointer">Close</button>
+            </div>
         </div>
     </dialog>
 
@@ -738,7 +768,7 @@
             @csrf
             @method('PUT')
             <label for="farmerName" class="text-xs font-bold text-gray-600 text-right">Farmer Name:</label>
-            <input type="text" id="farmerName" name="farmerName" class="h-9 px-3 rounded-lg border border-gray-200 focus:border-pcic-500 focus:ring-2 focus:ring-pcic-100 outline-none text-sm w-full">
+            <input type="text" id="farmerName" name="farmerName" class="h-9 px-3 rounded-lg border border-gray-200 focus:border-pcic-500 focus:ring-2 focus:ring-pcic-100 outline-none text-sm w-full auto-caps">
             
             <label for="editProvince" class="text-xs font-bold text-gray-600 text-right">Province:</label>
             <select name="province" id="editProvince" required class="h-9 px-3 rounded-lg border border-gray-200 focus:border-pcic-500 focus:ring-2 focus:ring-pcic-100 outline-none text-sm w-full bg-white">
@@ -793,24 +823,28 @@
             </select>
             
             <label for="causeOfDamage" class="text-xs font-bold text-gray-600 text-right">Cause of Damage:</label>
-            <input type="text" id="causeOfDamage" name="causeOfDamage" class="h-9 px-3 rounded-lg border border-gray-200 focus:border-pcic-500 focus:ring-2 focus:ring-pcic-100 outline-none text-sm w-full">
+            <input type="text" id="causeOfDamage" name="causeOfDamage" class="h-9 px-3 rounded-lg border border-gray-200 focus:border-pcic-500 focus:ring-2 focus:ring-pcic-100 outline-none text-sm w-full auto-caps">
             
             <label for="modeOfPayment" class="text-xs font-bold text-gray-600 text-right">Mode of payment:</label>
             <select name="modeOfPayment" id="modeOfPayment" class="h-9 px-3 rounded-lg border border-gray-200 focus:border-pcic-500 focus:ring-2 focus:ring-pcic-100 outline-none text-sm w-full bg-white">
                 <option value="">Select Mode of payment</option>
                 <option value="check">Check</option>
                 <option value="palawan">Palawan Pay</option>
+                <option value="gcash">GCash</option>
                 <option value="not_indicated">Not indicated</option>
             </select>
             <label for="accounts" class="text-xs font-bold text-gray-600 text-right">Account (sender):</label>
-            <input type="text" id="accounts" name="accounts" class="h-9 px-3 rounded-lg border border-gray-200 focus:border-pcic-500 focus:ring-2 focus:ring-pcic-100 outline-none text-sm w-full">
+            <input type="text" id="accounts" name="accounts" class="h-9 px-3 rounded-lg border border-gray-200 focus:border-pcic-500 focus:ring-2 focus:ring-pcic-100 outline-none text-sm w-full auto-caps">
             <label for="facebook_page_url" class="text-xs font-bold text-gray-600 text-right">FB page link:</label>
             <input type="url" id="facebook_page_url" name="facebook_page_url" placeholder="https://www.facebook.com/..." class="h-9 px-3 rounded-lg border border-gray-200 focus:border-pcic-500 focus:ring-2 focus:ring-pcic-100 outline-none text-sm w-full">
             <label for="date_occurrence" class="text-xs font-bold text-gray-600 text-right">Date occurrence:</label>
             <input type="text" id="date_occurrence" name="date_occurrence" class="h-9 px-3 rounded-lg border border-gray-200 focus:border-pcic-500 focus:ring-2 focus:ring-pcic-100 outline-none text-sm w-full">
             
+            <label for="date_received" class="text-xs font-bold text-gray-600 text-right">Date received:</label>
+            <input type="date" id="date_received" name="date_received" class="h-9 px-3 rounded-lg border border-gray-200 focus:border-pcic-500 focus:ring-2 focus:ring-pcic-100 outline-none text-sm w-full">
+            
             <label for="remarks" class="text-xs font-bold text-gray-600 text-right">Remarks - Care of:</label>
-            <input type="text" id="remarks" name="remarks" class="h-9 px-3 rounded-lg border border-gray-200 focus:border-pcic-500 focus:ring-2 focus:ring-pcic-100 outline-none text-sm w-full">
+            <input type="text" id="remarks" name="remarks" class="h-9 px-3 rounded-lg border border-gray-200 focus:border-pcic-500 focus:ring-2 focus:ring-pcic-100 outline-none text-sm w-full auto-caps">
             
             <label for="transmittal_number" class="text-xs font-bold text-gray-600 text-right">Control Number:</label>
             <input type="text" id="transmittal_number" name="transmittal_number" placeholder="e.g., 2026-0420-001..." class="h-9 px-3 rounded-lg border border-gray-200 focus:border-pcic-500 focus:ring-2 focus:ring-pcic-100 outline-none text-sm w-full">
@@ -1008,6 +1042,188 @@
             closeAdminUsersModal.addEventListener('click', function() {
                 adminUsersModal.close();
             });
+        }
+
+        // Active Users Modal
+        const openActiveUsersModal = document.getElementById('openActiveUsersModal');
+        const activeUsersModal = document.getElementById('activeUsersModal');
+        const closeActiveUsersModal = document.querySelector('.closeActiveUsersModal');
+
+        if (openActiveUsersModal && activeUsersModal) {
+            openActiveUsersModal.addEventListener('click', function() {
+                loadActiveUsers();
+                activeUsersModal.showModal();
+            });
+        }
+
+        if (closeActiveUsersModal && activeUsersModal) {
+            closeActiveUsersModal.addEventListener('click', function() {
+                activeUsersModal.close();
+            });
+        }
+
+        function loadActiveUsers() {
+            const contentDiv = document.getElementById('activeUsersContent');
+            
+            // Show loading state
+            contentDiv.innerHTML = `
+                <div class="text-center py-8">
+                    <div class="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-pcic-700"></div>
+                    <p class="text-sm text-gray-500 mt-2">Loading active users...</p>
+                </div>
+            `;
+
+            // Fetch active users from server
+            fetch('/admin/active-users')
+                .then(response => {
+                    if (!response.ok) {
+                        throw new Error(`HTTP error! status: ${response.status}`);
+                    }
+                    return response.json();
+                })
+                .then(data => {
+                    if (data.success && data.activeUsers && data.activeUsers.length > 0) {
+                        displayActiveUsers(data.activeUsers);
+                    } else if (data.success && (!data.activeUsers || data.activeUsers.length === 0)) {
+                        contentDiv.innerHTML = `
+                            <div class="text-center py-8">
+                                <div class="text-gray-400 mb-2">
+                                    <svg class="w-12 h-12 mx-auto" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z"></path>
+                                    </svg>
+                                </div>
+                                <p class="text-sm text-gray-500">No active users found</p>
+                            </div>
+                        `;
+                    } else {
+                        // Show error message from server if available
+                        const errorMessage = data.error || data.message || 'Unknown error occurred';
+                        contentDiv.innerHTML = `
+                            <div class="text-center py-8">
+                                <div class="text-red-400 mb-2">
+                                    <svg class="w-12 h-12 mx-auto" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                                    </svg>
+                                </div>
+                                <p class="text-sm text-red-600 font-medium">Error: ${errorMessage}</p>
+                                <p class="text-xs text-gray-500 mt-1">Please try again or contact support</p>
+                            </div>
+                        `;
+                    }
+                })
+                .catch(error => {
+                    console.error('Error loading active users:', error);
+                    contentDiv.innerHTML = `
+                        <div class="text-center py-8">
+                            <div class="text-red-400 mb-2">
+                                <svg class="w-12 h-12 mx-auto" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                                </svg>
+                            </div>
+                            <p class="text-sm text-red-600 font-medium">Network Error</p>
+                            <p class="text-xs text-gray-500 mt-1">${error.message}</p>
+                            <button onclick="loadActiveUsers()" class="mt-3 px-4 py-2 bg-pcic-700 text-white text-sm rounded-lg hover:bg-pcic-800 transition-colors">
+                                Retry
+                            </button>
+                        </div>
+                    `;
+                });
+        }
+
+        function displayActiveUsers(activeUsers) {
+            const contentDiv = document.getElementById('activeUsersContent');
+            
+            let html = `
+                <div class="overflow-x-auto">
+                    <table class="w-full text-sm">
+                        <thead>
+                            <tr class="border-b border-gray-200">
+                                <th class="text-left py-2 px-3 font-semibold text-gray-700">User</th>
+                                <th class="text-left py-2 px-3 font-semibold text-gray-700">Channel</th>
+                                <th class="text-left py-2 px-3 font-semibold text-gray-700">Last Activity</th>
+                                <th class="text-left py-2 px-3 font-semibold text-gray-700">Status</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+            `;
+
+            activeUsers.forEach(user => {
+                const channelIcon = getChannelIcon(user.channel);
+                const statusBadge = getStatusBadge(user.status);
+                const lastActivity = formatLastActivity(user.last_activity);
+                
+                html += `
+                    <tr class="border-b border-gray-100 hover:bg-gray-50">
+                        <td class="py-3 px-3">
+                            <div class="flex items-center gap-2">
+                                <div class="w-8 h-8 rounded-full bg-pcic-100 flex items-center justify-center">
+                                    <span class="text-xs font-semibold text-pcic-700">${user.name.charAt(0).toUpperCase()}</span>
+                                </div>
+                                <div>
+                                    <div class="font-medium text-gray-900">${user.name}</div>
+                                    <div class="text-xs text-gray-500">${user.email}</div>
+                                </div>
+                            </div>
+                        </td>
+                        <td class="py-3 px-3">
+                            <div class="flex items-center gap-2">
+                                ${channelIcon}
+                                <span class="text-gray-700">${user.channel}</span>
+                            </div>
+                        </td>
+                        <td class="py-3 px-3 text-gray-600 text-sm">${lastActivity}</td>
+                        <td class="py-3 px-3">${statusBadge}</td>
+                    </tr>
+                `;
+            });
+
+            html += `
+                        </tbody>
+                    </table>
+                </div>
+            `;
+
+            contentDiv.innerHTML = html;
+        }
+
+        function getChannelIcon(channel) {
+            const icons = {
+                'Admin': '<svg class="w-4 h-4 text-blue-500" fill="currentColor" viewBox="0 0 20 20"><path d="M9 6a3 3 0 11-6 0 3 3 0 016 0zM17 6a3 3 0 11-6 0 3 3 0 016 0zM12.93 17c.046-.327.07-.66.07-1a6.97 6.97 0 00-1.5-4.33A5 5 0 0119 16v1h-6.07zM6 11a5 5 0 015 5v1H1v-1a5 5 0 015-5z"></path></svg>',
+                'Facebook': '<svg class="w-4 h-4 text-blue-600" fill="currentColor" viewBox="0 0 24 24"><path d="M24 12.073c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.99 4.388 10.954 10.125 11.854v-8.385H7.078v-3.47h3.047V9.43c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.47h-2.796v8.385C19.612 23.027 24 18.062 24 12.073z"></path></svg>',
+                'Email': '<svg class="w-4 h-4 text-green-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 8l7.89 4.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"></path></svg>',
+                'Officer of the Day': '<svg class="w-4 h-4 text-purple-500" fill="currentColor" viewBox="0 0 20 20"><path d="M9 6a3 3 0 11-6 0 3 3 0 016 0zM17 6a3 3 0 11-6 0 3 3 0 016 0zM12.93 17c.046-.327.07-.66.07-1a6.97 6.97 0 00-1.5-4.33A5 5 0 0119 16v1h-6.07zM6 11a5 5 0 015 5v1H1v-1a5 5 0 015-5z"></path></svg>'
+            };
+            return icons[channel] || '<svg class="w-4 h-4 text-gray-400" fill="currentColor" viewBox="0 0 20 20"><path d="M9 6a3 3 0 11-6 0 3 3 0 016 0zM17 6a3 3 0 11-6 0 3 3 0 016 0zM12.93 17c.046-.327.07-.66.07-1a6.97 6.97 0 00-1.5-4.33A5 5 0 0119 16v1h-6.07zM6 11a5 5 0 015 5v1H1v-1a5 5 0 015-5z"></path></svg>';
+        }
+
+        function getStatusBadge(status) {
+            const badges = {
+                'online': '<span class="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-green-100 text-green-800">Online</span>',
+                'active': '<span class="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-blue-100 text-blue-800">Active</span>',
+                'idle': '<span class="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-yellow-100 text-yellow-800">Idle</span>',
+                'away': '<span class="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-gray-100 text-gray-800">Away</span>'
+            };
+            return badges[status] || badges['idle'];
+        }
+
+        function formatLastActivity(lastActivity) {
+            if (!lastActivity) return 'Unknown';
+            
+            const date = new Date(lastActivity);
+            const now = new Date();
+            const diffMs = now - date;
+            const diffMins = Math.floor(diffMs / 60000);
+            
+            if (diffMins < 1) return 'Just now';
+            if (diffMins < 60) return `${diffMins} min ago`;
+            
+            const diffHours = Math.floor(diffMins / 60);
+            if (diffHours < 24) return `${diffHours} hour${diffHours > 1 ? 's' : ''} ago`;
+            
+            const diffDays = Math.floor(diffHours / 24);
+            if (diffDays < 7) return `${diffDays} day${diffDays > 1 ? 's' : ''} ago`;
+            
+            return date.toLocaleDateString();
         }
 
         // Transmit Selected Records - open print preview in new tab
