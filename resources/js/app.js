@@ -1280,7 +1280,18 @@ Zarah,San Luis,Aurora`;
     }
 
     function openRecordEditDialog(button) {
-        const editForm = document.getElementById('recordEditForm');
+        // Find the closest dialog/parent with the edit form
+        const dialog = button.closest('dialog');
+        let editForm = null;
+        
+        if (dialog) {
+            // Find the edit form within the dialog
+            editForm = dialog.querySelector('#recordEditForm');
+        } else {
+            // Fallback to document-wide search
+            editForm = document.getElementById('recordEditForm');
+        }
+        
         if (!editForm) {
             return;
         }
@@ -1453,7 +1464,19 @@ Zarah,San Luis,Aurora`;
     const addRecordForms = document.querySelectorAll('form[action*="records"]');
     addRecordForms.forEach(form => {
         form.addEventListener('submit', function (e) {
+            e.preventDefault();
+            
+            // Capitalize inputs first
             capitalizeInputs(form);
+            
+            // Show confirmation dialog
+            const isConfirmed = confirm('Are you sure you want to add this record? Please review all the data before continuing.\n\nClick "OK" to continue or "Cancel" to go back and edit.');
+            
+            if (isConfirmed) {
+                // If confirmed, submit the form
+                form.submit();
+            }
+            // If not confirmed, do nothing - user can continue editing
         });
     });
 

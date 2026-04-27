@@ -251,6 +251,10 @@
             <input type="text" id="facebook_page_url" name="facebook_page_url" readonly class="h-9 px-3 rounded-lg border border-gray-200 bg-gray-50 text-sm w-full" placeholder="—">
             <label for="date_occurrence" class="text-xs font-bold text-gray-600 text-right">Date occurrence:</label>
             <input type="text" id="date_occurrence" name="date_occurrence" class="h-9 px-3 rounded-lg border border-gray-200 focus:border-pcic-500 focus:ring-2 focus:ring-pcic-100 outline-none text-sm w-full">
+            
+            <label for="date_received" class="text-xs font-bold text-gray-600 text-right">Date received:</label>
+            <input type="date" id="date_received" name="date_received" class="h-9 px-3 rounded-lg border border-gray-200 focus:border-pcic-500 focus:ring-2 focus:ring-pcic-100 outline-none text-sm w-full">
+            
             <label for="remarks" class="text-xs font-bold text-gray-600 text-right">Remarks - Care of:</label>
             <input type="text" id="remarks" name="remarks" class="h-9 px-3 rounded-lg border border-gray-200 focus:border-pcic-500 focus:ring-2 focus:ring-pcic-100 outline-none text-sm w-full auto-caps">
             <label for="transmittal_number" class="text-xs font-bold text-gray-600 text-right">Control number:</label>
