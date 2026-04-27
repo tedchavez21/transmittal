@@ -200,8 +200,9 @@
             }
 
             $summaryProgram = request('dash_program') ? request('dash_program') : 'All Programs';
+            $summaryLine = request('dash_line') ? request('dash_line') : 'All Lines';
 
-            $dash3MetaText = $summaryProgram . ' • ' . ($summaryDate ? $summaryDate : 'All dates');
+            $dash3MetaText = $summaryProgram . ' • ' . $summaryLine . ' • ' . ($summaryDate ? $summaryDate : 'All dates');
 
             $provinceTables = [
                 'Aurora' => $dashCountsByProvince['Aurora'] ?? [],
@@ -228,6 +229,16 @@
                                     <option value="">All Programs</option>
                                     @foreach($allPrograms as $program)
                                         <option value="{{ $program }}" {{ request('dash_program') == $program ? 'selected' : '' }}>{{ $program }}</option>
+                                    @endforeach
+                                </select>
+                            </div>
+
+                            <div class="form-field">
+                                <label>Line</label>
+                                <select name="dash_line">
+                                    <option value="">All Lines</option>
+                                    @foreach($allLines as $line)
+                                        <option value="{{ $line }}" {{ request('dash_line') == $line ? 'selected' : '' }}>{{ $line }}</option>
                                     @endforeach
                                 </select>
                             </div>
@@ -324,29 +335,6 @@
                         </div>
                         @endforeach
                         @if($recordsByProgram->isEmpty())
-                            <div class="dash3-empty">No data</div>
-                        @endif
-                    </div>
-                </div>
-
-                <div class="admin-card dash3-chart-card">
-                    <div class="card-header">
-                        <div>
-                            <h3 class="card-title">By Line</h3>
-                            <p class="card-subtitle">NL count per line</p>
-                        </div>
-                    </div>
-                    <div class="card-body dash3-chart-body">
-                        @foreach($recordsByLine as $line => $count)
-                        <div class="dash3-chart-bar-row">
-                            <span class="dash3-chart-label">{{ $line }}</span>
-                            <div class="dash3-chart-bar-track">
-                                <div class="dash3-chart-bar-fill dash3-chart-bar-fill--line" style="width: {{ $chartMax > 0 ? round($count / $chartMax * 100) : 0 }}%"></div>
-                            </div>
-                            <span class="dash3-chart-value">{{ number_format($count) }}</span>
-                        </div>
-                        @endforeach
-                        @if($recordsByLine->isEmpty())
                             <div class="dash3-empty">No data</div>
                         @endif
                     </div>
@@ -621,6 +609,10 @@
                         <option value="{{ $source }}" {{ request('source') == $source ? 'selected' : '' }}>{{ $source }}</option>
                         @endforeach
                     </select>
+                </div>
+                <div style="display: flex; flex-direction: column; gap: 4px;">
+                    <label style="font-size: 12px; font-weight: bold;">Date</label>
+                    <input type="date" name="date" value="{{ request('date') }}" style="padding: 6px; font-size: 12px; border: 1px solid #ccc; border-radius: 3px;">
                 </div>
                 <div style="display: flex; flex-direction: column; gap: 4px;">
                     <label style="font-size: 12px; font-weight: bold;">Mode of Payment</label>
@@ -1072,8 +1064,38 @@
 
         if (openActiveUsersModal && activeUsersModal) {
             openActiveUsersModal.addEventListener('click', function() {
-                // Load active users functionality removed due to syntax error
-                activeUsersModal.showModal();
+                // Load active users data
+                fetch('{{ route('admin.active-users') }}')
+                    .then(response => response.json())
+                    .then(data => {
+                        const content = document.getElementById('activeUsersContent');
+                        if (data.error) {
+                            content.innerHTML = '<p class="text-sm text-red-600 text-center py-4">Error loading active users.</p>';
+                        } else if (data.activeUsers && data.activeUsers.length > 0) {
+                            let html = '<table class="w-full text-sm">';
+                            html += '<thead><tr class="border-b border-gray-200"><th class="text-left py-2 px-3 font-bold text-gray-700">Name</th><th class="text-left py-2 px-3 font-bold text-gray-700">Channel</th><th class="text-left py-2 px-3 font-bold text-gray-700">Status</th><th class="text-left py-2 px-3 font-bold text-gray-700">Last Activity</th></tr></thead>';
+                            html += '<tbody>';
+                            data.activeUsers.forEach(user => {
+                                html += '<tr class="border-b border-gray-100">';
+                                html += '<td class="py-2 px-3 text-gray-800">' + user.name + '</td>';
+                                html += '<td class="py-2 px-3 text-gray-600">' + user.channel + '</td>';
+                                html += '<td class="py-2 px-3"><span class="px-2 py-1 rounded-full text-xs font-bold ' + (user.status === 'active' ? 'bg-green-100 text-green-700' : 'bg-yellow-100 text-yellow-700') + '">' + user.status + '</span></td>';
+                                html += '<td class="py-2 px-3 text-gray-600">' + (user.last_activity ? new Date(user.last_activity).toLocaleString() : 'N/A') + '</td>';
+                                html += '</tr>';
+                            });
+                            html += '</tbody></table>';
+                            content.innerHTML = html;
+                        } else {
+                            content.innerHTML = '<p class="text-sm text-gray-500 text-center py-4">No active users found.</p>';
+                        }
+                        activeUsersModal.showModal();
+                    })
+                    .catch(error => {
+                        console.error('Error loading active users:', error);
+                        const content = document.getElementById('activeUsersContent');
+                        content.innerHTML = '<p class="text-sm text-red-600 text-center py-4">Error loading active users.</p>';
+                        activeUsersModal.showModal();
+                    });
             });
         }
 
@@ -1763,7 +1785,19 @@
 
         // 4. Verification Prompt (Your existing dialog logic)
         deleteSelectedBtn?.addEventListener('click', function() {
-            if (!this.disabled) bulkDeleteDialog?.showModal();
+            if (!this.disabled) {
+                const selectedIds = getSelectedDeleteIdsFromUrl();
+                if (selectedIds.length > 0) {
+                    // Show count instead of names to avoid delay
+                    const listElement = document.querySelector('.bulk-delete-list');
+                    listElement.innerHTML = '';
+                    const li = document.createElement('li');
+                    li.textContent = `${selectedIds.length} record(s) will be deleted`;
+                    li.className = 'text-sm text-gray-700 py-1 font-semibold';
+                    listElement.appendChild(li);
+                    bulkDeleteDialog?.showModal();
+                }
+            }
         });
 
         document.getElementById('confirm-bulk-delete')?.addEventListener('click', () => {

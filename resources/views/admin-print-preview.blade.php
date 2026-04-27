@@ -491,6 +491,7 @@
             <input type="hidden" name="{{ $key }}" value="{{ $value }}">
         @endforeach
         <button type="submit" class="btn btn-success">Assign Transmittal Number</button>
+        <a href="{{ route('admin.export-preview-csv') }}" class="btn btn-primary" target="_blank">Export to CSV</a>
     </form>
     
     <script>

@@ -19,7 +19,7 @@
 @endsection
 
 @section('content')
-    <div class="min-h-screen bg-gradient-to-br from-pcic-50 via-white to-pcic-50">
+    <div class="min-h-screen bg-gradient-to-br from-pcic-100 via-white to-pcic-100">
         {{-- Top Header Bar --}}
         <div class="odHeader sticky top-0 z-20 w-full bg-white/90 backdrop-blur-md border-b border-gray-200/60">
             <div class="max-w-6xl mx-auto px-4 py-3 flex items-center justify-between gap-3">

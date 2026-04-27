@@ -98,48 +98,6 @@ class RecordsController extends Controller
             $request->province,
         ])));
 
-        // Check for potential duplicate records
-        $potentialDuplicates = Record::where('farmerName', 'LIKE', '%' . $request->farmerName . '%')
-            ->where('municipality', $request->municipality)
-            ->where('barangay', $request->barangay)
-            ->where('causeOfDamage', $request->causeOfDamage)
-            ->where('line', $request->line)
-            ->when($request->date_occurrence, function ($query) use ($request) {
-                return $query->where('date_occurrence', $request->date_occurrence);
-            })
-            ->get();
-
-        if ($potentialDuplicates->isNotEmpty()) {
-            // Return duplicates as JSON for AJAX requests
-            if ($isAjax) {
-                return response()->json([
-                    'success' => false,
-                    'message' => 'Potential duplicate record(s) found. Please review before submitting.',
-                    'duplicates' => $potentialDuplicates->toArray()
-                ]);
-            }
-            
-            // For non-AJAX requests, create a detailed error message
-            $duplicateInfo = [];
-            foreach ($potentialDuplicates as $duplicate) {
-                $duplicateInfo[] = sprintf(
-                    "Name: %s, Address: %s, Cause: %s, Line: %s, Date: %s",
-                    $duplicate->farmerName,
-                    $duplicate->address,
-                    $duplicate->causeOfDamage,
-                    $duplicate->line,
-                    $duplicate->date_occurrence ?: 'Not specified'
-                );
-            }
-            
-            $errorMessage = "Potential duplicate record(s) found:\n\n" . implode("\n", $duplicateInfo) . 
-                           "\n\nPlease review the existing records before submitting a new one.";
-            
-            return redirect()->back()
-                ->with('error', $errorMessage)
-                ->withInput();
-        }
-
         try {
             // Validate address before proceeding
             if (empty(trim($address))) {
@@ -323,43 +281,6 @@ class RecordsController extends Controller
             // Don't change admin transmittal number if not specified
             unset($updateData['admin_transmittal_number']);
             unset($updateData['admin_transmittal_assigned_at']);
-        }
-
-        // Check for potential duplicate records (excluding current record)
-        // But only if not just clearing admin transmittal number
-        if (!($request->has('clear_admin_transmittal_number') && $request->input('clear_admin_transmittal_number') == '1')) {
-            $potentialDuplicates = Record::where('farmerName', 'LIKE', '%' . $request->farmerName . '%')
-                ->where('municipality', $request->municipality)
-                ->where('barangay', $request->barangay)
-                ->where('causeOfDamage', $request->causeOfDamage)
-                ->where('line', $request->line)
-                ->when($request->date_occurrence, function ($query) use ($request) {
-                    return $query->where('date_occurrence', $request->date_occurrence);
-                })
-                ->where('id', '!=', $record->id) // Exclude current record
-                ->get();
-
-            if ($potentialDuplicates->isNotEmpty()) {
-                // Create a detailed error message with duplicate information
-                $duplicateInfo = [];
-                foreach ($potentialDuplicates as $duplicate) {
-                    $duplicateInfo[] = sprintf(
-                        "Name: %s, Address: %s, Cause: %s, Line: %s, Date: %s",
-                        $duplicate->farmerName,
-                        $duplicate->address,
-                        $duplicate->causeOfDamage,
-                        $duplicate->line,
-                        $duplicate->date_occurrence ?: 'Not specified'
-                    );
-                }
-                
-                $errorMessage = "Potential duplicate record(s) found:\n\n" . implode("\n", $duplicateInfo) . 
-                               "\n\nPlease review the existing records before updating.";
-                
-                return redirect()->back()
-                    ->with('error', $errorMessage)
-                    ->withInput();
-            }
         }
 
         try {

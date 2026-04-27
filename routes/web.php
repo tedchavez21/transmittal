@@ -29,6 +29,7 @@ Route::get('/admin/export-pdf', [RoutesController::class, 'exportPdf'])->name('a
 Route::get('/admin/print-preview', [RoutesController::class, 'printPreview'])->name('admin.print-preview');
 Route::post('/admin/add-to-print-preview', [RoutesController::class, 'addToPrintPreview'])->name('admin.add-to-print-preview');
 Route::post('/admin/clear-print-preview', [RoutesController::class, 'clearPrintPreview'])->name('admin.clear-print-preview');
+Route::get('/admin/export-preview-csv', [RoutesController::class, 'exportPreviewCsv'])->name('admin.export-preview-csv');
 Route::post('/admin/assign-transmittals', [RoutesController::class, 'assignTransmittals'])->name('admin.assign-transmittals');
 Route::get('/admin/api/pending-approvals', [RoutesController::class, 'pendingApprovalsApi'])->name('admin.api.pending-approvals');
 

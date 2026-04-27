@@ -27,10 +27,15 @@ class RoutesController extends Controller
             $emailUserApproved = $handler && $handler->approved;
 
             if ($emailUserApproved) {
-                $records = Record::where('source', 'Email')
-                    ->where('encoderName', $emailUserName)
-                    ->whereDate('created_at', today())
-                    ->orderBy('id', 'desc')
+                $query = Record::where('source', 'Email')
+                    ->where('encoderName', $emailUserName);
+                
+                // Apply date filter if provided
+                if ($request->filled('date_encoded')) {
+                    $query->whereDate('created_at', $request->date_encoded);
+                }
+                
+                $records = $query->orderBy('id', 'desc')
                     ->paginate(25)
                     ->withQueryString();
             }
@@ -152,10 +157,15 @@ class RoutesController extends Controller
             );
             $officerApproved = $officer->approved;
             
-            $records = Record::where('encoderName', $officerName)
-                ->where('source', 'OD')
-                ->whereDate('created_at', today())
-                ->orderBy('id', 'desc')
+            $query = Record::where('encoderName', $officerName)
+                ->where('source', 'OD');
+            
+            // Apply date filter if provided
+            if ($request->filled('date_encoded')) {
+                $query->whereDate('created_at', $request->date_encoded);
+            }
+            
+            $records = $query->orderBy('id', 'desc')
                 ->paginate(25)
                 ->withQueryString();
         }
@@ -397,9 +407,7 @@ class RoutesController extends Controller
         if ($request->filled('dash_program')) {
             $statsQuery->where('program', $request->dash_program);
         }
-        if ($request->filled('dash_line')) {
-            $statsQuery->where('line', $request->dash_line);
-        }
+        // Note: dash_line filter is NOT applied to statsQuery so that the By Line card shows all lines
         if ($request->filled('dash_province')) {
             $statsQuery->where('province', 'like', '%' . $request->dash_province . '%');
         }
@@ -434,10 +442,13 @@ class RoutesController extends Controller
             }
         }
 
-        // Dashboard (new) - only date + program filters
+        // Dashboard (new) - only date + program + line filters
         $dashQuery = Record::query();
         if ($request->filled('dash_program')) {
             $dashQuery->where('program', $request->dash_program);
+        }
+        if ($request->filled('dash_line')) {
+            $dashQuery->where('line', $request->dash_line);
         }
         if ($request->filled('dash_date_type')) {
             $dashDateType = $request->dash_date_type;
@@ -754,6 +765,70 @@ class RoutesController extends Controller
         $request->session()->put('admin_print_preview_record_ids', $recordIds);
 
         return redirect()->route('admin.print-preview')->with('success', 'Added '.count($recordIds).' records to print preview.');
+    }
+
+    public function exportPreviewCsv(Request $request)
+    {
+        // Check if admin is logged in
+        if (!$request->session()->has('admin_logged_in') || !$request->session()->get('admin_logged_in')) {
+            return redirect()->route('welcome');
+        }
+
+        $sessionRecordIds = $request->session()->get('admin_print_preview_record_ids', []);
+
+        // ALSO support ids from URL query parameter
+        if ($request->filled('ids')) {
+            $urlIds = explode(',', $request->input('ids'));
+            $urlIds = array_filter(array_map('intval', $urlIds));
+            if (!empty($urlIds)) {
+                $sessionRecordIds = $urlIds;
+            }
+        }
+
+        if (!empty($sessionRecordIds)) {
+            $recordsQuery = Record::whereIn('id', $sessionRecordIds)->orderBy('id', 'desc');
+        } else {
+            $query = Record::query();
+            $this->applyFilters($request, $query);
+            $recordsQuery = $query->orderBy('id', 'desc');
+        }
+
+        // Get all records with all columns
+        $records = $recordsQuery->get();
+
+        // Get all column names from the records model
+        $columns = array_keys($records->first()?->getAttributes() ?? []);
+
+        // Generate CSV headers
+        $csv = fopen('php://temp', 'r+');
+        fputcsv($csv, $columns);
+
+        // Add data rows
+        foreach ($records as $record) {
+            $row = [];
+            foreach ($columns as $column) {
+                $value = $record->$column;
+                // Handle null values and format dates
+                if ($value === null) {
+                    $row[] = '';
+                } elseif ($value instanceof \Carbon\Carbon) {
+                    $row[] = $value->format('Y-m-d H:i:s');
+                } else {
+                    $row[] = (string)$value;
+                }
+            }
+            fputcsv($csv, $row);
+        }
+
+        rewind($csv);
+        $csvContent = stream_get_contents($csv);
+        fclose($csv);
+
+        $filename = 'transmittal_export_' . date('Y-m-d_H-i-s') . '.csv';
+
+        return response($csvContent)
+            ->header('Content-Type', 'text/csv')
+            ->header('Content-Disposition', 'attachment; filename="' . $filename . '"');
     }
 
     public function assignTransmittals(Request $request)
