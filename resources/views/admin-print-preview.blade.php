@@ -57,7 +57,7 @@
         }
 
         .print-preview-table th {
-            padding: 12px 14px;
+            padding: 8px 10px;
             background: #006c35;
             border-bottom: 2px solid #005428;
             font-weight: 700;
@@ -65,14 +65,18 @@
             text-align: left;
             font-size: 12px;
             text-transform: uppercase;
-            letter-spacing: 0.5px;
+            letter-spacing: 0.3px;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
         }
 
         .print-preview-table td {
-            padding: 10px 12px;
+            padding: 6px 8px;
             border-bottom: 1px solid rgba(15, 23, 42, 0.1);
             vertical-align: top;
-            font-size: 16px;
+            font-size: 14px;
+            line-height: 1.3;
         }
 
         /* Alternating row colors for screen */
@@ -164,17 +168,17 @@
                 background: #006c35 !important;
                 border-bottom: 2px solid #005428 !important;
                 color: #fff !important;
-                padding: 4px 8px !important;
+                padding: 2px 6px !important;
                 font-weight: 700 !important;
                 font-size: 10px !important;
                 display: flex !important;
-                gap: 8px !important;
+                gap: 6px !important;
                 flex-wrap: wrap !important;
                 justify-content: space-between !important;
                 -webkit-print-color-adjust: exact !important;
                 print-color-adjust: exact !important;
                 margin-bottom: 0 !important;
-                line-height: 1.2 !important;
+                line-height: 1.0 !important;
             }
 
             .print-preview-card .meta strong {
@@ -182,16 +186,26 @@
                 font-weight: 900 !important;
             }
 
+            .page-section {
+                page-break-after: always;
+                margin-bottom: 0 !important;
+                padding-bottom: 0 !important;
+            }
+
+            .page-section:last-child {
+                page-break-after: auto;
+            }
+
             /* Table wrapper */
             .print-preview-card .table-wrap {
-                padding: 2px 4px 4px 4px !important;
+                padding: 1px 2px 2px 2px !important;
                 margin: 0 !important;
             }
 
             /* Received by section */
             .received-by {
-                padding: 6px 8px 8px 8px !important;
-                font-size: 10px !important;
+                padding: 3px 6px 4px 6px !important;
+                font-size: 9px !important;
                 font-weight: 800 !important;
                 color: #000 !important;
                 margin: 0 !important;
@@ -254,31 +268,31 @@
                 page-break-inside: avoid !important;
             }
 
-            /* Column widths optimized for 6-column layout */
+            /* Column widths optimized for 7-column layout */
             .print-preview-table th:nth-child(1),
             .print-preview-table td:nth-child(1) {
-                width: 5% !important;
+                width: 4% !important;
                 text-align: center !important;
             }
 
             .print-preview-table th:nth-child(2),
             .print-preview-table td:nth-child(2) {
-                width: 23% !important;
+                width: 20% !important;
             }
 
             .print-preview-table th:nth-child(3),
             .print-preview-table td:nth-child(3) {
-                width: 29% !important;
+                width: 25% !important;
             }
 
             .print-preview-table th:nth-child(4),
             .print-preview-table td:nth-child(4) {
-                width: 15% !important;
+                width: 13% !important;
             }
 
             .print-preview-table th:nth-child(5),
             .print-preview-table td:nth-child(5) {
-                width: 13% !important;
+                width: 11% !important;
             }
 
             .print-preview-table th:nth-child(6),
@@ -286,36 +300,44 @@
                 width: 15% !important;
             }
 
+            .print-preview-table th:nth-child(7),
+            .print-preview-table td:nth-child(7) {
+                width: 12% !important;
+            }
+
             .print-preview-table th {
-                padding: 4px 6px !important;
+                padding: 2px 3px !important;
                 border: 1px solid #000 !important;
                 background-color: #006c35 !important;
                 font-weight: 700 !important;
                 text-align: left !important;
                 font-size: 9px !important;
                 display: table-cell !important;
-                height: 16px !important;
+                height: 12px !important;
                 margin: 0 !important;
                 color: #fff !important;
                 vertical-align: middle !important;
                 text-transform: uppercase !important;
-                letter-spacing: 0.3px !important;
+                letter-spacing: 0.1px !important;
                 -webkit-print-color-adjust: exact !important;
                 print-color-adjust: exact !important;
-                line-height: 1.2 !important;
+                line-height: 1.0 !important;
+                white-space: nowrap !important;
+                overflow: hidden !important;
+                text-overflow: ellipsis !important;
             }
 
             .print-preview-table td {
-                padding: 2px 4px !important;
+                padding: 1px 3px !important;
                 border: 1px solid #000 !important;
-                font-size: 8px !important;
+                font-size: 9px !important;
                 display: table-cell !important;
-                height: 12px !important;
+                height: 10px !important;
                 margin: 0 !important;
                 color: #000 !important;
                 vertical-align: middle !important;
                 word-wrap: break-word !important;
-                line-height: 1.1 !important;
+                line-height: 1.0 !important;
             }
 
             .print-preview-table .address-cell {
@@ -387,6 +409,7 @@
                                         <th>Program</th>
                                         <th>Line</th>
                                         <th>Cause of Damage</th>
+                                        <th>Remarks</th>
                                     </tr>
                                 </thead>
                                 <tbody>
@@ -400,6 +423,7 @@
                                             <td>{{ $record->program }}</td>
                                             <td>{{ $record->line }}</td>
                                             <td>{{ $record->causeOfDamage }}</td>
+                                            <td>{{ $record->remarks ?: '—' }}</td>
                                         </tr>
                                     @endforeach
                                 </tbody>
