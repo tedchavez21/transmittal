@@ -73,15 +73,37 @@
 
         <main class="admin-main">
             <div class="admin-topbar no-print">
-                <div class="heading">
-                    <h1>PCIC Admin Portal</h1>
-                    <p>Monitoring • approvals • transmittals</p>
-                </div>
-                <div class="actions">
-                    <form action="{{ route('admin.logout') }}" method="POST" style="margin:0;">
-                        @csrf
-                        <button type="submit" class="h-8 px-3 rounded-lg border border-gray-200 bg-white text-xs font-bold text-gray-600 hover:bg-red-50 hover:border-red-200 hover:text-red-600 transition-colors cursor-pointer" title="Logout">Logout</button>
-                    </form>
+                <div class="topbar-content">
+                    <div class="topbar-left">
+                        <div class="topbar-brand">
+                            <div class="brand-icon">
+                                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                    <path d="M12 2L2 7l10 5 10-5-10-5z"/>
+                                    <path d="M2 17l10 5 10-5"/>
+                                    <path d="M2 12l10 5 10-5"/>
+                                </svg>
+                            </div>
+                            <div class="brand-text">
+                                <h1>NL Records Admin</h1>
+                                <p>NL monitoring and transmittal</p>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="topbar-right">
+                        <div class="topbar-actions">
+                            <form action="{{ route('admin.logout') }}" method="POST" class="logout-form">
+                                @csrf
+                                <button type="submit" class="logout-btn" title="Logout">
+                                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                        <path d="M9 21H5a2 2 0 01-2-2V5a2 2 0 012-2h4"/>
+                                        <polyline points="16,17 21,12 16,7"/>
+                                        <line x1="21" y1="12" x2="9" y2="12"/>
+                                    </svg>
+                                    <span>Logout</span>
+                                </button>
+                            </form>
+                        </div>
+                    </div>
                 </div>
             </div>
 
