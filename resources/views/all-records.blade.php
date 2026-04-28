@@ -22,9 +22,9 @@
     display: flex;
     align-items: center;
     justify-content: space-between;
-    gap: 24px;
-    padding: 16px 24px;
-    min-height: 72px;
+    gap: 20px;
+    padding: 10px 20px;
+    min-height: 52px;
 }
 
 .nav-left {
@@ -48,10 +48,10 @@
     display: flex;
     align-items: center;
     justify-content: center;
-    width: 48px;
-    height: 48px;
+    width: 36px;
+    height: 36px;
     background: linear-gradient(135deg, #006c35 0%, #008a43 100%);
-    border-radius: 12px;
+    border-radius: 10px;
     color: white;
     box-shadow: 0 4px 12px rgba(0, 108, 53, 0.25);
     transition: all 0.3s ease;
@@ -63,12 +63,12 @@
 }
 
 .nav-icon svg {
-    width: 24px;
-    height: 24px;
+    width: 18px;
+    height: 18px;
 }
 
 .nav-text h1 {
-    font-size: 20px;
+    font-size: 16px;
     margin: 0;
     font-weight: 900;
     color: #0f172a;
@@ -77,8 +77,8 @@
 }
 
 .nav-text p {
-    margin: 4px 0 0 0;
-    font-size: 13px;
+    margin: 2px 0 0 0;
+    font-size: 11px;
     color: #64748b;
     font-weight: 600;
     letter-spacing: 0.02em;
@@ -94,18 +94,17 @@
 .back-btn {
     display: flex;
     align-items: center;
-    gap: 8px;
-    padding: 10px 16px;
+    gap: 6px;
+    padding: 6px 12px;
     background: linear-gradient(135deg, #ffffff 0%, #f8fafc 100%);
     border: 1px solid #e2e8f0;
-    border-radius: 10px;
-    color: #64748b;
-    font-size: 13px;
+    border-radius: 6px;
+    color: #475569;
     font-weight: 600;
-    cursor: pointer;
-    transition: all 0.2s ease;
-    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+    font-size: 11px;
     text-decoration: none;
+    transition: all 0.2s ease;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
 }
 
 .back-btn:hover {
@@ -128,7 +127,7 @@
 
 /* Main content area */
 .records-main {
-    padding: 18px 18px 28px 18px;
+    padding: 12px 12px 16px 12px;
     min-height: calc(100vh - 72px);
     overflow-y: auto;
     overscroll-behavior: contain;
@@ -140,21 +139,21 @@
     border: 1px solid var(--border) !important;
     background: rgba(255,255,255,0.92) !important;
     box-shadow: 0 10px 24px rgba(0,0,0,0.06) !important;
-    margin-bottom: 16px !important;
-    padding: 20px !important;
+    margin-bottom: 8px !important;
+    padding: 8px !important;
 }
 
 .filter-grid {
     display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
-    gap: 16px;
+    grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+    gap: 8px;
     align-items: start;
 }
 
 .form-field {
     display: flex;
     flex-direction: column;
-    gap: 6px;
+    gap: 4px;
 }
 
 .form-field label {
@@ -167,11 +166,11 @@
 
 .form-field input,
 .form-field select {
-    padding: 10px 12px;
-    font-size: 13px;
-    border: 1px solid #cbd5e1;
-    border-radius: 8px;
-    background: #ffffff;
+    padding: 6px 8px;
+    border: 1px solid #e2e8f0;
+    border-radius: 6px;
+    font-size: 12px;
+    background: white;
     transition: all 0.2s;
     box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
 }
@@ -185,25 +184,25 @@
 
 .filter-actions {
     display: flex;
-    gap: 12px;
-    margin-top: 20px;
-    padding-top: 20px;
+    gap: 6px;
+    margin-top: 8px;
+    padding-top: 8px;
     border-top: 1px solid #e2e8f0;
     justify-content: flex-end;
 }
 
 .btn {
-    padding: 12px 24px;
-    border-radius: 8px;
+    padding: 8px 16px;
+    border-radius: 6px;
     font-weight: 600;
-    font-size: 14px;
+    font-size: 12px;
     cursor: pointer;
     transition: all 0.2s;
     border: none;
     text-decoration: none;
     display: inline-flex;
     align-items: center;
-    gap: 8px;
+    gap: 6px;
 }
 
 .btn-primary {
@@ -233,9 +232,11 @@
 .table-wrapper {
     width: 100%;
     border-radius: 16px;
-    overflow: hidden;
     border: 1px solid #e5e7eb;
     box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+    max-height: calc(100vh - 380px);
+    overflow-y: auto;
+    overflow-x: auto;
 }
 
 /* System-matched table styling */
@@ -255,16 +256,14 @@ table thead tr:first-child {
     background: linear-gradient(135deg, rgba(0, 108, 53, 0.96) 0%, rgba(99, 140, 8, 0.90) 100%);
 }
 
+
 table th {
-    padding: 12px 14px;
+    padding: 8px 10px;
     text-align: left;
     font-weight: 900;
-    font-size: 13px;
+    font-size: 12px;
     color: white;
     white-space: nowrap;
-    position: sticky;
-    top: 0;
-    z-index: 10;
 }
 
 table tbody tr {
@@ -285,8 +284,8 @@ table tbody tr:hover {
 }
 
 table td {
-    padding: 12px 14px;
-    font-size: 13px;
+    padding: 8px 10px;
+    font-size: 12px;
     color: #334155;
 }
 
@@ -305,9 +304,9 @@ table input[type="checkbox"] {
 .view-btn {
     background: linear-gradient(135deg, #0ea5e9 0%, #38bdf8 100%);
     color: white;
-    padding: 6px 12px;
-    border-radius: 8px;
-    font-size: 12px;
+    padding: 4px 8px;
+    border-radius: 6px;
+    font-size: 11px;
     font-weight: 600;
     border: none;
     cursor: pointer;
@@ -326,23 +325,23 @@ table input[type="checkbox"] {
     display: flex;
     justify-content: center;
     align-items: center;
-    gap: 12px;
-    margin-top: 16px;
-    padding: 16px;
+    gap: 8px;
+    margin-top: 12px;
+    padding: 8px 12px;
     background: rgba(255,255,255,0.92);
-    border-radius: 16px;
+    border-radius: 12px;
     border: 1px solid var(--border);
     box-shadow: 0 10px 24px rgba(0,0,0,0.06);
 }
 
 .pagination-link {
-    padding: 8px 16px;
-    border-radius: 8px;
+    padding: 6px 12px;
+    border-radius: 6px;
     background: linear-gradient(135deg, #006c35 0%, #008a43 100%);
     color: white;
     text-decoration: none;
     font-weight: 500;
-    font-size: 14px;
+    font-size: 12px;
     transition: all 0.2s ease;
     box-shadow: 0 2px 4px rgba(0, 108, 53, 0.1);
 }
@@ -354,12 +353,12 @@ table input[type="checkbox"] {
 }
 
 .pagination-info {
-    padding: 8px 16px;
-    border-radius: 8px;
+    padding: 6px 12px;
+    border-radius: 6px;
     background: #f8fafc;
     color: #475569;
     font-weight: 600;
-    font-size: 14px;
+    font-size: 12px;
     border: 1px solid #e2e8f0;
 }
 
@@ -537,7 +536,7 @@ table input[type="checkbox"] {
             <h3 style="margin: 0; font-size: 16px; font-weight: 700; color: #1e293b;">Table Filters</h3>
         </div>
 
-        <form method="GET" action="{{ route('all-records') }}">
+        <form id="filterForm" method="GET" action="{{ route('all-records') }}">
             <div class="filter-grid">
                 <div class="form-field">
                     <label>Search Farmer</label>
@@ -547,45 +546,6 @@ table input[type="checkbox"] {
                 <div class="form-field">
                     <label>Search Encoder</label>
                     <input type="text" name="encoderName" value="{{ request('encoderName') }}" placeholder="Enter encoder name">
-                </div>
-                
-                <div class="form-field">
-                    <label>Program</label>
-                    <select name="program">
-                        <option value="">All Programs</option>
-                        @foreach($allPrograms as $program)
-                            <option value="{{ $program }}" {{ request('program') == $program ? 'selected' : '' }}>{{ $program }}</option>
-                        @endforeach
-                    </select>
-                </div>
-                
-                <div class="form-field">
-                    <label>Line</label>
-                    <select name="line">
-                        <option value="">All Lines</option>
-                        @foreach($allLines as $line)
-                            <option value="{{ $line }}" {{ request('line') == $line ? 'selected' : '' }}>{{ $line }}</option>
-                        @endforeach
-                    </select>
-                </div>
-                
-                <div class="form-field">
-                    <label>Province</label>
-                    <select name="province">
-                        <option value="">All Provinces</option>
-                        <option value="Aurora" {{ request('province') == 'Aurora' ? 'selected' : '' }}>Aurora</option>
-                        <option value="Nueva Ecija" {{ request('province') == 'Nueva Ecija' ? 'selected' : '' }}>Nueva Ecija</option>
-                    </select>
-                </div>
-                
-                <div class="form-field">
-                    <label>Municipality</label>
-                    <input type="text" name="municipality" value="{{ request('municipality') }}" placeholder="Enter municipality">
-                </div>
-                
-                <div class="form-field">
-                    <label>Barangay</label>
-                    <input type="text" name="barangay" value="{{ request('barangay') }}" placeholder="Enter barangay">
                 </div>
                 
                 <div class="form-field">
@@ -599,23 +559,13 @@ table input[type="checkbox"] {
                 </div>
                 
                 <div class="form-field">
-                    <label>Mode of Payment</label>
-                    <select name="modeOfPayment">
-                        <option value="">All Modes</option>
-                        @foreach($allModes as $mode)
-                            <option value="{{ $mode }}" {{ request('modeOfPayment') == $mode ? 'selected' : '' }}>{{ $mode }}</option>
-                        @endforeach
-                    </select>
+                    <label>Municipality</label>
+                    <input type="text" name="municipality" value="{{ request('municipality') }}" placeholder="Enter municipality">
                 </div>
                 
                 <div class="form-field">
-                    <label>Account</label>
-                    <input type="text" name="accounts" value="{{ request('accounts') }}" placeholder="Email / username">
-                </div>
-                
-                <div class="form-field">
-                    <label>Admin Transmittal</label>
-                    <input type="text" name="admin_transmittal_number" value="{{ request('admin_transmittal_number') }}" placeholder="Enter transmittal #">
+                    <label>Date Received</label>
+                    <input type="date" name="date_received" value="{{ request('date_received') }}">
                 </div>
                 
                 <div class="form-field">
@@ -625,7 +575,7 @@ table input[type="checkbox"] {
             </div>
             
             <div class="filter-actions">
-                <button type="submit" class="btn btn-primary">Apply Filters</button>
+                <button type="submit" class="btn btn-primary" form="filterForm">Apply Filters</button>
                 <a href="{{ route('all-records') }}" class="btn btn-muted">Clear All</a>
             </div>
         </form>
@@ -636,47 +586,35 @@ table input[type="checkbox"] {
         <table>
             <thead>
                 <tr>
-                    <th>ID</th>
-                    <th>Farmer Name</th>
-                    <th>Encoder Name</th>
-                    <th>Program</th>
-                    <th>Line</th>
-                    <th>Province</th>
-                    <th>Municipality</th>
-                    <th>Barangay</th>
+                    <th>Farmer</th>
+                    <th>Encoder</th>
                     <th>Source</th>
-                    <th>Mode of Payment</th>
-                    <th>Account</th>
+                    <th>Municipality</th>
                     <th>Date Received</th>
                     <th>Date Encoded</th>
-                    <th>Admin Transmittal</th>
+                    <th>Date of Occurrence</th>
+                    <th>TRANSMITTAL #</th>
                     <th>Actions</th>
                 </tr>
             </thead>
             <tbody>
                 @forelse($records as $record)
                     <tr>
-                        <td>{{ $record->id }}</td>
                         <td>{{ $record->farmerName }}</td>
                         <td>{{ $record->encoderName }}</td>
-                        <td>{{ $record->program }}</td>
-                        <td>{{ $record->line }}</td>
-                        <td>{{ $record->province }}</td>
-                        <td>{{ $record->municipality }}</td>
-                        <td>{{ $record->barangay }}</td>
                         <td>{{ $record->source }}</td>
-                        <td>{{ $record->modeOfPayment }}</td>
-                        <td>{{ $record->accounts }}</td>
+                        <td>{{ $record->municipality }}</td>
                         <td>{{ $record->date_received ? \Carbon\Carbon::parse($record->date_received)->format('M d, Y') : 'N/A' }}</td>
                         <td>{{ $record->created_at->format('M d, Y') }}</td>
-                        <td>{{ $record->admin_transmittal_number ?: 'N/A' }}</td>
+                        <td>{{ $record->date_occurrence ? (function($date) { try { return \Carbon\Carbon::parse($date)->format('M d, Y'); } catch (\Exception $e) { return $date; } })($record->date_occurrence) : 'N/A' }}</td>
+                        <td>{{ $record->admin_transmittal_number ?? 'N/A' }}</td>
                         <td>
                             <button class="view-btn" onclick="viewRecord({{ $record->id }})">View</button>
                         </td>
                     </tr>
                 @empty
                     <tr>
-                        <td colspan="15" style="text-align: center; padding: 2rem; color: #64748b; font-weight: 500;">
+                        <td colspan="9" style="text-align: center; padding: 40px; color: #64748b; font-weight: 500;">
                             No records found matching your filters.
                         </td>
                     </tr>
@@ -721,16 +659,23 @@ table input[type="checkbox"] {
 </dialog>
 
 <script>
+// Ensure filter form works properly
+document.addEventListener('DOMContentLoaded', function() {
+    const filterForm = document.getElementById('filterForm');
+    if (filterForm) {
+        filterForm.addEventListener('submit', function(e) {
+            // Let the form submit normally
+            return true;
+        });
+    }
+});
+
 function viewRecord(recordId) {
     fetch(`/api/records/${recordId}`)
         .then(response => response.json())
         .then(data => {
             const modalBody = document.getElementById('modalBody');
             modalBody.innerHTML = `
-                <div class="record-detail">
-                    <div class="detail-label">Record ID:</div>
-                    <div class="detail-value">${data.id}</div>
-                </div>
                 <div class="record-detail">
                     <div class="detail-label">Farmer Name:</div>
                     <div class="detail-value">${data.farmerName}</div>
@@ -740,16 +685,8 @@ function viewRecord(recordId) {
                     <div class="detail-value">${data.encoderName}</div>
                 </div>
                 <div class="record-detail">
-                    <div class="detail-label">Program:</div>
-                    <div class="detail-value">${data.program}</div>
-                </div>
-                <div class="record-detail">
-                    <div class="detail-label">Line:</div>
-                    <div class="detail-value">${data.line}</div>
-                </div>
-                <div class="record-detail">
-                    <div class="detail-label">Province:</div>
-                    <div class="detail-value">${data.province}</div>
+                    <div class="detail-label">Source:</div>
+                    <div class="detail-value">${data.source}</div>
                 </div>
                 <div class="record-detail">
                     <div class="detail-label">Municipality:</div>
@@ -757,19 +694,7 @@ function viewRecord(recordId) {
                 </div>
                 <div class="record-detail">
                     <div class="detail-label">Barangay:</div>
-                    <div class="detail-value">${data.barangay}</div>
-                </div>
-                <div class="record-detail">
-                    <div class="detail-label">Source:</div>
-                    <div class="detail-value">${data.source}</div>
-                </div>
-                <div class="record-detail">
-                    <div class="detail-label">Mode of Payment:</div>
-                    <div class="detail-value">${data.modeOfPayment}</div>
-                </div>
-                <div class="record-detail">
-                    <div class="detail-label">Account:</div>
-                    <div class="detail-value">${data.accounts}</div>
+                    <div class="detail-value">${data.barangay || 'N/A'}</div>
                 </div>
                 <div class="record-detail">
                     <div class="detail-label">Date Received:</div>
@@ -780,8 +705,20 @@ function viewRecord(recordId) {
                     <div class="detail-value">${data.created_at}</div>
                 </div>
                 <div class="record-detail">
-                    <div class="detail-label">Admin Transmittal:</div>
+                    <div class="detail-label">Transmittal #:</div>
                     <div class="detail-value">${data.admin_transmittal_number || 'N/A'}</div>
+                </div>
+                <div class="record-detail">
+                    <div class="detail-label">Remarks:</div>
+                    <div class="detail-value">${data.remarks || 'N/A'}</div>
+                </div>
+                <div class="record-detail">
+                    <div class="detail-label">Line:</div>
+                    <div class="detail-value">${data.line || 'N/A'}</div>
+                </div>
+                <div class="record-detail">
+                    <div class="detail-label">Payment Method:</div>
+                    <div class="detail-value">${data.modeOfPayment || 'N/A'}</div>
                 </div>
             `;
             

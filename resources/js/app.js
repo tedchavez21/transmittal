@@ -1511,9 +1511,17 @@ Zarah,San Luis,Aurora`;
                                   (form.id && form.id === 'recordEditForm') ||
                                   (form.action && form.action.includes('/records/') && form.action.match(/\/records\/\d+/));
                 
-                if (isEditForm) {
-                    // For edit forms, just capitalize inputs and submit directly
-                    console.log('Edit form detected, submitting directly without confirmation');
+                // Check if this is the filter form (should not show confirmation modal)
+                const isFilterForm = (form.id && form.id === 'filterForm') ||
+                                   (form.action && form.action.includes('/all-records'));
+                
+                if (isEditForm || isFilterForm) {
+                    // For edit forms and filter forms, just capitalize inputs and submit directly
+                    if (isFilterForm) {
+                        console.log('Filter form detected, submitting directly without confirmation');
+                    } else {
+                        console.log('Edit form detected, submitting directly without confirmation');
+                    }
                     console.log('Form action:', form.action);
                     console.log('Form method:', form.method);
                     console.log('Form ID:', form.id);
