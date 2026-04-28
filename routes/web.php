@@ -10,6 +10,8 @@ Route::post('/email/login', [RoutesController::class, 'loginEmail'])->name('emai
 Route::post('/email/logout', [RoutesController::class, 'logoutEmail'])->name('email.logout');
 Route::get('/facebook-handler', [RoutesController::class, 'showFacebookHandler'])->name('facebook-handler');
 Route::post('/facebook/login', [RoutesController::class, 'loginFacebook'])->name('facebook.login');
+Route::get('/all-records', [RoutesController::class, 'showAllRecords'])->name('all-records');
+Route::get('/api/records/{id}', [RoutesController::class, 'getRecordDetails'])->name('api.records.show');
 Route::post('/facebook/logout', [RoutesController::class, 'logoutFacebook'])->name('facebook.logout');
 Route::get('/officer-of-the-day', [RoutesController::class, 'showOfficerOfTheDay'])->name('officer-of-the-day');
 Route::post('/officer/login', [RoutesController::class, 'loginOfficer'])->name('officer.login');

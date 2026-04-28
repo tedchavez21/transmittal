@@ -1453,6 +1453,111 @@ class RoutesController extends Controller
         return Carbon::now()->subMinutes(rand(1, 30));
     }
 
+    public function showAllRecords(Request $request)
+    {
+        // Get all programs, lines, sources, and modes for filters
+        $allPrograms = Record::distinct()->pluck('program')->sort()->values();
+        $allLines = Record::distinct()->pluck('line')->sort()->values();
+        $allSources = Record::distinct()->pluck('source')->sort()->values();
+        $allModes = Record::distinct()->pluck('modeOfPayment')->sort()->values();
+        
+        // Build query for all records
+        $query = Record::query();
+        
+        // Apply filters if present
+        if ($request->filled('farmerName')) {
+            $query->where('farmerName', 'like', '%' . $request->farmerName . '%');
+        }
+        
+        if ($request->filled('encoderName')) {
+            $query->where('encoderName', 'like', '%' . $request->encoderName . '%');
+        }
+        
+        if ($request->filled('program')) {
+            $query->where('program', $request->program);
+        }
+        
+        if ($request->filled('line')) {
+            $query->where('line', $request->line);
+        }
+        
+        if ($request->filled('province')) {
+            $query->where('province', $request->province);
+        }
+        
+        if ($request->filled('municipality')) {
+            $query->where('municipality', $request->municipality);
+        }
+        
+        if ($request->filled('barangay')) {
+            $query->where('barangay', $request->barangay);
+        }
+        
+        if ($request->filled('source')) {
+            $query->where('source', $request->source);
+        }
+        
+        if ($request->filled('modeOfPayment')) {
+            $query->where('modeOfPayment', $request->modeOfPayment);
+        }
+        
+        if ($request->filled('accounts')) {
+            $query->where('accounts', 'like', '%' . $request->accounts . '%');
+        }
+        
+        if ($request->filled('admin_transmittal_number')) {
+            $query->where('admin_transmittal_number', 'like', '%' . $request->admin_transmittal_number . '%');
+        }
+        
+        if ($request->filled('created_at')) {
+            $query->whereDate('created_at', $request->created_at);
+        }
+        
+        if ($request->filled('date_received_type') && $request->filled('date_single')) {
+            $query->whereDate('date_received', $request->date_single);
+        }
+        
+        if ($request->filled('date_received_type') == 'range') {
+            if ($request->filled('date_from')) {
+                $query->whereDate('date_received', '>=', $request->date_from);
+            }
+            if ($request->filled('date_to')) {
+                $query->whereDate('date_received', '<=', $request->date_to);
+            }
+        }
+        
+        // Order by latest and paginate
+        $records = $query->orderBy('id', 'desc')->paginate(50);
+        
+        return view('all-records', compact('records', 'allPrograms', 'allLines', 'allSources', 'allModes'));
+    }
+
+    public function getRecordDetails($id)
+    {
+        $record = Record::find($id);
+        
+        if (!$record) {
+            return response()->json(['error' => 'Record not found'], 404);
+        }
+        
+        return response()->json([
+            'id' => $record->id,
+            'farmerName' => $record->farmerName,
+            'encoderName' => $record->encoderName,
+            'program' => $record->program,
+            'line' => $record->line,
+            'province' => $record->province,
+            'municipality' => $record->municipality,
+            'barangay' => $record->barangay,
+            'source' => $record->source,
+            'modeOfPayment' => $record->modeOfPayment,
+            'accounts' => $record->accounts,
+            'date_received' => $record->date_received ? \Carbon\Carbon::parse($record->date_received)->format('M d, Y') : null,
+            'created_at' => $record->created_at->format('M d, Y h:i A'),
+            'admin_transmittal_number' => $record->admin_transmittal_number
+        ]);
+    }
+
     private function getUserStatus($lastActivity, $now)
     {
         $diffInMinutes = $now->diffInMinutes($lastActivity);
