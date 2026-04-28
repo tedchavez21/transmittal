@@ -33,11 +33,11 @@
             <div class="admin-sidebar-section-label">Navigation</div>
             <nav class="admin-nav" aria-label="Admin navigation">
                 <button type="button" class="active" id="btn-dashboard">
-                    <span class="icon" aria-hidden="true"><img src="/images/dashboard.svg" alt="" width="18" height="18"></span>
+                    <span class="icon" aria-hidden="true"><img src="{{ asset('images/dashboard.svg') }}" alt="" width="18" height="18"></span>
                     <span>Dashboard</span>
                 </button>
                 <button type="button" id="btn-nl-records">
-                    <span class="icon" aria-hidden="true"><img src="/images/file-svgrepo-com.svg" alt="" width="18" height="18"></span>
+                    <span class="icon" aria-hidden="true"><img src="{{ asset('images/file-svgrepo-com.svg') }}" alt="" width="18" height="18"></span>
                     <span>NL Records</span>
                 </button>
             </nav>
@@ -47,7 +47,7 @@
             <div class="admin-sidebar-actions">
                 <button type="button" class="admin-sidebar-tool" id="openUserApprovalsModal" title="Pending user approvals (Email and OD)">
                     <div class="tool-content">
-                        <span class="icon" aria-hidden="true"><img src="/images/user.svg" alt="" width="18" height="18"></span>
+                        <span class="icon" aria-hidden="true"><img src="{{ asset('images/user.svg') }}" alt="" width="18" height="18"></span>
                         <span class="label">User approvals</span>
                     </div>
                     <span id="pendingBadge" class="pending-badge" style="display:none;"></span>
@@ -64,8 +64,19 @@
                 </button>
                 <button type="button" class="admin-sidebar-tool" id="openAdminUsersModal" title="Admin Users">
                     <div class="tool-content">
-                        <span class="icon" aria-hidden="true"><img src="/images/admin.svg" alt="" width="18" height="18"></span>
+                        <span class="icon" aria-hidden="true"><img src="{{ asset('images/admin.svg') }}" alt="" width="18" height="18"></span>
                         <span class="label">Admin users</span>
+                    </div>
+                </button>
+                <button type="button" class="admin-sidebar-tool" id="openUserMaintenanceModal" title="User Maintenance">
+                    <div class="tool-content">
+                        <span class="icon" aria-hidden="true">
+                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"></path>
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path>
+                            </svg>
+                        </span>
+                        <span class="label">User maintenance</span>
                     </div>
                 </button>
             </div>
@@ -206,6 +217,139 @@
                 <button type="button" class="closeActiveUsersModal h-9 px-4 rounded-lg border border-gray-200 text-xs font-bold text-gray-600 hover:bg-gray-50 transition-colors cursor-pointer">Close</button>
             </div>
         </div>
+    </dialog>
+
+    <!-- User Maintenance Modal -->
+    <dialog class="largeModal rounded-2xl shadow-2xl bg-white backdrop:bg-black/40 p-0 w-[min(900px,calc(100vw-2rem))]" id="userMaintenanceModal">
+        <div class="px-5 pt-5 pb-3 border-b border-gray-100 flex items-center justify-between">
+            <h3 class="text-base font-black text-gray-900">User Maintenance</h3>
+            <div class="flex gap-2">
+                <button type="button" class="addOfficerButton h-8 px-3 rounded-lg bg-pcic-700 text-white text-xs font-bold hover:bg-pcic-800 transition-colors cursor-pointer">Add Officer</button>
+                <button type="button" class="addEmailHandlerButton h-8 px-3 rounded-lg bg-harvest-600 text-white text-xs font-bold hover:bg-harvest-700 transition-colors cursor-pointer">Add Email Handler</button>
+            </div>
+        </div>
+        <div class="px-5 py-4">
+            <!-- Tab Navigation -->
+            <div class="flex border-b border-gray-200 mb-4">
+                <button type="button" class="userTab px-4 py-2 text-sm font-medium text-pcic-700 border-b-2 border-pcic-700" data-tab="officers">Officers</button>
+                <button type="button" class="userTab px-4 py-2 text-sm font-medium text-gray-500 hover:text-gray-700" data-tab="email-handlers">Email Handlers</button>
+            </div>
+
+            <!-- Officers Tab -->
+            <div id="officersTab" class="userTabContent">
+                <div class="mb-4">
+                    <div class="flex items-center justify-between mb-2">
+                        <h4 class="text-sm font-bold text-gray-900">Officers Management</h4>
+                        <button type="button" class="refreshOfficers h-7 px-3 rounded-lg border border-gray-200 text-xs font-bold text-gray-600 hover:bg-gray-50 transition-colors cursor-pointer">Refresh</button>
+                    </div>
+                    <div id="officersList" class="max-h-96 overflow-y-auto">
+                        <div class="text-center py-8">
+                            <div class="inline-block animate-spin rounded-full h-6 w-6 border-b-2 border-pcic-700"></div>
+                            <p class="text-sm text-gray-500 mt-2">Loading officers...</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Email Handlers Tab -->
+            <div id="emailHandlersTab" class="userTabContent hidden">
+                <div class="mb-4">
+                    <div class="flex items-center justify-between mb-2">
+                        <h4 class="text-sm font-bold text-gray-900">Email Handlers Management</h4>
+                        <button type="button" class="refreshEmailHandlers h-7 px-3 rounded-lg border border-gray-200 text-xs font-bold text-gray-600 hover:bg-gray-50 transition-colors cursor-pointer">Refresh</button>
+                    </div>
+                    <div id="emailHandlersList" class="max-h-96 overflow-y-auto">
+                        <div class="text-center py-8">
+                            <div class="inline-block animate-spin rounded-full h-6 w-6 border-b-2 border-harvest-600"></div>
+                            <p class="text-sm text-gray-500 mt-2">Loading email handlers...</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="mt-5 flex justify-between">
+                <div class="text-xs text-gray-500">
+                    Total Officers: <span id="totalOfficers">0</span> | 
+                    Total Email Handlers: <span id="totalEmailHandlers">0</span>
+                </div>
+                <button type="button" class="closeUserMaintenanceModal h-9 px-4 rounded-lg border border-gray-200 text-xs font-bold text-gray-600 hover:bg-gray-50 transition-colors cursor-pointer">Close</button>
+            </div>
+        </div>
+    </dialog>
+
+    <!-- Add/Edit Officer Modal -->
+    <dialog class="largeModal rounded-2xl shadow-2xl bg-white backdrop:bg-black/40 p-0 w-[min(500px,calc(100vw-2rem))]" id="officerModal">
+        <div class="px-5 pt-5 pb-3 border-b border-gray-100">
+            <h3 class="text-base font-black text-gray-900" id="officerModalTitle">Add Officer</h3>
+        </div>
+        <form id="officerForm" class="px-5 py-4">
+            @csrf
+            <input type="hidden" name="officer_id" id="officer_id">
+            <div class="grid grid-cols-1 gap-4">
+                <div>
+                    <label for="officer_name" class="block text-xs font-bold text-gray-700 mb-1">Name *</label>
+                    <input type="text" id="officer_name" name="name" required
+                           class="h-9 px-3 rounded-lg border border-gray-200 focus:border-pcic-500 focus:ring-2 focus:ring-pcic-100 outline-none text-sm w-full">
+                </div>
+                <div>
+                    <label for="officer_username" class="block text-xs font-bold text-gray-700 mb-1">Username *</label>
+                    <input type="text" id="officer_username" name="username" required
+                           class="h-9 px-3 rounded-lg border border-gray-200 focus:border-pcic-500 focus:ring-2 focus:ring-pcic-100 outline-none text-sm w-full">
+                </div>
+                <div>
+                    <label for="officer_password" class="block text-xs font-bold text-gray-700 mb-1">Password *</label>
+                    <input type="password" id="officer_password" name="password" required
+                           class="h-9 px-3 rounded-lg border border-gray-200 focus:border-pcic-500 focus:ring-2 focus:ring-pcic-100 outline-none text-sm w-full">
+                </div>
+                <div>
+                    <label for="officer_active" class="flex items-center gap-2">
+                        <input type="checkbox" id="officer_active" name="active" value="1" checked
+                               class="h-4 w-4 text-pcic-600 focus:ring-pcic-500 border-gray-300 rounded">
+                        <span class="text-xs font-medium text-gray-700">Active</span>
+                    </label>
+                </div>
+            </div>
+            <div class="flex gap-3 mt-5">
+                <button type="button" class="closeOfficerModal flex-1 h-9 px-4 rounded-lg border border-gray-200 text-sm font-bold text-gray-600 hover:bg-gray-50 transition-colors cursor-pointer">Cancel</button>
+                <button type="submit" class="flex-1 h-9 px-4 rounded-lg bg-pcic-700 text-white text-sm font-bold hover:bg-pcic-800 transition-colors cursor-pointer">Save</button>
+            </div>
+        </form>
+    </dialog>
+
+    <!-- Add/Edit Email Handler Modal -->
+    <dialog class="largeModal rounded-2xl shadow-2xl bg-white backdrop:bg-black/40 p-0 w-[min(500px,calc(100vw-2rem))]" id="emailHandlerModal">
+        <div class="px-5 pt-5 pb-3 border-b border-gray-100">
+            <h3 class="text-base font-black text-gray-900" id="emailHandlerModalTitle">Add Email Handler</h3>
+        </div>
+        <form id="emailHandlerForm" class="px-5 py-4">
+            @csrf
+            <input type="hidden" name="email_handler_id" id="email_handler_id">
+            <div class="grid grid-cols-1 gap-4">
+                <div>
+                    <label for="email_handler_name" class="block text-xs font-bold text-gray-700 mb-1">Name *</label>
+                    <input type="text" id="email_handler_name" name="name" required
+                           class="h-9 px-3 rounded-lg border border-gray-200 focus:border-harvest-500 focus:ring-2 focus:ring-harvest-100 outline-none text-sm w-full">
+                </div>
+                <div>
+                    <label for="email_handler_active" class="flex items-center gap-2">
+                        <input type="checkbox" id="email_handler_active" name="active" value="1" checked
+                               class="h-4 w-4 text-harvest-600 focus:ring-harvest-500 border-gray-300 rounded">
+                        <span class="text-xs font-medium text-gray-700">Active</span>
+                    </label>
+                </div>
+                <div>
+                    <label for="email_handler_approved" class="flex items-center gap-2">
+                        <input type="checkbox" id="email_handler_approved" name="approved" value="1"
+                               class="h-4 w-4 text-harvest-600 focus:ring-harvest-500 border-gray-300 rounded">
+                        <span class="text-xs font-medium text-gray-700">Approved</span>
+                    </label>
+                </div>
+            </div>
+            <div class="flex gap-3 mt-5">
+                <button type="button" class="closeEmailHandlerModal flex-1 h-9 px-4 rounded-lg border border-gray-200 text-sm font-bold text-gray-600 hover:bg-gray-50 transition-colors cursor-pointer">Cancel</button>
+                <button type="submit" class="flex-1 h-9 px-4 rounded-lg bg-harvest-600 text-white text-sm font-bold hover:bg-harvest-700 transition-colors cursor-pointer">Save</button>
+            </div>
+        </form>
     </dialog>
 
     <!-- Dashboard Section -->
@@ -3338,6 +3482,379 @@ Yapara,Dingalan,Aurora`;
             const form = select.closest('form');
             form?.submit();
         });
+
+    // User Maintenance Modal Functionality
+    const openUserMaintenanceModal = document.getElementById('openUserMaintenanceModal');
+    const userMaintenanceModal = document.getElementById('userMaintenanceModal');
+    const closeUserMaintenanceModal = document.querySelector('.closeUserMaintenanceModal');
+    const userTabs = document.querySelectorAll('.userTab');
+    const userTabContents = document.querySelectorAll('.userTabContent');
+
+    if (openUserMaintenanceModal && userMaintenanceModal) {
+        openUserMaintenanceModal.addEventListener('click', function() {
+            userMaintenanceModal.showModal();
+            loadOfficers();
+            loadEmailHandlers();
+        });
+    }
+
+    if (closeUserMaintenanceModal && userMaintenanceModal) {
+        closeUserMaintenanceModal.addEventListener('click', function() {
+            userMaintenanceModal.close();
+        });
+    }
+
+    // Tab switching
+    userTabs.forEach(tab => {
+        tab.addEventListener('click', function() {
+            const targetTab = this.getAttribute('data-tab');
+            
+            // Update tab styles
+            userTabs.forEach(t => {
+                t.classList.remove('text-pcic-700', 'border-b-2', 'border-pcic-700');
+                t.classList.add('text-gray-500', 'hover:text-gray-700');
+            });
+            this.classList.remove('text-gray-500', 'hover:text-gray-700');
+            this.classList.add('text-pcic-700', 'border-b-2', 'border-pcic-700');
+            
+            // Show/hide tab content
+            userTabContents.forEach(content => {
+                content.classList.add('hidden');
+            });
+            document.getElementById(targetTab + 'Tab').classList.remove('hidden');
+        });
+    });
+
+    // Load Officers
+    function loadOfficers() {
+        const officersList = document.getElementById('officersList');
+        if (!officersList) return;
+
+        officersList.innerHTML = `
+            <div class="text-center py-8">
+                <div class="inline-block animate-spin rounded-full h-6 w-6 border-b-2 border-pcic-700"></div>
+                <p class="text-sm text-gray-500 mt-2">Loading officers...</p>
+            </div>
+        `;
+
+        fetch('/api/officers')
+            .then(response => response.json())
+            .then(data => {
+                displayOfficers(data.officers || []);
+                document.getElementById('totalOfficers').textContent = data.officers?.length || 0;
+            })
+            .catch(error => {
+                console.error('Error loading officers:', error);
+                officersList.innerHTML = '<p class="text-sm text-red-600 text-center">Error loading officers</p>';
+            });
+    }
+
+    // Load Email Handlers
+    function loadEmailHandlers() {
+        const emailHandlersList = document.getElementById('emailHandlersList');
+        if (!emailHandlersList) return;
+
+        emailHandlersList.innerHTML = `
+            <div class="text-center py-8">
+                <div class="inline-block animate-spin rounded-full h-6 w-6 border-b-2 border-harvest-600"></div>
+                <p class="text-sm text-gray-500 mt-2">Loading email handlers...</p>
+            </div>
+        `;
+
+        fetch('/api/email-handlers')
+            .then(response => response.json())
+            .then(data => {
+                displayEmailHandlers(data.emailHandlers || []);
+                document.getElementById('totalEmailHandlers').textContent = data.emailHandlers?.length || 0;
+            })
+            .catch(error => {
+                console.error('Error loading email handlers:', error);
+                emailHandlersList.innerHTML = '<p class="text-sm text-red-600 text-center">Error loading email handlers</p>';
+            });
+    }
+
+    // Display Officers
+    function displayOfficers(officers) {
+        const officersList = document.getElementById('officersList');
+        if (!officersList) return;
+
+        if (officers.length === 0) {
+            officersList.innerHTML = '<p class="text-sm text-gray-500 text-center">No officers found</p>';
+            return;
+        }
+
+        const html = officers.map(officer => `
+            <div class="flex items-center justify-between p-3 border border-gray-200 rounded-lg mb-2">
+                <div class="flex-1">
+                    <div class="font-medium text-sm text-gray-900">${officer.name}</div>
+                    <div class="text-xs text-gray-500">Username: ${officer.username}</div>
+                    <div class="text-xs text-gray-500">Status: ${officer.active ? '<span class="text-green-600">Active</span>' : '<span class="text-red-600">Inactive</span>'}</div>
+                </div>
+                <div class="flex gap-2">
+                    <button type="button" class="editOfficer h-7 px-3 rounded-lg border border-pcic-200 text-xs font-bold text-pcic-700 hover:bg-pcic-50 transition-colors cursor-pointer" data-id="${officer.id}">Edit</button>
+                    <button type="button" class="deleteOfficer h-7 px-3 rounded-lg border border-red-200 text-xs font-bold text-red-600 hover:bg-red-50 transition-colors cursor-pointer" data-id="${officer.id}">Delete</button>
+                </div>
+            </div>
+        `).join('');
+
+        officersList.innerHTML = html;
+
+        // Add event listeners for edit/delete buttons
+        officersList.querySelectorAll('.editOfficer').forEach(btn => {
+            btn.addEventListener('click', function() {
+                const officerId = this.getAttribute('data-id');
+                editOfficer(officerId);
+            });
+        });
+
+        officersList.querySelectorAll('.deleteOfficer').forEach(btn => {
+            btn.addEventListener('click', function() {
+                const officerId = this.getAttribute('data-id');
+                deleteOfficer(officerId);
+            });
+        });
+    }
+
+    // Display Email Handlers
+    function displayEmailHandlers(emailHandlers) {
+        const emailHandlersList = document.getElementById('emailHandlersList');
+        if (!emailHandlersList) return;
+
+        if (emailHandlers.length === 0) {
+            emailHandlersList.innerHTML = '<p class="text-sm text-gray-500 text-center">No email handlers found</p>';
+            return;
+        }
+
+        const html = emailHandlers.map(handler => `
+            <div class="flex items-center justify-between p-3 border border-gray-200 rounded-lg mb-2">
+                <div class="flex-1">
+                    <div class="font-medium text-sm text-gray-900">${handler.name}</div>
+                    <div class="text-xs text-gray-500">Status: ${handler.active ? '<span class="text-green-600">Active</span>' : '<span class="text-red-600">Inactive</span>'}</div>
+                    <div class="text-xs text-gray-500">Approved: ${handler.approved ? '<span class="text-green-600">Yes</span>' : '<span class="text-red-600">No</span>'}</div>
+                </div>
+                <div class="flex gap-2">
+                    <button type="button" class="editEmailHandler h-7 px-3 rounded-lg border border-harvest-200 text-xs font-bold text-harvest-700 hover:bg-harvest-50 transition-colors cursor-pointer" data-id="${handler.id}">Edit</button>
+                    <button type="button" class="deleteEmailHandler h-7 px-3 rounded-lg border border-red-200 text-xs font-bold text-red-600 hover:bg-red-50 transition-colors cursor-pointer" data-id="${handler.id}">Delete</button>
+                </div>
+            </div>
+        `).join('');
+
+        emailHandlersList.innerHTML = html;
+
+        // Add event listeners for edit/delete buttons
+        emailHandlersList.querySelectorAll('.editEmailHandler').forEach(btn => {
+            btn.addEventListener('click', function() {
+                const handlerId = this.getAttribute('data-id');
+                editEmailHandler(handlerId);
+            });
+        });
+
+        emailHandlersList.querySelectorAll('.deleteEmailHandler').forEach(btn => {
+            btn.addEventListener('click', function() {
+                const handlerId = this.getAttribute('data-id');
+                deleteEmailHandler(handlerId);
+            });
+        });
+    }
+
+    // Refresh buttons
+    document.querySelector('.refreshOfficers')?.addEventListener('click', loadOfficers);
+    document.querySelector('.refreshEmailHandlers')?.addEventListener('click', loadEmailHandlers);
+
+    // Officer Modal
+    const officerModal = document.getElementById('officerModal');
+    const addOfficerButton = document.querySelector('.addOfficerButton');
+    const closeOfficerModal = document.querySelector('.closeOfficerModal');
+    const officerForm = document.getElementById('officerForm');
+
+    if (addOfficerButton && officerModal) {
+        addOfficerButton.addEventListener('click', function() {
+            document.getElementById('officerModalTitle').textContent = 'Add Officer';
+            officerForm.reset();
+            document.getElementById('officer_id').value = '';
+            officerModal.showModal();
+        });
+    }
+
+    if (closeOfficerModal && officerModal) {
+        closeOfficerModal.addEventListener('click', function() {
+            officerModal.close();
+        });
+    }
+
+    if (officerForm) {
+        officerForm.addEventListener('submit', function(e) {
+            e.preventDefault();
+            const formData = new FormData(this);
+            const officerId = document.getElementById('officer_id').value;
+            const url = officerId ? `/api/officers/${officerId}` : '/api/officers';
+            const method = officerId ? 'PUT' : 'POST';
+
+            fetch(url, {
+                method: method,
+                body: formData,
+                headers: {
+                    'X-Requested-With': 'XMLHttpRequest',
+                    'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content')
+                }
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    officerModal.close();
+                    loadOfficers();
+                    alert(officerId ? 'Officer updated successfully' : 'Officer added successfully');
+                } else {
+                    alert('Error: ' + (data.message || 'Unknown error'));
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                alert('Error saving officer');
+            });
+        });
+    }
+
+    // Email Handler Modal
+    const emailHandlerModal = document.getElementById('emailHandlerModal');
+    const addEmailHandlerButton = document.querySelector('.addEmailHandlerButton');
+    const closeEmailHandlerModal = document.querySelector('.closeEmailHandlerModal');
+    const emailHandlerForm = document.getElementById('emailHandlerForm');
+
+    if (addEmailHandlerButton && emailHandlerModal) {
+        addEmailHandlerButton.addEventListener('click', function() {
+            document.getElementById('emailHandlerModalTitle').textContent = 'Add Email Handler';
+            emailHandlerForm.reset();
+            document.getElementById('email_handler_id').value = '';
+            emailHandlerModal.showModal();
+        });
+    }
+
+    if (closeEmailHandlerModal && emailHandlerModal) {
+        closeEmailHandlerModal.addEventListener('click', function() {
+            emailHandlerModal.close();
+        });
+    }
+
+    if (emailHandlerForm) {
+        emailHandlerForm.addEventListener('submit', function(e) {
+            e.preventDefault();
+            const formData = new FormData(this);
+            const handlerId = document.getElementById('email_handler_id').value;
+            const url = handlerId ? `/api/email-handlers/${handlerId}` : '/api/email-handlers';
+            const method = handlerId ? 'PUT' : 'POST';
+
+            fetch(url, {
+                method: method,
+                body: formData,
+                headers: {
+                    'X-Requested-With': 'XMLHttpRequest',
+                    'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content')
+                }
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    emailHandlerModal.close();
+                    loadEmailHandlers();
+                    alert(handlerId ? 'Email handler updated successfully' : 'Email handler added successfully');
+                } else {
+                    alert('Error: ' + (data.message || 'Unknown error'));
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                alert('Error saving email handler');
+            });
+        });
+    }
+
+    // Edit functions
+    function editOfficer(officerId) {
+        fetch(`/api/officers/${officerId}`)
+            .then(response => response.json())
+            .then(officer => {
+                document.getElementById('officerModalTitle').textContent = 'Edit Officer';
+                document.getElementById('officer_id').value = officer.id;
+                document.getElementById('officer_name').value = officer.name;
+                document.getElementById('officer_username').value = officer.username;
+                document.getElementById('officer_password').value = ''; // Don't populate password
+                document.getElementById('officer_active').checked = officer.active;
+                officerModal.showModal();
+            })
+            .catch(error => {
+                console.error('Error loading officer:', error);
+                alert('Error loading officer data');
+            });
+    }
+
+    function editEmailHandler(handlerId) {
+        fetch(`/api/email-handlers/${handlerId}`)
+            .then(response => response.json())
+            .then(handler => {
+                document.getElementById('emailHandlerModalTitle').textContent = 'Edit Email Handler';
+                document.getElementById('email_handler_id').value = handler.id;
+                document.getElementById('email_handler_name').value = handler.name;
+                document.getElementById('email_handler_active').checked = handler.active;
+                document.getElementById('email_handler_approved').checked = handler.approved;
+                emailHandlerModal.showModal();
+            })
+            .catch(error => {
+                console.error('Error loading email handler:', error);
+                alert('Error loading email handler data');
+            });
+    }
+
+    // Delete functions
+    function deleteOfficer(officerId) {
+        if (confirm('Are you sure you want to delete this officer?')) {
+            fetch(`/api/officers/${officerId}`, {
+                method: 'DELETE',
+                headers: {
+                    'X-Requested-With': 'XMLHttpRequest',
+                    'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content')
+                }
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    loadOfficers();
+                    alert('Officer deleted successfully');
+                } else {
+                    alert('Error: ' + (data.message || 'Unknown error'));
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                alert('Error deleting officer');
+            });
+        }
+    }
+
+    function deleteEmailHandler(handlerId) {
+        if (confirm('Are you sure you want to delete this email handler?')) {
+            fetch(`/api/email-handlers/${handlerId}`, {
+                method: 'DELETE',
+                headers: {
+                    'X-Requested-With': 'XMLHttpRequest',
+                    'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content')
+                }
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    loadEmailHandlers();
+                    alert('Email handler deleted successfully');
+                } else {
+                    alert('Error: ' + (data.message || 'Unknown error'));
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                alert('Error deleting email handler');
+            });
+        }
+    }
 
     // Automatic logout on browser/tab close
     window.addEventListener('beforeunload', function(e) {

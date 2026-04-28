@@ -18,45 +18,44 @@ class RoutesController extends Controller
 
     public function showEmailHandler(Request $request)
     {
+        // Check authentication - redirect to login if not authenticated
+        if (!$request->session()->get('email_logged_in')) {
+            return redirect()->route('auth.login', ['channel' => 'Email']);
+        }
+
         $emailUserName = $request->session()->get('email_user_name');
-        $emailUserApproved = false;
         $records = collect();
 
         if ($emailUserName) {
-            $handler = EmailHandler::where('name', $emailUserName)->first();
-            $emailUserApproved = $handler && $handler->approved;
+            $query = Record::where('source', 'Email')
+                ->where('encoderName', $emailUserName);
 
-            if ($emailUserApproved) {
-                $query = Record::where('source', 'Email')
-                    ->where('encoderName', $emailUserName);
-
-                // Apply date encoded filter - only if enabled
-                if ($request->filled('enable_date_encoded')) {
-                    if ($request->filled('date_encoded')) {
-                        $query->whereDate('created_at', $request->date_encoded);
-                    } else {
-                        $query->whereDate('created_at', today());
-                    }
+            // Apply date encoded filter - only if enabled
+            if ($request->filled('enable_date_encoded')) {
+                if ($request->filled('date_encoded')) {
+                    $query->whereDate('created_at', $request->date_encoded);
+                } else {
+                    $query->whereDate('created_at', today());
                 }
-
-                // Apply date received filter - only if enabled
-                if ($request->filled('enable_date_received')) {
-                    if ($request->filled('date_received')) {
-                        $query->whereDate('date_received', $request->date_received);
-                    }
-                }
-
-                $records = $query->orderBy('id', 'desc')
-                    ->paginate(25)
-                    ->withQueryString();
             }
+
+            // Apply date received filter - only if enabled
+            if ($request->filled('enable_date_received')) {
+                if ($request->filled('date_received')) {
+                    $query->whereDate('date_received', $request->date_received);
+                }
+            }
+
+            $records = $query->orderBy('id', 'desc')
+                ->paginate(25)
+                ->withQueryString();
         }
 
         return view('email-handler', [
             'records' => $records,
             'isLoggedIn' => (bool) $emailUserName,
             'emailUserName' => $emailUserName,
-            'emailUserApproved' => $emailUserApproved,
+            'emailUserApproved' => true, // All authenticated users are now approved
         ]);
     }
 
@@ -115,10 +114,15 @@ class RoutesController extends Controller
 
     public function showFacebookHandler(Request $request)
     {
-        $isLoggedIn = $request->session()->get('facebook_logged_in', false);
+        // Check authentication - redirect to login if not authenticated
+        if (!$request->session()->get('facebook_logged_in')) {
+            return redirect()->route('auth.login', ['channel' => 'Facebook']);
+        }
+
+        $facebookUser = $request->session()->get('facebook_user');
         $records = collect();
 
-        if ($isLoggedIn) {
+        if ($facebookUser) {
             $records = Record::where('source', 'Facebook')
                 ->whereDate('created_at', today())
                 ->orderBy('id', 'desc')
@@ -128,7 +132,8 @@ class RoutesController extends Controller
 
         return view('facebook-handler', [
             'records' => $records,
-            'isLoggedIn' => $isLoggedIn,
+            'isLoggedIn' => true,
+            'facebookUser' => $facebookUser,
         ]);
     }
 
@@ -157,23 +162,22 @@ class RoutesController extends Controller
 
     public function showOfficerOfTheDay(Request $request)
     {
+        // Check authentication - redirect to login if not authenticated
+        if (!$request->session()->get('officer_logged_in')) {
+            return redirect()->route('auth.login', ['channel' => 'OD']);
+        }
+
+        $officerId = $request->session()->get('officer_id');
         $officerName = $request->session()->get('officer_name');
-        $officerApproved = false;
         $records = collect();
 
-        if ($officerName) {
-            $officer = Officer::firstOrCreate(
-                ['name' => trim($officerName)],
-                ['approved' => false]
-            );
-            $officerApproved = $officer->approved;
-
+        if ($officerId && $officerName) {
             $query = Record::where('encoderName', $officerName)
                 ->where('source', 'OD');
 
             // Apply date filter - default to today if not provided
-            if ($request->filled('date_encoded')) {
-                $query->whereDate('created_at', $request->date_encoded);
+            if ($request->filled('created_at')) {
+                $query->whereDate('created_at', $request->created_at);
             } else {
                 $query->whereDate('created_at', today());
             }
@@ -186,7 +190,7 @@ class RoutesController extends Controller
         return view('officer-of-the-day', [
             'records' => $records,
             'officerName' => $officerName,
-            'officerApproved' => $officerApproved,
+            'officerApproved' => true, // All authenticated officers are now approved
         ]);
     }
 
@@ -302,8 +306,25 @@ class RoutesController extends Controller
         if ($admin) {
             $request->session()->put('admin_logged_in', true);
             $request->session()->put('admin_username', $admin->username);
-            return redirect()->route('admin');
+            $request->session()->save(); // Force save session
+            
+            // Debug: Log session data
+            \Log::info('Admin login successful', [
+                'username' => $admin->username,
+                'session_id' => session()->getId(),
+                'admin_logged_in' => session()->get('admin_logged_in'),
+                'admin_username' => session()->get('admin_username'),
+                'all_session_data' => $request->session()->all()
+            ]);
+            
+            return redirect()->route('admin')->with('success', 'Admin login successful');
         }
+
+        // Debug: Log failed login attempt
+        \Log::warning('Admin login failed', [
+            'username' => $request->username,
+            'user_exists' => $admin !== null
+        ]);
 
         return redirect()->back()->with('error', 'Invalid credentials');
     }
@@ -318,8 +339,20 @@ class RoutesController extends Controller
     public function showAdmin(Request $request)
     {
         // Check if admin is logged in
-        if (!$request->session()->has('admin_logged_in') || !$request->session()->get('admin_logged_in')) {
-            return redirect()->route('welcome');
+        $adminLoggedIn = $request->session()->get('admin_logged_in', false);
+        $adminUsername = $request->session()->get('admin_username', '');
+        
+        // Debug logging
+        \Log::info('Admin page access attempt', [
+            'admin_logged_in' => $adminLoggedIn,
+            'admin_username' => $adminUsername,
+            'session_id' => session()->getId(),
+            'session_data' => $request->session()->all()
+        ]);
+        
+        if (!$adminLoggedIn) {
+            \Log::warning('Admin access denied - not logged in');
+            return redirect()->route('welcome')->with('error', 'Please login as admin to access this page');
         }
 
         $query = Record::query();
@@ -1517,6 +1550,173 @@ class RoutesController extends Controller
             'date_of_occurrence' => $record->date_occurrence ? (function($date) { try { return \Carbon\Carbon::parse($date)->format('M d, Y'); } catch (\Exception $e) { return $date; } })($record->date_occurrence) : null,
             'created_at' => $record->created_at->format('M d, Y h:i A'),
             'admin_transmittal_number' => $record->admin_transmittal_number
+        ]);
+    }
+
+    // User Maintenance API Methods
+    
+    public function getOfficers()
+    {
+        $officers = Officer::select('id', 'name', 'username', 'active', 'created_at', 'updated_at')
+            ->orderBy('name', 'asc')
+            ->get();
+            
+        return response()->json([
+            'officers' => $officers
+        ]);
+    }
+    
+    public function createOfficer(Request $request)
+    {
+        $request->validate([
+            'name' => 'required|string|max:255',
+            'username' => 'required|string|max:255|unique:officers,username',
+            'password' => 'required|string|min:6',
+            'active' => 'boolean'
+        ]);
+        
+        $officer = Officer::create([
+            'name' => $request->name,
+            'username' => $request->username,
+            'password' => Hash::make($request->password),
+            'active' => $request->boolean('active', true)
+        ]);
+        
+        return response()->json([
+            'success' => true,
+            'officer' => $officer
+        ]);
+    }
+    
+    public function getOfficer($id)
+    {
+        $officer = Officer::findOrFail($id);
+        
+        return response()->json([
+            'id' => $officer->id,
+            'name' => $officer->name,
+            'username' => $officer->username,
+            'active' => $officer->active,
+            'created_at' => $officer->created_at,
+            'updated_at' => $officer->updated_at
+        ]);
+    }
+    
+    public function updateOfficer(Request $request, $id)
+    {
+        $officer = Officer::findOrFail($id);
+        
+        $request->validate([
+            'name' => 'required|string|max:255',
+            'username' => 'required|string|max:255|unique:officers,username,' . $id,
+            'password' => 'nullable|string|min:6',
+            'active' => 'boolean'
+        ]);
+        
+        $updateData = [
+            'name' => $request->name,
+            'username' => $request->username,
+            'active' => $request->boolean('active')
+        ];
+        
+        if ($request->filled('password')) {
+            $updateData['password'] = Hash::make($request->password);
+        }
+        
+        $officer->update($updateData);
+        
+        return response()->json([
+            'success' => true,
+            'officer' => $officer
+        ]);
+    }
+    
+    public function deleteOfficer($id)
+    {
+        $officer = Officer::findOrFail($id);
+        $officer->delete();
+        
+        return response()->json([
+            'success' => true,
+            'message' => 'Officer deleted successfully'
+        ]);
+    }
+    
+    public function getEmailHandlers()
+    {
+        $handlers = EmailHandler::select('id', 'name', 'active', 'approved', 'created_at', 'updated_at')
+            ->orderBy('name', 'asc')
+            ->get();
+            
+        return response()->json([
+            'emailHandlers' => $handlers
+        ]);
+    }
+    
+    public function createEmailHandler(Request $request)
+    {
+        $request->validate([
+            'name' => 'required|string|max:255',
+            'active' => 'boolean',
+            'approved' => 'boolean'
+        ]);
+        
+        $handler = EmailHandler::create([
+            'name' => $request->name,
+            'active' => $request->boolean('active', true),
+            'approved' => $request->boolean('approved', false)
+        ]);
+        
+        return response()->json([
+            'success' => true,
+            'emailHandler' => $handler
+        ]);
+    }
+    
+    public function getEmailHandler($id)
+    {
+        $handler = EmailHandler::findOrFail($id);
+        
+        return response()->json([
+            'id' => $handler->id,
+            'name' => $handler->name,
+            'active' => $handler->active,
+            'approved' => $handler->approved,
+            'created_at' => $handler->created_at,
+            'updated_at' => $handler->updated_at
+        ]);
+    }
+    
+    public function updateEmailHandler(Request $request, $id)
+    {
+        $handler = EmailHandler::findOrFail($id);
+        
+        $request->validate([
+            'name' => 'required|string|max:255',
+            'active' => 'boolean',
+            'approved' => 'boolean'
+        ]);
+        
+        $handler->update([
+            'name' => $request->name,
+            'active' => $request->boolean('active'),
+            'approved' => $request->boolean('approved')
+        ]);
+        
+        return response()->json([
+            'success' => true,
+            'emailHandler' => $handler
+        ]);
+    }
+    
+    public function deleteEmailHandler($id)
+    {
+        $handler = EmailHandler::findOrFail($id);
+        $handler->delete();
+        
+        return response()->json([
+            'success' => true,
+            'message' => 'Email handler deleted successfully'
         ]);
     }
 

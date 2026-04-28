@@ -235,5 +235,6 @@
         </div>
     </dialog>
 
+    @stack('scripts')
     </body>
 </html>

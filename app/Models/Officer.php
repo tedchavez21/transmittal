@@ -8,14 +8,20 @@ class Officer extends Model
 {
     protected $fillable = [
         'name',
+        'username',
+        'password',
+        'active',
         'approved',
         'approved_at',
-        'active',
     ];
 
     protected $casts = [
+        'active' => 'boolean',
         'approved' => 'boolean',
         'approved_at' => 'datetime',
-        'active' => 'boolean',
+    ];
+
+    protected $hidden = [
+        'password',
     ];
 }
