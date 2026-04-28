@@ -540,143 +540,161 @@
     <div id="nl-records-section" style="display: none;">
 
     <!-- Transmittal Management -->
-    <div class="admin-card" style="margin-bottom: 5px;">
-        <div class="card-body" style="padding: 8px 12px;">
-            <label class="admin-toggle" style="font-size: 12px; margin: 0;">
-                <input type="checkbox" id="unassigned-toggle" {{ request('unassigned_only') ? 'checked' : '' }}>
-                <span style="font-size: 12px;">Show only records without admin transmittal numbers</span>
-            </label>
-        </div>
+    <div class="no-print" style="margin-bottom: 12px; padding: 16px 20px; border-radius: 12px; background: linear-gradient(135deg, #ffffff 0%, #f8fafc 100%); border: 1px solid #e2e8f0; box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);">
+        <label style="display: flex; align-items: center; gap: 12px; cursor: pointer; margin: 0;">
+            <div style="position: relative; width: 48px; height: 24px;">
+                <input type="checkbox" id="unassigned-toggle" {{ request('unassigned_only') ? 'checked' : '' }} style="opacity: 0; width: 0; height: 0;">
+                <span style="position: absolute; cursor: pointer; top: 0; left: 0; right: 0; bottom: 0; background-color: #cbd5e1; transition: 0.3s; border-radius: 24px;" id="unassigned-toggle-bg"></span>
+                <span style="position: absolute; cursor: pointer; content: ''; height: 18px; width: 18px; left: 3px; bottom: 3px; background-color: white; transition: 0.3s; border-radius: 50%; box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);" id="unassigned-toggle-dot"></span>
+            </div>
+            <span style="font-size: 14px; font-weight: 500; color: #1e293b;">Show only records without admin transmittal numbers</span>
+        </label>
     </div>
 
+    <script>
+        (function () {
+            var toggle = document.getElementById('unassigned-toggle');
+            var bg = document.getElementById('unassigned-toggle-bg');
+            var dot = document.getElementById('unassigned-toggle-dot');
+            
+            if (toggle && bg && dot) {
+                function updateToggle() {
+                    if (toggle.checked) {
+                        bg.style.backgroundColor = '#006c35';
+                        dot.style.transform = 'translateX(24px)';
+                    } else {
+                        bg.style.backgroundColor = '#cbd5e1';
+                        dot.style.transform = 'translateX(0)';
+                    }
+                }
+                
+                updateToggle();
+                toggle.addEventListener('change', updateToggle);
+            }
+        })();
+    </script>
+
     <!-- TABLE FILTERS -->
-    <div class="no-print table-filters" style="margin-bottom: 5px; padding: 8px 12px; border: 1px solid #ccc; background: #fff;">
-        <h3 style="margin: 0 0 8px 0; font-size: 14px;">TABLE FILTERS</h3>
+    <div class="no-print table-filters" style="margin-bottom: 16px; padding: 20px; border-radius: 12px; background: linear-gradient(135deg, #ffffff 0%, #f8fafc 100%); border: 1px solid #e2e8f0; box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);">
+        <div style="display: flex; align-items: center; gap: 12px; margin-bottom: 16px;">
+            <div style="width: 32px; height: 32px; background: linear-gradient(135deg, #006c35 0%, #008a43 100%); border-radius: 8px; display: flex; align-items: center; justify-content: center;">
+                <svg width="18" height="18" fill="none" stroke="white" stroke-width="2" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 7.293A1 1 0 013 6.586V4z"></path>
+                </svg>
+            </div>
+            <h3 style="margin: 0; font-size: 16px; font-weight: 700; color: #1e293b;">Table Filters</h3>
+        </div>
         <form method="GET" action="{{ route('admin') }}" style="margin: 0;">
             <input type="hidden" name="tab" value="nl-records">
-            <div style="display: flex; flex-wrap: wrap; gap: 8px; align-items: center;">
-                <div style="display: flex; flex-direction: column; gap: 4px;">
-                    <label style="font-size: 12px; font-weight: bold;">Search Farmer</label>
-                    <input type="text" name="farmerName" value="{{ request('farmerName') }}" style="padding: 6px; font-size: 12px; border: 1px solid #ccc; border-radius: 3px;">
+            <div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(180px, 1fr)); gap: 16px; align-items: start;">
+                <div style="display: flex; flex-direction: column; gap: 6px;">
+                    <label style="font-size: 12px; font-weight: 600; color: #64748b; text-transform: uppercase; letter-spacing: 0.5px;">Search Farmer</label>
+                    <input type="text" name="farmerName" value="{{ request('farmerName') }}" style="padding: 10px 12px; font-size: 13px; border: 1px solid #cbd5e1; border-radius: 8px; background: #ffffff; transition: all 0.2s; box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);" placeholder="Enter farmer name">
                 </div>
-                <div style="display: flex; flex-direction: column; gap: 4px;">
-                    <label style="font-size: 12px; font-weight: bold;">Search Encoder</label>
-                    <input type="text" name="encoderName" value="{{ request('encoderName') }}" style="padding: 6px; font-size: 12px; border: 1px solid #ccc; border-radius: 3px;">
+                <div style="display: flex; flex-direction: column; gap: 6px;">
+                    <label style="font-size: 12px; font-weight: 600; color: #64748b; text-transform: uppercase; letter-spacing: 0.5px;">Search Encoder</label>
+                    <input type="text" name="encoderName" value="{{ request('encoderName') }}" style="padding: 10px 12px; font-size: 13px; border: 1px solid #cbd5e1; border-radius: 8px; background: #ffffff; transition: all 0.2s; box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);" placeholder="Enter encoder name">
                 </div>
-                <div style="display: flex; flex-direction: column; gap: 4px;">
-                    <label style="font-size: 12px; font-weight: bold;">Program</label>
-                    <select name="program" style="padding: 6px; font-size: 12px; border: 1px solid #ccc; border-radius: 3px;">
+                <div style="display: flex; flex-direction: column; gap: 6px;">
+                    <label style="font-size: 12px; font-weight: 600; color: #64748b; text-transform: uppercase; letter-spacing: 0.5px;">Program</label>
+                    <select name="program" style="padding: 10px 12px; font-size: 13px; border: 1px solid #cbd5e1; border-radius: 8px; background: #ffffff; transition: all 0.2s; box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);">
                         <option value="">All Programs</option>
                         @foreach($allPrograms as $program)
                         <option value="{{ $program }}" {{ request('program') == $program ? 'selected' : '' }}>{{ $program }}</option>
                         @endforeach
                     </select>
                 </div>
-                <div style="display: flex; flex-direction: column; gap: 4px;">
-                    <label style="font-size: 12px; font-weight: bold;">Line</label>
-                    <select name="line" style="padding: 6px; font-size: 12px; border: 1px solid #ccc; border-radius: 3px;">
+                <div style="display: flex; flex-direction: column; gap: 6px;">
+                    <label style="font-size: 12px; font-weight: 600; color: #64748b; text-transform: uppercase; letter-spacing: 0.5px;">Line</label>
+                    <select name="line" style="padding: 10px 12px; font-size: 13px; border: 1px solid #cbd5e1; border-radius: 8px; background: #ffffff; transition: all 0.2s; box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);">
                         <option value="">All Lines</option>
                         @foreach($allLines as $line)
                         <option value="{{ $line }}" {{ request('line') == $line ? 'selected' : '' }}>{{ $line }}</option>
                         @endforeach
                     </select>
                 </div>
-                <div style="display: flex; flex-direction: column; gap: 4px;">
-                    <label style="font-size: 12px; font-weight: bold;">Province</label>
-                    <select name="province" id="tableProvince" style="padding: 6px; font-size: 12px; border: 1px solid #ccc; border-radius: 3px;">
+                <div style="display: flex; flex-direction: column; gap: 6px;">
+                    <label style="font-size: 12px; font-weight: 600; color: #64748b; text-transform: uppercase; letter-spacing: 0.5px;">Province</label>
+                    <select name="province" id="tableProvince" style="padding: 10px 12px; font-size: 13px; border: 1px solid #cbd5e1; border-radius: 8px; background: #ffffff; transition: all 0.2s; box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);">
                         <option value="">All Provinces</option>
                         <option value="Aurora" {{ request('province') == 'Aurora' ? 'selected' : '' }}>Aurora</option>
                         <option value="Nueva Ecija" {{ request('province') == 'Nueva Ecija' ? 'selected' : '' }}>Nueva Ecija</option>
                     </select>
                 </div>
-                <div style="display: flex; flex-direction: column; gap: 4px;">
-                    <label style="font-size: 12px; font-weight: bold;">Municipality</label>
-                    <select name="municipality" id="tableMunicipality" style="padding: 6px; font-size: 12px; border: 1px solid #ccc; border-radius: 3px;">
+                <div style="display: flex; flex-direction: column; gap: 6px;">
+                    <label style="font-size: 12px; font-weight: 600; color: #64748b; text-transform: uppercase; letter-spacing: 0.5px;">Municipality</label>
+                    <select name="municipality" id="tableMunicipality" style="padding: 10px 12px; font-size: 13px; border: 1px solid #cbd5e1; border-radius: 8px; background: #ffffff; transition: all 0.2s; box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);">
                         <option value="">All Municipalities</option>
                     </select>
                 </div>
-                <div style="display: flex; flex-direction: column; gap: 4px;">
-                    <label style="font-size: 12px; font-weight: bold;">Barangay</label>
-                    <select name="barangay" id="tableBarangay" style="padding: 6px; font-size: 12px; border: 1px solid #ccc; border-radius: 3px;">
+                <div style="display: flex; flex-direction: column; gap: 6px;">
+                    <label style="font-size: 12px; font-weight: 600; color: #64748b; text-transform: uppercase; letter-spacing: 0.5px;">Barangay</label>
+                    <select name="barangay" id="tableBarangay" style="padding: 10px 12px; font-size: 13px; border: 1px solid #cbd5e1; border-radius: 8px; background: #ffffff; transition: all 0.2s; box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);">
                         <option value="">All Barangays</option>
                     </select>
                 </div>
-                <div style="display: flex; flex-direction: column; gap: 4px;">
-                    <label style="font-size: 12px; font-weight: bold;">Source</label>
-                    <select name="source" style="padding: 6px; font-size: 12px; border: 1px solid #ccc; border-radius: 3px;">
+                <div style="display: flex; flex-direction: column; gap: 6px;">
+                    <label style="font-size: 12px; font-weight: 600; color: #64748b; text-transform: uppercase; letter-spacing: 0.5px;">Source</label>
+                    <select name="source" style="padding: 10px 12px; font-size: 13px; border: 1px solid #cbd5e1; border-radius: 8px; background: #ffffff; transition: all 0.2s; box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);">
                         <option value="">All Sources</option>
                         @foreach($allSources as $source)
                         <option value="{{ $source }}" {{ request('source') == $source ? 'selected' : '' }}>{{ $source }}</option>
                         @endforeach
                     </select>
                 </div>
-                <div style="display: flex; flex-direction: column; gap: 4px;">
-                    <label style="font-size: 12px; font-weight: bold;">Date</label>
-                    <input type="date" name="date" value="{{ request('date') }}" style="padding: 6px; font-size: 12px; border: 1px solid #ccc; border-radius: 3px;">
-                </div>
-                <div style="display: flex; flex-direction: column; gap: 4px;">
-                    <label style="font-size: 12px; font-weight: bold;">Mode of Payment</label>
-                    <select name="modeOfPayment" style="padding: 6px; font-size: 12px; border: 1px solid #ccc; border-radius: 3px;">
+                <div style="display: flex; flex-direction: column; gap: 6px;">
+                    <label style="font-size: 12px; font-weight: 600; color: #64748b; text-transform: uppercase; letter-spacing: 0.5px;">Mode of Payment</label>
+                    <select name="modeOfPayment" style="padding: 10px 12px; font-size: 13px; border: 1px solid #cbd5e1; border-radius: 8px; background: #ffffff; transition: all 0.2s; box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);">
                         <option value="">All Modes</option>
                         @foreach($allModes as $mode)
                         <option value="{{ $mode }}" {{ request('modeOfPayment') == $mode ? 'selected' : '' }}>{{ $mode }}</option>
                         @endforeach
                     </select>
                 </div>
-                <div style="display: flex; flex-direction: column; gap: 4px;">
-                    <label style="font-size: 12px; font-weight: bold;">Account</label>
-                    <input type="text" name="accounts" value="{{ request('accounts') }}" style="padding: 6px; font-size: 12px; border: 1px solid #ccc; border-radius: 3px;" placeholder="Email / username">
+                <div style="display: flex; flex-direction: column; gap: 6px;">
+                    <label style="font-size: 12px; font-weight: 600; color: #64748b; text-transform: uppercase; letter-spacing: 0.5px;">Account</label>
+                    <input type="text" name="accounts" value="{{ request('accounts') }}" style="padding: 10px 12px; font-size: 13px; border: 1px solid #cbd5e1; border-radius: 8px; background: #ffffff; transition: all 0.2s; box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);" placeholder="Email / username">
                 </div>
-                <div style="display: flex; flex-direction: column; gap: 4px;">
-                    <label style="font-size: 12px; font-weight: bold;">Control #</label>
-                    <input type="text" name="transmittal_number" value="{{ request('transmittal_number') }}" style="padding: 6px; font-size: 12px; border: 1px solid #ccc; border-radius: 3px;">
+                <div style="display: flex; flex-direction: column; gap: 6px;">
+                    <label style="font-size: 12px; font-weight: 600; color: #64748b; text-transform: uppercase; letter-spacing: 0.5px;">Admin Transmittal</label>
+                    <input type="text" name="admin_transmittal_number" value="{{ request('admin_transmittal_number') }}" style="padding: 10px 12px; font-size: 13px; border: 1px solid #cbd5e1; border-radius: 8px; background: #ffffff; transition: all 0.2s; box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);" placeholder="Enter transmittal #">
                 </div>
-                <div style="display: flex; flex-direction: column; gap: 4px;">
-                    <label style="font-size: 12px; font-weight: bold;">Admin Transmittal</label>
-                    <input type="text" name="admin_transmittal_number" value="{{ request('admin_transmittal_number') }}" style="padding: 6px; font-size: 12px; border: 1px solid #ccc; border-radius: 3px;">
-                </div>
-                <div style="display: flex; flex-direction: column; gap: 4px;">
-                    <label style="font-size: 12px; font-weight: bold;">Date Received</label>
-                    <select name="date_received_type" id="tableDateReceivedType" style="padding: 6px; font-size: 12px; border: 1px solid #ccc; border-radius: 3px;">
+                <div style="display: flex; flex-direction: column; gap: 6px;">
+                    <label style="font-size: 12px; font-weight: 600; color: #64748b; text-transform: uppercase; letter-spacing: 0.5px;">Date Received</label>
+                    <select name="date_received_type" id="tableDateReceivedType" style="padding: 10px 12px; font-size: 13px; border: 1px solid #cbd5e1; border-radius: 8px; background: #ffffff; transition: all 0.2s; box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);">
                         <option value="">All Dates</option>
                         <option value="single" {{ request('date_received_type') == 'single' ? 'selected' : '' }}>Specific Date</option>
                         <option value="range" {{ request('date_received_type') == 'range' ? 'selected' : '' }}>Date Range</option>
                     </select>
                 </div>
-                <div id="tableDateReceivedSingleWrap" style="display: {{ request('date_received_type') == 'single' ? 'flex' : 'none' }}; flex-direction: column; gap: 4px;">
-                    <label style="font-size: 12px; font-weight: bold;">Date</label>
-                    <input type="date" name="date_single" value="{{ request('date_single') }}" style="padding: 6px; font-size: 12px; border: 1px solid #ccc; border-radius: 3px;" {{ request('date_received_type') == 'single' ? '' : 'disabled' }}>
+                <div id="tableDateReceivedSingleWrap" style="display: {{ request('date_received_type') == 'single' ? 'flex' : 'none' }}; flex-direction: column; gap: 6px;">
+                    <label style="font-size: 12px; font-weight: 600; color: #64748b; text-transform: uppercase; letter-spacing: 0.5px;">Date</label>
+                    <input type="date" name="date_single" value="{{ request('date_single') }}" style="padding: 10px 12px; font-size: 13px; border: 1px solid #cbd5e1; border-radius: 8px; background: #ffffff; transition: all 0.2s; box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);" {{ request('date_received_type') == 'single' ? '' : 'disabled' }}>
                 </div>
-                <div id="tableDateReceivedFromWrap" style="display: {{ request('date_received_type') == 'range' ? 'flex' : 'none' }}; flex-direction: column; gap: 4px;">
-                    <label style="font-size: 12px; font-weight: bold;">From</label>
-                    <input type="date" name="date_from" value="{{ request('date_from') }}" style="padding: 6px; font-size: 12px; border: 1px solid #ccc; border-radius: 3px;" {{ request('date_received_type') == 'range' ? '' : 'disabled' }}>
+                <div id="tableDateReceivedFromWrap" style="display: {{ request('date_received_type') == 'range' ? 'flex' : 'none' }}; flex-direction: column; gap: 6px;">
+                    <label style="font-size: 12px; font-weight: 600; color: #64748b; text-transform: uppercase; letter-spacing: 0.5px;">From</label>
+                    <input type="date" name="date_from" value="{{ request('date_from') }}" style="padding: 10px 12px; font-size: 13px; border: 1px solid #cbd5e1; border-radius: 8px; background: #ffffff; transition: all 0.2s; box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);" {{ request('date_received_type') == 'range' ? '' : 'disabled' }}>
                 </div>
-                <div id="tableDateReceivedToWrap" style="display: {{ request('date_received_type') == 'range' ? 'flex' : 'none' }}; flex-direction: column; gap: 4px;">
-                    <label style="font-size: 12px; font-weight: bold;">To</label>
-                    <input type="date" name="date_to" value="{{ request('date_to') }}" style="padding: 6px; font-size: 12px; border: 1px solid #ccc; border-radius: 3px;" {{ request('date_received_type') == 'range' ? '' : 'disabled' }}>
+                <div id="tableDateReceivedToWrap" style="display: {{ request('date_received_type') == 'range' ? 'flex' : 'none' }}; flex-direction: column; gap: 6px;">
+                    <label style="font-size: 12px; font-weight: 600; color: #64748b; text-transform: uppercase; letter-spacing: 0.5px;">To</label>
+                    <input type="date" name="date_to" value="{{ request('date_to') }}" style="padding: 10px 12px; font-size: 13px; border: 1px solid #cbd5e1; border-radius: 8px; background: #ffffff; transition: all 0.2s; box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);" {{ request('date_received_type') == 'range' ? '' : 'disabled' }}>
                 </div>
-                <div style="display: flex; flex-direction: column; gap: 4px;">
-                    <label style="font-size: 12px; font-weight: bold;">Cause of Damage</label>
-                    <input type="text" name="causeOfDamage" value="{{ request('causeOfDamage') }}" style="padding: 6px; font-size: 12px; border: 1px solid #ccc; border-radius: 3px;">
+                <div style="display: flex; flex-direction: column; gap: 6px;">
+                    <label style="font-size: 12px; font-weight: 600; color: #64748b; text-transform: uppercase; letter-spacing: 0.5px;">Cause of Damage</label>
+                    <input type="text" name="causeOfDamage" value="{{ request('causeOfDamage') }}" style="padding: 10px 12px; font-size: 13px; border: 1px solid #cbd5e1; border-radius: 8px; background: #ffffff; transition: all 0.2s; box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);" placeholder="Enter cause">
                 </div>
-                <div style="display: flex; flex-direction: column; gap: 4px;">
-                    <label style="font-size: 12px; font-weight: bold;">Remarks</label>
-                    <input type="text" name="remarks" value="{{ request('remarks') }}" style="padding: 6px; font-size: 12px; border: 1px solid #ccc; border-radius: 3px;">
-                </div>
-                <div style="display: flex; flex-direction: column; gap: 4px;">
-                    <label style="font-size: 12px; font-weight: bold;">Date of occurrence</label>
-                    <input type="text" name="date_occurrence" value="{{ request('date_occurrence') }}" style="padding: 6px; font-size: 12px; border: 1px solid #ccc; border-radius: 3px;" placeholder="Search text">
-                </div>
-                <div style="display: flex; flex-direction: column; gap: 4px;">
-                    <label style="font-size: 12px; font-weight: bold;">Rows per page</label>
-                    <select name="per_page" style="padding: 6px; font-size: 12px; border: 1px solid #ccc; border-radius: 3px;">
+                <div style="display: flex; flex-direction: column; gap: 6px;">
+                    <label style="font-size: 12px; font-weight: 600; color: #64748b; text-transform: uppercase; letter-spacing: 0.5px;">Rows per page</label>
+                    <select name="per_page" style="padding: 10px 12px; font-size: 13px; border: 1px solid #cbd5e1; border-radius: 8px; background: #ffffff; transition: all 0.2s; box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);">
                         <option value="25" {{ request('per_page') == '25' ? 'selected' : '' }}>25</option>
                         <option value="50" {{ request('per_page', '50') == '50' ? 'selected' : '' }}>50</option>
                         <option value="100" {{ request('per_page') == '100' ? 'selected' : '' }}>100</option>
                     </select>
                 </div>
-                <button type="submit" style="padding: 8px 16px; background-color: #28a745; color: white; border: none; border-radius: 4px; cursor: pointer; font-weight: bold;">Filter Table</button>
-                <a href="{{ route('admin') }}" style="padding: 8px 16px; background-color: #6c757d; color: white; text-decoration: none; border-radius: 4px; font-weight: bold; display: inline-block; line-height: 20px;">Clear</a>
+            </div>
+            <div style="display: flex; gap: 12px; margin-top: 20px; padding-top: 20px; border-top: 1px solid #e2e8f0;">
+                <button type="submit" style="padding: 12px 24px; background: linear-gradient(135deg, #006c35 0%, #008a43 100%); color: white; border: none; border-radius: 8px; cursor: pointer; font-weight: 600; font-size: 14px; box-shadow: 0 2px 4px rgba(0, 108, 53, 0.2); transition: all 0.2s;">Apply Filters</button>
+                <a href="{{ route('admin') }}" style="padding: 12px 24px; background: #f1f5f9; color: #64748b; text-decoration: none; border-radius: 8px; font-weight: 600; font-size: 14px; display: inline-flex; align-items: center; transition: all 0.2s; border: 1px solid #e2e8f0;">Clear All</a>
             </div>
         </form>
 
@@ -713,17 +731,22 @@
         </script>
     </div>
 
-    <div class="admin-card no-print" style="margin-bottom: 14px;">
-        <div class="card-body">
-            <div class="admin-toolbar">
-                <div class="admin-toolbar-title">NL Records</div>
-                <div class="admin-toolbar-actions">
-                    <button id="delete-multiple" class="btn btn-danger">Delete Multiple</button>
-                    <button id="delete-selected" class="btn btn-warning" disabled>Delete Selected</button>
-                    <button type="button" id="select-records-transmit" class="btn btn-info">Select for Transmit</button>
-                    <button type="button" id="transmit-selected-records" class="btn btn-success" disabled>Transmit Selected</button>
-                    <span id="bulk-selected-count" class="admin-toolbar-count"></span>
+    <div class="no-print" style="margin-bottom: 16px; padding: 20px; border-radius: 12px; background: linear-gradient(135deg, #ffffff 0%, #f8fafc 100%); border: 1px solid #e2e8f0; box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);">
+        <div style="display: flex; align-items: center; justify-content: space-between; gap: 16px; flex-wrap: wrap;">
+            <div style="display: flex; align-items: center; gap: 12px;">
+                <div style="width: 32px; height: 32px; background: linear-gradient(135deg, #006c35 0%, #008a43 100%); border-radius: 8px; display: flex; align-items: center; justify-content: center;">
+                    <svg width="18" height="18" fill="none" stroke="white" stroke-width="2" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
+                    </svg>
                 </div>
+                <h3 style="margin: 0; font-size: 16px; font-weight: 700; color: #1e293b;">NL Records</h3>
+            </div>
+            <div style="display: flex; align-items: center; gap: 12px; flex-wrap: wrap;">
+                <button id="delete-multiple" class="btn" style="padding: 10px 16px; background: linear-gradient(135deg, #dc2626 0%, #ef4444 100%); color: white; border: none; border-radius: 8px; cursor: pointer; font-weight: 600; font-size: 13px; box-shadow: 0 2px 4px rgba(220, 38, 38, 0.2); transition: all 0.2s;">Delete Multiple</button>
+                <button id="delete-selected" class="btn" disabled style="padding: 10px 16px; background: linear-gradient(135deg, #f59e0b 0%, #fbbf24 100%); color: white; border: none; border-radius: 8px; cursor: not-allowed; font-weight: 600; font-size: 13px; box-shadow: 0 2px 4px rgba(245, 158, 11, 0.2); transition: all 0.2s; opacity: 0.6;">Delete Selected</button>
+                <button type="button" id="select-records-transmit" class="btn" style="padding: 10px 16px; background: linear-gradient(135deg, #0ea5e9 0%, #38bdf8 100%); color: white; border: none; border-radius: 8px; cursor: pointer; font-weight: 600; font-size: 13px; box-shadow: 0 2px 4px rgba(14, 165, 233, 0.2); transition: all 0.2s;">Select for Transmit</button>
+                <button type="button" id="transmit-selected-records" class="btn" disabled style="padding: 10px 16px; background: linear-gradient(135deg, #006c35 0%, #008a43 100%); color: white; border: none; border-radius: 8px; cursor: not-allowed; font-weight: 600; font-size: 13px; box-shadow: 0 2px 4px rgba(0, 108, 53, 0.2); transition: all 0.2s; opacity: 0.6;">Transmit Selected</button>
+                <span id="bulk-selected-count" style="padding: 8px 12px; background: #f1f5f9; color: #64748b; border-radius: 8px; font-size: 12px; font-weight: 600; border: 1px solid #e2e8f0; min-width: 80px; text-align: center;">0 selected</span>
             </div>
         </div>
     </div>
