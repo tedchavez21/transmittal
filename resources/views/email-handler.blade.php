@@ -88,16 +88,16 @@
 				<div class="flex flex-col gap-2">
 					<div class="flex items-center justify-between mb-1">
 						<label class="text-xs font-bold text-gray-700">Date Received</label>
-						<label style="display: flex; align-items: center; gap: 12px; cursor: pointer; margin: 0;">
-							<div style="position: relative; width: 48px; height: 24px;">
-								<input type="checkbox" name="enable_date_received" value="1" {{ request('enable_date_received') ? 'checked' : 'checked' }} style="opacity: 0; width: 0; height: 0;">
-								<span style="position: absolute; top: 0; left: 0; right: 0; bottom: 0; background-color: #cbd5e1; transition: 0.3s; border-radius: 24px;" class="toggle-bg"></span>
-								<span style="position: absolute; content: ''; height: 18px; width: 18px; left: 3px; bottom: 3px; background-color: white; transition: 0.3s; border-radius: 50%; box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);" class="toggle-dot"></span>
-							</div>
-						</label>
+						<div class="toggle-container">
+							<label class="toggle-switch">
+								<input type="checkbox" id="enable_date_received" name="enable_date_received" value="1" {{ request('enable_date_received') ? 'checked' : 'checked' }}>
+								<span class="toggle-slider"></span>
+							</label>
+							<span class="toggle-label-text">Enable filter</span>
+						</div>
 					</div>
 					<div class="flex items-center gap-2">
-						<input type="date" name="date_received" value="{{ request('date_received', now()->format('Y-m-d')) }}" class="h-10 px-3 rounded-lg border border-gray-300 focus:border-pcic-500 focus:ring-2 focus:ring-pcic-100 bg-white outline-none text-sm shadow-sm w-full" {{ request('enable_date_received') ? '' : 'disabled' }}>
+						<input type="date" name="date_received" value="{{ request('date_received', now()->format('Y-m-d')) }}" class="h-10 px-3 rounded-lg border border-gray-300 focus:border-pcic-500 focus:ring-2 focus:ring-pcic-100 bg-white outline-none text-sm shadow-sm w-full">
 					</div>
 				</div>
 			</div>
@@ -105,16 +105,16 @@
 				<div class="flex flex-col gap-2">
 					<div class="flex items-center justify-between mb-1">
 						<label class="text-xs font-bold text-gray-700">Date Encoded</label>
-						<label style="display: flex; align-items: center; gap: 12px; cursor: pointer; margin: 0;">
-							<div style="position: relative; width: 48px; height: 24px;">
-								<input type="checkbox" name="enable_date_encoded" value="1" {{ request('enable_date_encoded') ? 'checked' : 'checked' }} style="opacity: 0; width: 0; height: 0;">
-								<span style="position: absolute; top: 0; left: 0; right: 0; bottom: 0; background-color: #cbd5e1; transition: 0.3s; border-radius: 24px;" class="toggle-bg"></span>
-								<span style="position: absolute; content: ''; height: 18px; width: 18px; left: 3px; bottom: 3px; background-color: white; transition: 0.3s; border-radius: 50%; box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);" class="toggle-dot"></span>
-							</div>
-						</label>
+						<div class="toggle-container">
+							<label class="toggle-switch">
+								<input type="checkbox" id="enable_date_encoded" name="enable_date_encoded" value="1" {{ request('enable_date_encoded') ? 'checked' : 'checked' }}>
+								<span class="toggle-slider"></span>
+							</label>
+							<span class="toggle-label-text">Enable filter</span>
+						</div>
 					</div>
 					<div class="flex items-center gap-2">
-						<input type="date" name="date_encoded" value="{{ request('date_encoded', now()->format('Y-m-d')) }}" class="h-10 px-3 rounded-lg border border-gray-300 focus:border-pcic-500 focus:ring-2 focus:ring-pcic-100 bg-white outline-none text-sm shadow-sm w-full" {{ request('enable_date_encoded') ? '' : 'disabled' }}>
+						<input type="date" name="date_encoded" value="{{ request('date_encoded', now()->format('Y-m-d')) }}" class="h-10 px-3 rounded-lg border border-gray-300 focus:border-pcic-500 focus:ring-2 focus:ring-pcic-100 bg-white outline-none text-sm shadow-sm w-full">
 					</div>
 				</div>
 			</div>
@@ -497,108 +497,135 @@ function clearFilter(filterName) {
     }
 }
 
-// Handle toggle switches for date filters - matching admin page design
+<style>
+/* New Toggle Switch Styles */
+.toggle-container {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.toggle-switch {
+    position: relative;
+    display: inline-block;
+    width: 44px;
+    height: 24px;
+}
+
+.toggle-switch input {
+    opacity: 0;
+    width: 0;
+    height: 0;
+}
+
+.toggle-slider {
+    position: absolute;
+    cursor: pointer;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background-color: #ccc;
+    transition: .4s;
+    border-radius: 24px;
+}
+
+.toggle-slider:before {
+    position: absolute;
+    content: "";
+    height: 18px;
+    width: 18px;
+    left: 3px;
+    bottom: 3px;
+    background-color: white;
+    transition: .4s;
+    border-radius: 50%;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+}
+
+.toggle-switch input:checked + .toggle-slider {
+    background-color: #006c35;
+}
+
+.toggle-switch input:focus + .toggle-slider {
+    box-shadow: 0 0 1px #006c35;
+}
+
+.toggle-switch input:checked + .toggle-slider:before {
+    transform: translateX(20px);
+}
+
+.toggle-label-text {
+    font-size: 11px;
+    color: #64748b;
+    font-weight: 500;
+}
+</style>
+
+<script>
+// Simple toggle functionality for date filters
 document.addEventListener('DOMContentLoaded', function() {
     // Date Received Toggle
-    var dateReceivedToggle = document.querySelector('input[name="enable_date_received"]');
-    var dateReceivedBg = dateReceivedToggle ? dateReceivedToggle.parentElement.querySelector('.toggle-bg') : null;
-    var dateReceivedDot = dateReceivedToggle ? dateReceivedToggle.parentElement.querySelector('.toggle-dot') : null;
-    var dateReceivedInput = document.querySelector('input[name="date_received"]');
-    var dateReceivedContainer = document.querySelector('.date-received-container');
+    const dateReceivedToggle = document.getElementById('enable_date_received');
+    const dateReceivedInput = document.querySelector('input[name="date_received"]');
+    const dateReceivedContainer = document.querySelector('.date-received-container');
     
-    if (dateReceivedToggle && dateReceivedBg && dateReceivedDot) {
+    if (dateReceivedToggle && dateReceivedInput) {
         function updateDateReceivedToggle() {
             if (dateReceivedToggle.checked) {
-                dateReceivedBg.style.backgroundColor = '#006c35';
-                dateReceivedDot.style.transform = 'translateX(24px)';
-                // Enable input and remove grey styling
-                if (dateReceivedInput) {
-                    dateReceivedInput.disabled = false;
-                    dateReceivedInput.style.opacity = '1';
-                    dateReceivedInput.style.backgroundColor = 'white';
-                }
+                dateReceivedInput.disabled = false;
+                dateReceivedInput.style.opacity = '1';
+                dateReceivedInput.style.backgroundColor = 'white';
+                dateReceivedInput.style.pointerEvents = 'auto';
                 if (dateReceivedContainer) {
                     dateReceivedContainer.style.opacity = '1';
                 }
             } else {
-                dateReceivedBg.style.backgroundColor = '#cbd5e1';
-                dateReceivedDot.style.transform = 'translateX(0)';
-                // Disable input and add grey styling
-                if (dateReceivedInput) {
-                    dateReceivedInput.disabled = true;
-                    dateReceivedInput.style.opacity = '0.5';
-                    dateReceivedInput.style.backgroundColor = '#f9fafb';
-                }
+                dateReceivedInput.disabled = true;
+                dateReceivedInput.style.opacity = '0.5';
+                dateReceivedInput.style.backgroundColor = '#f9fafb';
+                dateReceivedInput.style.pointerEvents = 'none';
                 if (dateReceivedContainer) {
                     dateReceivedContainer.style.opacity = '0.6';
                 }
             }
         }
         
-        // Add click handler to the parent label
-        var dateReceivedLabel = dateReceivedToggle.closest('label');
-        dateReceivedLabel.addEventListener('click', function(e) {
-            if (e.target !== dateReceivedToggle) {
-                dateReceivedToggle.checked = !dateReceivedToggle.checked;
-                updateDateReceivedToggle();
-            }
-        });
-        
-        // Initialize state
-        updateDateReceivedToggle();
         dateReceivedToggle.addEventListener('change', updateDateReceivedToggle);
+        updateDateReceivedToggle();
     }
     
     // Date Encoded Toggle
-    var dateEncodedToggle = document.querySelector('input[name="enable_date_encoded"]');
-    var dateEncodedBg = dateEncodedToggle ? dateEncodedToggle.parentElement.querySelector('.toggle-bg') : null;
-    var dateEncodedDot = dateEncodedToggle ? dateEncodedToggle.parentElement.querySelector('.toggle-dot') : null;
-    var dateEncodedInput = document.querySelector('input[name="date_encoded"]');
-    var dateEncodedContainer = document.querySelector('.date-encoded-container');
+    const dateEncodedToggle = document.getElementById('enable_date_encoded');
+    const dateEncodedInput = document.querySelector('input[name="date_encoded"]');
+    const dateEncodedContainer = document.querySelector('.date-encoded-container');
     
-    if (dateEncodedToggle && dateEncodedBg && dateEncodedDot) {
+    if (dateEncodedToggle && dateEncodedInput) {
         function updateDateEncodedToggle() {
             if (dateEncodedToggle.checked) {
-                dateEncodedBg.style.backgroundColor = '#006c35';
-                dateEncodedDot.style.transform = 'translateX(24px)';
-                // Enable input and remove grey styling
-                if (dateEncodedInput) {
-                    dateEncodedInput.disabled = false;
-                    dateEncodedInput.style.opacity = '1';
-                    dateEncodedInput.style.backgroundColor = 'white';
-                }
+                dateEncodedInput.disabled = false;
+                dateEncodedInput.style.opacity = '1';
+                dateEncodedInput.style.backgroundColor = 'white';
+                dateEncodedInput.style.pointerEvents = 'auto';
                 if (dateEncodedContainer) {
                     dateEncodedContainer.style.opacity = '1';
                 }
             } else {
-                dateEncodedBg.style.backgroundColor = '#cbd5e1';
-                dateEncodedDot.style.transform = 'translateX(0)';
-                // Disable input and add grey styling
-                if (dateEncodedInput) {
-                    dateEncodedInput.disabled = true;
-                    dateEncodedInput.style.opacity = '0.5';
-                    dateEncodedInput.style.backgroundColor = '#f9fafb';
-                }
+                dateEncodedInput.disabled = true;
+                dateEncodedInput.style.opacity = '0.5';
+                dateEncodedInput.style.backgroundColor = '#f9fafb';
+                dateEncodedInput.style.pointerEvents = 'none';
                 if (dateEncodedContainer) {
                     dateEncodedContainer.style.opacity = '0.6';
                 }
             }
         }
         
-        // Add click handler to the parent label
-        var dateEncodedLabel = dateEncodedToggle.closest('label');
-        dateEncodedLabel.addEventListener('click', function(e) {
-            if (e.target !== dateEncodedToggle) {
-                dateEncodedToggle.checked = !dateEncodedToggle.checked;
-                updateDateEncodedToggle();
-            }
-        });
-        
-        // Initialize state
-        updateDateEncodedToggle();
         dateEncodedToggle.addEventListener('change', updateDateEncodedToggle);
+        updateDateEncodedToggle();
     }
 });
+</script>
 
 // Automatic logout on browser/tab close
 window.addEventListener('beforeunload', function(e) {
