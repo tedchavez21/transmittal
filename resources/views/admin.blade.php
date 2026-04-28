@@ -584,6 +584,47 @@
             </div>
             <h3 style="margin: 0; font-size: 16px; font-weight: 700; color: #1e293b;">Table Filters</h3>
         </div>
+
+        @php
+            $activeFilters = [];
+            if(request('farmerName')) $activeFilters['Farmer'] = request('farmerName');
+            if(request('encoderName')) $activeFilters['Encoder'] = request('encoderName');
+            if(request('program')) $activeFilters['Program'] = request('program');
+            if(request('line')) $activeFilters['Line'] = request('line');
+            if(request('province')) $activeFilters['Province'] = request('province');
+            if(request('municipality')) $activeFilters['Municipality'] = request('municipality');
+            if(request('barangay')) $activeFilters['Barangay'] = request('barangay');
+            if(request('source')) $activeFilters['Source'] = request('source');
+            if(request('modeOfPayment')) $activeFilters['Mode of Payment'] = request('modeOfPayment');
+            if(request('accounts')) $activeFilters['Account'] = request('accounts');
+            if(request('admin_transmittal_number')) $activeFilters['Admin Transmittal'] = request('admin_transmittal_number');
+            if(request('causeOfDamage')) $activeFilters['Cause of Damage'] = request('causeOfDamage');
+            if(request('date_received_type') == 'single' && request('date_single')) $activeFilters['Date Received'] = request('date_single');
+            if(request('date_received_type') == 'range' && (request('date_from') || request('date_to'))) {
+                $dateRange = '';
+                if(request('date_from')) $dateRange .= 'From: ' . request('date_from') . ' ';
+                if(request('date_to')) $dateRange .= 'To: ' . request('date_to');
+                $activeFilters['Date Received'] = trim($dateRange);
+            }
+        @endphp
+
+        @if(count($activeFilters) > 0)
+        <div style="margin-bottom: 16px; padding: 12px 16px; background: #f0fdf4; border: 1px solid #bbf7d0; border-radius: 8px; display: flex; align-items: center; gap: 12px; flex-wrap: wrap;">
+            <div style="display: flex; align-items: center; gap: 8px; color: #166534; font-weight: 600; font-size: 13px;">
+                <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                </svg>
+                <span>Active Filters:</span>
+            </div>
+            <div style="display: flex; gap: 8px; flex-wrap: wrap;">
+                @foreach($activeFilters as $label => $value)
+                <span style="padding: 4px 10px; background: #dcfce7; color: #166534; border-radius: 6px; font-size: 12px; font-weight: 500;">
+                    <strong>{{ $label }}:</strong> {{ $value }}
+                </span>
+                @endforeach
+            </div>
+        </div>
+        @endif
         <form method="GET" action="{{ route('admin') }}" style="margin: 0;">
             <input type="hidden" name="tab" value="nl-records">
             <div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(180px, 1fr)); gap: 16px; align-items: start;">
@@ -595,61 +636,96 @@
                     <label style="font-size: 12px; font-weight: 600; color: #64748b; text-transform: uppercase; letter-spacing: 0.5px;">Search Encoder</label>
                     <input type="text" name="encoderName" value="{{ request('encoderName') }}" style="padding: 10px 12px; font-size: 13px; border: 1px solid #cbd5e1; border-radius: 8px; background: #ffffff; transition: all 0.2s; box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);" placeholder="Enter encoder name">
                 </div>
-                <div style="display: flex; flex-direction: column; gap: 6px;">
+                <div style="display: flex; flex-direction: column; gap: 6px; position: relative;">
                     <label style="font-size: 12px; font-weight: 600; color: #64748b; text-transform: uppercase; letter-spacing: 0.5px;">Program</label>
-                    <select name="program" style="padding: 10px 12px; font-size: 13px; border: 1px solid #cbd5e1; border-radius: 8px; background: #ffffff; transition: all 0.2s; box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);">
-                        <option value="">All Programs</option>
-                        @foreach($allPrograms as $program)
-                        <option value="{{ $program }}" {{ request('program') == $program ? 'selected' : '' }}>{{ $program }}</option>
-                        @endforeach
-                    </select>
+                    <div style="position: relative;">
+                        <select name="program" style="padding: 10px 36px 10px 12px; font-size: 13px; border: 1px solid #cbd5e1; border-radius: 8px; background: #ffffff; transition: all 0.2s; box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05); appearance: none; cursor: pointer; width: 100%;">
+                            <option value="">All Programs</option>
+                            @foreach($allPrograms as $program)
+                            <option value="{{ $program }}" {{ request('program') == $program ? 'selected' : '' }}>{{ $program }}</option>
+                            @endforeach
+                        </select>
+                        <svg style="position: absolute; right: 12px; top: 50%; transform: translateY(-50%); width: 16px; height: 16px; pointer-events: none; color: #64748b;" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M19 9l-7 7-7-7"></path>
+                        </svg>
+                    </div>
                 </div>
-                <div style="display: flex; flex-direction: column; gap: 6px;">
+                <div style="display: flex; flex-direction: column; gap: 6px; position: relative;">
                     <label style="font-size: 12px; font-weight: 600; color: #64748b; text-transform: uppercase; letter-spacing: 0.5px;">Line</label>
-                    <select name="line" style="padding: 10px 12px; font-size: 13px; border: 1px solid #cbd5e1; border-radius: 8px; background: #ffffff; transition: all 0.2s; box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);">
-                        <option value="">All Lines</option>
-                        @foreach($allLines as $line)
-                        <option value="{{ $line }}" {{ request('line') == $line ? 'selected' : '' }}>{{ $line }}</option>
-                        @endforeach
-                    </select>
+                    <div style="position: relative;">
+                        <select name="line" style="padding: 10px 36px 10px 12px; font-size: 13px; border: 1px solid #cbd5e1; border-radius: 8px; background: #ffffff; transition: all 0.2s; box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05); appearance: none; cursor: pointer; width: 100%;">
+                            <option value="">All Lines</option>
+                            @foreach($allLines as $line)
+                            <option value="{{ $line }}" {{ request('line') == $line ? 'selected' : '' }}>{{ $line }}</option>
+                            @endforeach
+                        </select>
+                        <svg style="position: absolute; right: 12px; top: 50%; transform: translateY(-50%); width: 16px; height: 16px; pointer-events: none; color: #64748b;" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M19 9l-7 7-7-7"></path>
+                        </svg>
+                    </div>
                 </div>
-                <div style="display: flex; flex-direction: column; gap: 6px;">
+                <div style="display: flex; flex-direction: column; gap: 6px; position: relative;">
                     <label style="font-size: 12px; font-weight: 600; color: #64748b; text-transform: uppercase; letter-spacing: 0.5px;">Province</label>
-                    <select name="province" id="tableProvince" style="padding: 10px 12px; font-size: 13px; border: 1px solid #cbd5e1; border-radius: 8px; background: #ffffff; transition: all 0.2s; box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);">
-                        <option value="">All Provinces</option>
-                        <option value="Aurora" {{ request('province') == 'Aurora' ? 'selected' : '' }}>Aurora</option>
-                        <option value="Nueva Ecija" {{ request('province') == 'Nueva Ecija' ? 'selected' : '' }}>Nueva Ecija</option>
-                    </select>
+                    <div style="position: relative;">
+                        <select name="province" id="tableProvince" style="padding: 10px 36px 10px 12px; font-size: 13px; border: 1px solid #cbd5e1; border-radius: 8px; background: #ffffff; transition: all 0.2s; box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05); appearance: none; cursor: pointer; width: 100%;">
+                            <option value="">All Provinces</option>
+                            <option value="Aurora" {{ request('province') == 'Aurora' ? 'selected' : '' }}>Aurora</option>
+                            <option value="Nueva Ecija" {{ request('province') == 'Nueva Ecija' ? 'selected' : '' }}>Nueva Ecija</option>
+                        </select>
+                        <svg style="position: absolute; right: 12px; top: 50%; transform: translateY(-50%); width: 16px; height: 16px; pointer-events: none; color: #64748b;" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M19 9l-7 7-7-7"></path>
+                        </svg>
+                    </div>
                 </div>
-                <div style="display: flex; flex-direction: column; gap: 6px;">
+                <div style="display: flex; flex-direction: column; gap: 6px; position: relative;">
                     <label style="font-size: 12px; font-weight: 600; color: #64748b; text-transform: uppercase; letter-spacing: 0.5px;">Municipality</label>
-                    <select name="municipality" id="tableMunicipality" style="padding: 10px 12px; font-size: 13px; border: 1px solid #cbd5e1; border-radius: 8px; background: #ffffff; transition: all 0.2s; box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);">
-                        <option value="">All Municipalities</option>
-                    </select>
+                    <div style="position: relative;">
+                        <select name="municipality" id="tableMunicipality" style="padding: 10px 36px 10px 12px; font-size: 13px; border: 1px solid #cbd5e1; border-radius: 8px; background: #ffffff; transition: all 0.2s; box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05); appearance: none; cursor: pointer; width: 100%;">
+                            <option value="">All Municipalities</option>
+                        </select>
+                        <svg style="position: absolute; right: 12px; top: 50%; transform: translateY(-50%); width: 16px; height: 16px; pointer-events: none; color: #64748b;" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M19 9l-7 7-7-7"></path>
+                        </svg>
+                    </div>
                 </div>
-                <div style="display: flex; flex-direction: column; gap: 6px;">
+                <div style="display: flex; flex-direction: column; gap: 6px; position: relative;">
                     <label style="font-size: 12px; font-weight: 600; color: #64748b; text-transform: uppercase; letter-spacing: 0.5px;">Barangay</label>
-                    <select name="barangay" id="tableBarangay" style="padding: 10px 12px; font-size: 13px; border: 1px solid #cbd5e1; border-radius: 8px; background: #ffffff; transition: all 0.2s; box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);">
-                        <option value="">All Barangays</option>
-                    </select>
+                    <div style="position: relative;">
+                        <select name="barangay" id="tableBarangay" style="padding: 10px 36px 10px 12px; font-size: 13px; border: 1px solid #cbd5e1; border-radius: 8px; background: #ffffff; transition: all 0.2s; box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05); appearance: none; cursor: pointer; width: 100%;">
+                            <option value="">All Barangays</option>
+                        </select>
+                        <svg style="position: absolute; right: 12px; top: 50%; transform: translateY(-50%); width: 16px; height: 16px; pointer-events: none; color: #64748b;" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M19 9l-7 7-7-7"></path>
+                        </svg>
+                    </div>
                 </div>
-                <div style="display: flex; flex-direction: column; gap: 6px;">
+                <div style="display: flex; flex-direction: column; gap: 6px; position: relative;">
                     <label style="font-size: 12px; font-weight: 600; color: #64748b; text-transform: uppercase; letter-spacing: 0.5px;">Source</label>
-                    <select name="source" style="padding: 10px 12px; font-size: 13px; border: 1px solid #cbd5e1; border-radius: 8px; background: #ffffff; transition: all 0.2s; box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);">
-                        <option value="">All Sources</option>
-                        @foreach($allSources as $source)
-                        <option value="{{ $source }}" {{ request('source') == $source ? 'selected' : '' }}>{{ $source }}</option>
-                        @endforeach
-                    </select>
+                    <div style="position: relative;">
+                        <select name="source" style="padding: 10px 36px 10px 12px; font-size: 13px; border: 1px solid #cbd5e1; border-radius: 8px; background: #ffffff; transition: all 0.2s; box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05); appearance: none; cursor: pointer; width: 100%;">
+                            <option value="">All Sources</option>
+                            @foreach($allSources as $source)
+                            <option value="{{ $source }}" {{ request('source') == $source ? 'selected' : '' }}>{{ $source }}</option>
+                            @endforeach
+                        </select>
+                        <svg style="position: absolute; right: 12px; top: 50%; transform: translateY(-50%); width: 16px; height: 16px; pointer-events: none; color: #64748b;" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M19 9l-7 7-7-7"></path>
+                        </svg>
+                    </div>
                 </div>
-                <div style="display: flex; flex-direction: column; gap: 6px;">
+                <div style="display: flex; flex-direction: column; gap: 6px; position: relative;">
                     <label style="font-size: 12px; font-weight: 600; color: #64748b; text-transform: uppercase; letter-spacing: 0.5px;">Mode of Payment</label>
-                    <select name="modeOfPayment" style="padding: 10px 12px; font-size: 13px; border: 1px solid #cbd5e1; border-radius: 8px; background: #ffffff; transition: all 0.2s; box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);">
-                        <option value="">All Modes</option>
-                        @foreach($allModes as $mode)
-                        <option value="{{ $mode }}" {{ request('modeOfPayment') == $mode ? 'selected' : '' }}>{{ $mode }}</option>
-                        @endforeach
-                    </select>
+                    <div style="position: relative;">
+                        <select name="modeOfPayment" style="padding: 10px 36px 10px 12px; font-size: 13px; border: 1px solid #cbd5e1; border-radius: 8px; background: #ffffff; transition: all 0.2s; box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05); appearance: none; cursor: pointer; width: 100%;">
+                            <option value="">All Modes</option>
+                            @foreach($allModes as $mode)
+                            <option value="{{ $mode }}" {{ request('modeOfPayment') == $mode ? 'selected' : '' }}>{{ $mode }}</option>
+                            @endforeach
+                        </select>
+                        <svg style="position: absolute; right: 12px; top: 50%; transform: translateY(-50%); width: 16px; height: 16px; pointer-events: none; color: #64748b;" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M19 9l-7 7-7-7"></path>
+                        </svg>
+                    </div>
                 </div>
                 <div style="display: flex; flex-direction: column; gap: 6px;">
                     <label style="font-size: 12px; font-weight: 600; color: #64748b; text-transform: uppercase; letter-spacing: 0.5px;">Account</label>
@@ -727,6 +803,1207 @@
 
                 typeEl.addEventListener('change', toggle);
                 toggle();
+            })();
+
+            // Location data for cascading dropdowns
+            var locationCsv = `BARANGAY,MUNICIPALITY,PROVINCE
+Betes,Aliaga,Nueva Ecija
+Bibiclat,Aliaga,Nueva Ecija
+Bucot,Aliaga,Nueva Ecija
+La Purisima,Aliaga,Nueva Ecija
+Magsaysay,Aliaga,Nueva Ecija
+Macabucod,Aliaga,Nueva Ecija
+Pantoc,Aliaga,Nueva Ecija
+Poblacion Centro,Aliaga,Nueva Ecija
+Poblacion East I,Aliaga,Nueva Ecija
+Poblacion East II,Aliaga,Nueva Ecija
+Poblacion West III,Aliaga,Nueva Ecija
+Poblacion West IV,Aliaga,Nueva Ecija
+San Carlos,Aliaga,Nueva Ecija
+San Emiliano,Aliaga,Nueva Ecija
+San Eustacio,Aliaga,Nueva Ecija
+San Felipe Bata,Aliaga,Nueva Ecija
+San Felipe Matanda,Aliaga,Nueva Ecija
+San Juan,Aliaga,Nueva Ecija
+San Pablo Bata,Aliaga,Nueva Ecija
+San Pablo Matanda,Aliaga,Nueva Ecija
+Santa Monica,Aliaga,Nueva Ecija
+Santiago,Aliaga,Nueva Ecija
+Santo Rosario,Aliaga,Nueva Ecija
+Santo Tomas,Aliaga,Nueva Ecija
+Sunson,Aliaga,Nueva Ecija
+Umangan,Aliaga,Nueva Ecija
+Antipolo,Bongabon,Nueva Ecija
+Ariendo,Bongabon,Nueva Ecija
+Bantug,Bongabon,Nueva Ecija
+Calaanan,Bongabon,Nueva Ecija
+Commercial,Bongabon,Nueva Ecija
+Cruz,Bongabon,Nueva Ecija
+Digmala,Bongabon,Nueva Ecija
+Curva,Bongabon,Nueva Ecija
+Kaingin,Bongabon,Nueva Ecija
+Labi,Bongabon,Nueva Ecija
+Larcon,Bongabon,Nueva Ecija
+Lusok,Bongabon,Nueva Ecija
+Macabaclay,Bongabon,Nueva Ecija
+Magtanggol,Bongabon,Nueva Ecija
+Mantile,Bongabon,Nueva Ecija
+Olivete,Bongabon,Nueva Ecija
+Palo Maria,Bongabon,Nueva Ecija
+Pesa,Bongabon,Nueva Ecija
+Rizal,Bongabon,Nueva Ecija
+Sampalucan,Bongabon,Nueva Ecija
+San Roque,Bongabon,Nueva Ecija
+Santor,Bongabon,Nueva Ecija
+Sinipit,Bongabon,Nueva Ecija
+Sisilang na Ligaya,Bongabon,Nueva Ecija
+Social,Bongabon,Nueva Ecija
+Tugatug,Bongabon,Nueva Ecija
+Tulay na Bato,Bongabon,Nueva Ecija
+Vega,Bongabon,Nueva Ecija
+Aduas Centro,City of Cabanatuan,Nueva Ecija
+Bagong Sikat,City of Cabanatuan,Nueva Ecija
+Bagong Buhay,City of Cabanatuan,Nueva Ecija
+Bakero,City of Cabanatuan,Nueva Ecija
+Bakod Bayan,City of Cabanatuan,Nueva Ecija
+Balite,City of Cabanatuan,Nueva Ecija
+Bangad,City of Cabanatuan,Nueva Ecija
+Bantug Bulalo,City of Cabanatuan,Nueva Ecija
+Bantug Norte,City of Cabanatuan,Nueva Ecija
+Barlis,City of Cabanatuan,Nueva Ecija
+Barrera District,City of Cabanatuan,Nueva Ecija
+Bernardo District,City of Cabanatuan,Nueva Ecija
+Bitas,City of Cabanatuan,Nueva Ecija
+Bonifacio District,City of Cabanatuan,Nueva Ecija
+Buliran,City of Cabanatuan,Nueva Ecija
+Caalibangbangan,City of Cabanatuan,Nueva Ecija
+Cabu,City of Cabanatuan,Nueva Ecija
+Campo Tinio,City of Cabanatuan,Nueva Ecija
+Kapitan Pepe,City of Cabanatuan,Nueva Ecija
+Cinco-Cinco,City of Cabanatuan,Nueva Ecija
+City Supermarket,City of Cabanatuan,Nueva Ecija
+Caudillo,City of Cabanatuan,Nueva Ecija
+Communal,City of Cabanatuan,Nueva Ecija
+Cruz Roja,City of Cabanatuan,Nueva Ecija
+Daang Sarile,City of Cabanatuan,Nueva Ecija
+Dalampang,City of Cabanatuan,Nueva Ecija
+Dicarma,City of Cabanatuan,Nueva Ecija
+Dimasalang,City of Cabanatuan,Nueva Ecija
+Dionisio S. Garcia,City of Cabanatuan,Nueva Ecija
+Fatima,City of Cabanatuan,Nueva Ecija
+General Luna,City of Cabanatuan,Nueva Ecija
+Ibabao Bana,City of Cabanatuan,Nueva Ecija
+Imelda District,City of Cabanatuan,Nueva Ecija
+Isla,City of Cabanatuan,Nueva Ecija
+Calawagan,City of Cabanatuan,Nueva Ecija
+Kalikid Norte,City of Cabanatuan,Nueva Ecija
+Kalikid Sur,City of Cabanatuan,Nueva Ecija
+Lagare,City of Cabanatuan,Nueva Ecija
+M. S. Garcia,City of Cabanatuan,Nueva Ecija
+Mabini Extension,City of Cabanatuan,Nueva Ecija
+Mabini Homesite,City of Cabanatuan,Nueva Ecija
+Macatbong,City of Cabanatuan,Nueva Ecija
+Magsaysay District,City of Cabanatuan,Nueva Ecija
+Matadero,City of Cabanatuan,Nueva Ecija
+Lourdes,City of Cabanatuan,Nueva Ecija
+Lawang Kawayan,City of Cabanatuan,Nueva Ecija
+Lomboy,City of Cabanatuan,Nueva Ecija
+Mabini Extension,City of Cabanatuan,Nueva Ecija
+Mabini Homesite,City of Cabanatuan,Nueva Ecija
+Mabini Ward,City of Cabanatuan,Nueva Ecija
+Mag-Asawa,City of Cabanatuan,Nueva Ecija
+Malagena,City of Cabanatuan,Nueva Ecija
+Malaria,City of Cabanatuan,Nueva Ecija
+Malingting,City of Cabanatuan,Nueva Ecija
+Mangga,City of Cabanatuan,Nueva Ecija
+Managap,City of Cabanatuan,Nueva Ecija
+Manaoag,City of Cabanatuan,Nueva Ecija
+Marcos District,City of Cabanatuan,Nueva Ecija
+Melting Pot,City of Cabanatuan,Nueva Ecija
+Minano,City of Cabanatuan,Nueva Ecija
+Narvaez,City of Cabanatuan,Nueva Ecija
+Ocampo,City of Cabanatuan,Nueva Ecija
+Padre Burgos,City of Cabanatuan,Nueva Ecija
+Paltok,City of Cabanatuan,Nueva Ecija
+Pangatulan,City of Cabanatuan,Nueva Ecija
+Pantay Bata,City of Cabanatuan,Nueva Ecija
+Pantay Matayog,City of Cabanatuan,Nueva Ecija
+Pob. Central,City of Cabanatuan,Nueva Ecija
+Polilio,City of Cabanatuan,Nueva Ecija
+Primera,City of Cabanatuan,Nueva Ecija
+Quezon District,City of Cabanatuan,Nueva Ecija
+Rizal District,City of Cabanatuan,Nueva Ecija
+Rizal Extension,City of Cabanatuan,Nueva Ecija
+Sanglayang,City of Cabanatuan,Nueva Ecija
+San Isidro,City of Cabanatuan,Nueva Ecija
+San Jose,City of Cabanatuan,Nueva Ecija
+San Juan,City of Cabanatuan,Nueva Ecija
+San Roque,City of Cabanatuan,Nueva Ecija
+Sampaguita,City of Cabanatuan,Nueva Ecija
+Sindulan,City of Cabanatuan,Nueva Ecija
+Sumacab,City of Cabanatuan,Nueva Ecija
+Valdez,City of Cabanatuan,Nueva Ecija
+Villa Piedad,City of Cabanatuan,Nueva Ecija
+Villa Verano,City of Cabanatuan,Nueva Ecija
+Zabarte,City of Cabanatuan,Nueva Ecija
+Mayapyap Norte,City of Cabanatuan,Nueva Ecija
+Mayapyap Sur,City of Cabanatuan,Nueva Ecija
+Melojavilla,City of Cabanatuan,Nueva Ecija
+Obrero,City of Cabanatuan,Nueva Ecija
+Padre Crisostomo,City of Cabanatuan,Nueva Ecija
+Pagas,City of Cabanatuan,Nueva Ecija
+Palagay,City of Cabanatuan,Nueva Ecija
+Pamaldan,City of Cabanatuan,Nueva Ecija
+Pangatian,City of Cabanatuan,Nueva Ecija
+Patalac,City of Cabanatuan,Nueva Ecija
+Pula,City of Cabanatuan,Nueva Ecija
+Rizdelis,City of Cabanatuan,Nueva Ecija
+Samon,City of Cabanatuan,Nueva Ecija
+San Isidro,City of Cabanatuan,Nueva Ecija
+San Josef Norte,City of Cabanatuan,Nueva Ecija
+San Josef Sur,City of Cabanatuan,Nueva Ecija
+San Juan Pob.,City of Cabanatuan,Nueva Ecija
+San Roque Norte,City of Cabanatuan,Nueva Ecija
+San Roque Sur,City of Cabanatuan,Nueva Ecija
+Sanbermicristi,City of Cabanatuan,Nueva Ecija
+Sangitan,City of Cabanatuan,Nueva Ecija
+Santa Arcadia,City of Cabanatuan,Nueva Ecija
+Sumacab Norte,City of Cabanatuan,Nueva Ecija
+Valdefuente,City of Cabanatuan,Nueva Ecija
+Valle Cruz,City of Cabanatuan,Nueva Ecija
+Vijandre District,City of Cabanatuan,Nueva Ecija
+Villa Ofelia-Caridad,City of Cabanatuan,Nueva Ecija
+Zulueta District,City of Cabanatuan,Nueva Ecija
+Nabao,City of Cabanatuan,Nueva Ecija
+Padre Burgos,City of Cabanatuan,Nueva Ecija
+Talipapa,City of Cabanatuan,Nueva Ecija
+Aduas Norte,City of Cabanatuan,Nueva Ecija
+Aduas Sur,City of Cabanatuan,Nueva Ecija
+Sapang,City of Cabanatuan,Nueva Ecija
+Sumacab Este,City of Cabanatuan,Nueva Ecija
+Sumacab South,City of Cabanatuan,Nueva Ecija
+Caridad,City of Cabanatuan,Nueva Ecija
+Magsaysay South,City of Cabanatuan,Nueva Ecija
+Maria Theresa,City of Cabanatuan,Nueva Ecija
+Sangitan East,City of Cabanatuan,Nueva Ecija
+Santo Niño,City of Cabanatuan,Nueva Ecija
+Bagong Buhay,Cabiao,Nueva Ecija
+Bagong Sikat,Cabiao,Nueva Ecija
+Bagong Silang,Cabiao,Nueva Ecija
+Concepcion,Cabiao,Nueva Ecija
+Entablado,Cabiao,Nueva Ecija
+Maligaya,Cabiao,Nueva Ecija
+Natividad North,Cabiao,Nueva Ecija
+Natividad South,Cabiao,Nueva Ecija
+Palasinan,Cabiao,Nueva Ecija
+San Antonio,Cabiao,Nueva Ecija
+San Fernando Norte,Cabiao,Nueva Ecija
+San Fernando Sur,Cabiao,Nueva Ecija
+San Gregorio,Cabiao,Nueva Ecija
+San Juan North,Cabiao,Nueva Ecija
+San Juan South,Cabiao,Nueva Ecija
+San Roque,Cabiao,Nueva Ecija
+San Vicente,Cabiao,Nueva Ecija
+Santa Rita,Cabiao,Nueva Ecija
+Sinipit,Cabiao,Nueva Ecija
+Polilio,Cabiao,Nueva Ecija
+San Carlos,Cabiao,Nueva Ecija
+Santa Isabel,Cabiao,Nueva Ecija
+Santa Ines,Cabiao,Nueva Ecija
+R.A.Padilla,Carranglan,Nueva Ecija
+Bantug,Carranglan,Nueva Ecija
+Bunga,Carranglan,Nueva Ecija
+Burgos,Carranglan,Nueva Ecija
+Capintalan,Carranglan,Nueva Ecija
+Joson,Carranglan,Nueva Ecija
+General Luna,Carranglan,Nueva Ecija
+Minuli,Carranglan,Nueva Ecija
+Piut,Carranglan,Nueva Ecija
+Puncan,Carranglan,Nueva Ecija
+Putlan,Carranglan,Nueva Ecija
+Salazar,Carranglan,Nueva Ecija
+San Agustin,Carranglan,Nueva Ecija
+T. L. Padilla Pob.,Carranglan,Nueva Ecija
+F. C. Otic Pob.,Carranglan,Nueva Ecija
+D. L. Maglanoc Pob.,Carranglan,Nueva Ecija
+G. S. Rosario Pob.,Carranglan,Nueva Ecija
+Baloy,Cuyapo,Nueva Ecija
+Bambanaba,Cuyapo,Nueva Ecija
+Bantug,Cuyapo,Nueva Ecija
+Bentigan,Cuyapo,Nueva Ecija
+Bibiclat,Cuyapo,Nueva Ecija
+Bonifacio,Cuyapo,Nueva Ecija
+Bued,Cuyapo,Nueva Ecija
+Bulala,Cuyapo,Nueva Ecija
+Burgos,Cuyapo,Nueva Ecija
+Cabileo,Cuyapo,Nueva Ecija
+Cabatuan,Cuyapo,Nueva Ecija
+Cacapasan,Cuyapo,Nueva Ecija
+Calancuasan Norte,Cuyapo,Nueva Ecija
+Calancuasan Sur,Cuyapo,Nueva Ecija
+Colosboa,Cuyapo,Nueva Ecija
+Columbitin,Cuyapo,Nueva Ecija
+Curva,Cuyapo,Nueva Ecija
+District I,Cuyapo,Nueva Ecija
+District II,Cuyapo,Nueva Ecija
+District IV,Cuyapo,Nueva Ecija
+District V,Cuyapo,Nueva Ecija
+District VI,Cuyapo,Nueva Ecija
+District VII,Cuyapo,Nueva Ecija
+District VIII,Cuyapo,Nueva Ecija
+Landig,Cuyapo,Nueva Ecija
+Latap,Cuyapo,Nueva Ecija
+Loob,Cuyapo,Nueva Ecija
+Luna,Cuyapo,Nueva Ecija
+Malbeg-Patalan,Cuyapo,Nueva Ecija
+Malineng,Cuyapo,Nueva Ecija
+Matindeg,Cuyapo,Nueva Ecija
+Maycaban,Cuyapo,Nueva Ecija
+Nagcuralan,Cuyapo,Nueva Ecija
+Nagmisahan,Cuyapo,Nueva Ecija
+Paitan Norte,Cuyapo,Nueva Ecija
+Paitan Sur,Cuyapo,Nueva Ecija
+Piglisan,Cuyapo,Nueva Ecija
+Pugo,Cuyapo,Nueva Ecija
+Rizal,Cuyapo,Nueva Ecija
+Sabit,Cuyapo,Nueva Ecija
+Salagusog,Cuyapo,Nueva Ecija
+San Antonio,Cuyapo,Nueva Ecija
+San Jose,Cuyapo,Nueva Ecija
+San Juan,Cuyapo,Nueva Ecija
+Santa Clara,Cuyapo,Nueva Ecija
+Santa Cruz,Cuyapo,Nueva Ecija
+Simimbaan,Cuyapo,Nueva Ecija
+Tagtagumbao,Cuyapo,Nueva Ecija
+Tutuloy,Cuyapo,Nueva Ecija
+Ungab,Cuyapo,Nueva Ecija
+Villaflores,Cuyapo,Nueva Ecija
+Bagong Sikat,Gabaldon,Nueva Ecija
+Bagting,Gabaldon,Nueva Ecija
+Bantug,Gabaldon,Nueva Ecija
+Bitulok,Gabaldon,Nueva Ecija
+Bugnan,Gabaldon,Nueva Ecija
+Calabasa,Gabaldon,Nueva Ecija
+Camachile,Gabaldon,Nueva Ecija
+Cuyapa,Gabaldon,Nueva Ecija
+Ligaya,Gabaldon,Nueva Ecija
+Macasandal,Gabaldon,Nueva Ecija
+Malinao,Gabaldon,Nueva Ecija
+Pantoc,Gabaldon,Nueva Ecija
+Pinamalisan,Gabaldon,Nueva Ecija
+South Poblacion,Gabaldon,Nueva Ecija
+Sawmill,Gabaldon,Nueva Ecija
+Tagumpay,Gabaldon,Nueva Ecija
+Bayanihan,City of Gapan,Nueva Ecija
+Bulak,City of Gapan,Nueva Ecija
+Kapalangan,City of Gapan,Nueva Ecija
+Mahipon,City of Gapan,Nueva Ecija
+Malimba,City of Gapan,Nueva Ecija
+Mangino,City of Gapan,Nueva Ecija
+Marelo,City of Gapan,Nueva Ecija
+Pambuan,City of Gapan,Nueva Ecija
+Parcutela,City of Gapan,Nueva Ecija
+San Lorenzo,City of Gapan,Nueva Ecija
+San Nicolas,City of Gapan,Nueva Ecija
+San Roque,City of Gapan,Nueva Ecija
+San Vicente,City of Gapan,Nueva Ecija
+Santa Cruz,City of Gapan,Nueva Ecija
+Santo Cristo Norte,City of Gapan,Nueva Ecija
+Santo Cristo Sur,City of Gapan,Nueva Ecija
+Santo Niño,City of Gapan,Nueva Ecija
+Makabaclay,City of Gapan,Nueva Ecija
+Balante,City of Gapan,Nueva Ecija
+Bungo,City of Gapan,Nueva Ecija
+Mabunga,City of Gapan,Nueva Ecija
+Maburak,City of Gapan,Nueva Ecija
+Puting Tubig,City of Gapan,Nueva Ecija
+Balangkare Norte,General Mamerto Natividad,Nueva Ecija
+Balangkare Sur,General Mamerto Natividad,Nueva Ecija
+Balaring,General Mamerto Natividad,Nueva Ecija
+Belen,General Mamerto Natividad,Nueva Ecija
+Bravo,General Mamerto Natividad,Nueva Ecija
+Burol,General Mamerto Natividad,Nueva Ecija
+Kabulihan,General Mamerto Natividad,Nueva Ecija
+Mag-asawang Sampaloc,General Mamerto Natividad,Nueva Ecija
+Manarog,General Mamerto Natividad,Nueva Ecija
+Mataas na Kahoy,General Mamerto Natividad,Nueva Ecija
+Panacsac,General Mamerto Natividad,Nueva Ecija
+Picaleon,General Mamerto Natividad,Nueva Ecija
+Pinahan,General Mamerto Natividad,Nueva Ecija
+Platero,General Mamerto Natividad,Nueva Ecija
+Poblacion,General Mamerto Natividad,Nueva Ecija
+Pula,General Mamerto Natividad,Nueva Ecija
+Pulong Singkamas,General Mamerto Natividad,Nueva Ecija
+Sapang Bato,General Mamerto Natividad,Nueva Ecija
+Talabutab Norte,General Mamerto Natividad,Nueva Ecija
+Talabutab Sur,General Mamerto Natividad,Nueva Ecija
+Bago,General Tinio,Nueva Ecija
+Concepcion,General Tinio,Nueva Ecija
+Nazareth,General Tinio,Nueva Ecija
+Padolina,General Tinio,Nueva Ecija
+Pias,General Tinio,Nueva Ecija
+San Pedro,General Tinio,Nueva Ecija
+Poblacion East,General Tinio,Nueva Ecija
+Poblacion West,General Tinio,Nueva Ecija
+Rio Chico,General Tinio,Nueva Ecija
+Poblacion Central,General Tinio,Nueva Ecija
+Pulong Matong,General Tinio,Nueva Ecija
+Sampaguita,General Tinio,Nueva Ecija
+Palale,General Tinio,Nueva Ecija
+Agcano,Guimba,Nueva Ecija
+Ayos Lomboy,Guimba,Nueva Ecija
+Bacayao,Guimba,Nueva Ecija
+Bagong Barrio,Guimba,Nueva Ecija
+Balbalino,Guimba,Nueva Ecija
+Balingog East,Guimba,Nueva Ecija
+Balingog West,Guimba,Nueva Ecija
+Banitan,Guimba,Nueva Ecija
+Bantug,Guimba,Nueva Ecija
+Bulakid,Guimba,Nueva Ecija
+Caballero,Guimba,Nueva Ecija
+Cabaruan,Guimba,Nueva Ecija
+Caingin Tabing Ilog,Guimba,Nueva Ecija
+Calem,Guimba,Nueva Ecija
+Camiing,Guimba,Nueva Ecija
+Cardinal,Guimba,Nueva Ecija
+Casongsong,Guimba,Nueva Ecija
+Catimon,Guimba,Nueva Ecija
+Cavite,Guimba,Nueva Ecija
+Cawayan Bugtong,Guimba,Nueva Ecija
+Consuelo,Guimba,Nueva Ecija
+Culong,Guimba,Nueva Ecija
+Escano,Guimba,Nueva Ecija
+Faigal,Guimba,Nueva Ecija
+Galvan,Guimba,Nueva Ecija
+Guiset,Guimba,Nueva Ecija
+Lamorito,Guimba,Nueva Ecija
+Lennec,Guimba,Nueva Ecija
+Macamias,Guimba,Nueva Ecija
+Macapabellag,Guimba,Nueva Ecija
+Macatcatuit,Guimba,Nueva Ecija
+Manacsac,Guimba,Nueva Ecija
+Manggang Marikit,Guimba,Nueva Ecija
+Maturanoc,Guimba,Nueva Ecija
+Maybubon,Guimba,Nueva Ecija
+Naglabrahan,Guimba,Nueva Ecija
+Nagpandayan,Guimba,Nueva Ecija
+Narvacan I,Guimba,Nueva Ecija
+Narvacan II,Guimba,Nueva Ecija
+Pacac,Guimba,Nueva Ecija
+Partida I,Guimba,Nueva Ecija
+Partida II,Guimba,Nueva Ecija
+Pasong Inchic,Guimba,Nueva Ecija
+Saint John District,Guimba,Nueva Ecija
+San Agustin,Guimba,Nueva Ecija
+San Andres,Guimba,Nueva Ecija
+San Bernardino,Guimba,Nueva Ecija
+San Marcelino,Guimba,Nueva Ecija
+San Miguel,Guimba,Nueva Ecija
+San Rafael,Guimba,Nueva Ecija
+San Roque,Guimba,Nueva Ecija
+Santa Ana,Guimba,Nueva Ecija
+Santa Cruz,Guimba,Nueva Ecija
+Santa Lucia,Guimba,Nueva Ecija
+Santa Veronica District,Guimba,Nueva Ecija
+Santo Cristo District,Guimba,Nueva Ecija
+Saranay District,Guimba,Nueva Ecija
+Sinulatan,Guimba,Nueva Ecija
+Subol,Guimba,Nueva Ecija
+Tampac I,Guimba,Nueva Ecija
+Tampac II & III,Guimba,Nueva Ecija
+Triala,Guimba,Nueva Ecija
+Yuson,Guimba,Nueva Ecija
+Bunol,Guimba,Nueva Ecija
+Calabasa,Jaen,Nueva Ecija
+Dampulan,Jaen,Nueva Ecija
+Hilera,Jaen,Nueva Ecija
+Imbunia,Jaen,Nueva Ecija
+Imelda Pob.,Jaen,Nueva Ecija
+Lambakin,Jaen,Nueva Ecija
+Langla,Jaen,Nueva Ecija
+Magsalisi,Jaen,Nueva Ecija
+Malabon-Kaingin,Jaen,Nueva Ecija
+Marawa,Jaen,Nueva Ecija
+Don Mariano Marcos,Jaen,Nueva Ecija
+San Josef,Jaen,Nueva Ecija
+Niyugan,Jaen,Nueva Ecija
+Pamacpacan,Jaen,Nueva Ecija
+Pakol,Jaen,Nueva Ecija
+Pinanggaan,Jaen,Nueva Ecija
+Ulanin-Pitak,Jaen,Nueva Ecija
+Putlod,Jaen,Nueva Ecija
+Ocampo-Rivera District,Jaen,Nueva Ecija
+San Jose,Jaen,Nueva Ecija
+San Pablo,Jaen,Nueva Ecija
+San Roque,Jaen,Nueva Ecija
+San Vicente,Jaen,Nueva Ecija
+Santa Rita,Jaen,Nueva Ecija
+Santo Tomas North,Jaen,Nueva Ecija
+Santo Tomas South,Jaen,Nueva Ecija
+Sapang,Jaen,Nueva Ecija
+Barangay I,Laur,Nueva Ecija
+Barangay II,Laur,Nueva Ecija
+Barangay III,Laur,Nueva Ecija
+Barangay IV,Laur,Nueva Ecija
+Betania,Laur,Nueva Ecija
+Canantong,Laur,Nueva Ecija
+Nauzon,Laur,Nueva Ecija
+Pangarulong,Laur,Nueva Ecija
+Pinagbayanan,Laur,Nueva Ecija
+Sagana,Laur,Nueva Ecija
+San Fernando,Laur,Nueva Ecija
+San Isidro,Laur,Nueva Ecija
+San Josef,Laur,Nueva Ecija
+San Juan,Laur,Nueva Ecija
+San Vicente,Laur,Nueva Ecija
+Siclong,Laur,Nueva Ecija
+San Felipe,Laur,Nueva Ecija
+Linao,Licab,Nueva Ecija
+Poblacion Norte,Licab,Nueva Ecija
+Poblacion Sur,Licab,Nueva Ecija
+San Casimiro,Licab,Nueva Ecija
+San Cristobal,Licab,Nueva Ecija
+San Jose,Licab,Nueva Ecija
+San Juan,Licab,Nueva Ecija
+Santa Maria,Licab,Nueva Ecija
+Tabing Ilog,Licab,Nueva Ecija
+Villarosa,Licab,Nueva Ecija
+Aquino,Licab,Nueva Ecija
+A. Bonifacio,Llanera,Nueva Ecija
+Caridad Norte,Llanera,Nueva Ecija
+Caridad Sur,Llanera,Nueva Ecija
+Casile,Llanera,Nueva Ecija
+Florida Blanca,Llanera,Nueva Ecija
+General Luna,Llanera,Nueva Ecija
+General Ricarte,Llanera,Nueva Ecija
+Gomez,Llanera,Nueva Ecija
+Inanama,Llanera,Nueva Ecija
+Ligaya,Llanera,Nueva Ecija
+Mabini,Llanera,Nueva Ecija
+Murcon,Llanera,Nueva Ecija
+Plaridel,Llanera,Nueva Ecija
+Bagumbayan,Llanera,Nueva Ecija
+San Felipe,Llanera,Nueva Ecija
+San Francisco,Llanera,Nueva Ecija
+San Nicolas,Llanera,Nueva Ecija
+San Vicente,Llanera,Nueva Ecija
+Santa Barbara,Llanera,Nueva Ecija
+Victoria,Llanera,Nueva Ecija
+Villa Viniegas,Llanera,Nueva Ecija
+Bosque,Llanera,Nueva Ecija
+Agupalo Este,Lupao,Nueva Ecija
+Agupalo Weste,Lupao,Nueva Ecija
+Alalay Chica,Lupao,Nueva Ecija
+Alalay Grande,Lupao,Nueva Ecija
+J. U. Tienzo,Lupao,Nueva Ecija
+Bagong Flores,Lupao,Nueva Ecija
+Balbalungao,Lupao,Nueva Ecija
+Burgos,Lupao,Nueva Ecija
+Cordero,Lupao,Nueva Ecija
+Mapangpang,Lupao,Nueva Ecija
+Namulandayan,Lupao,Nueva Ecija
+Parista,Lupao,Nueva Ecija
+Poblacion East,Lupao,Nueva Ecija
+Poblacion North,Lupao,Nueva Ecija
+Poblacion South,Lupao,Nueva Ecija
+Poblacion West,Lupao,Nueva Ecija
+Salvacion I,Lupao,Nueva Ecija
+Salvacion II,Lupao,Nueva Ecija
+San Antonio Este,Lupao,Nueva Ecija
+San Antonio Weste,Lupao,Nueva Ecija
+San Isidro,Lupao,Nueva Ecija
+San Pedro,Lupao,Nueva Ecija
+San Roque,Lupao,Nueva Ecija
+Santo Domingo,Lupao,Nueva Ecija
+Bagong Sikat,Science City of Muñoz,Nueva Ecija
+Balante,Science City of Muñoz,Nueva Ecija
+Bantug,Science City of Muñoz,Nueva Ecija
+Bical,Science City of Muñoz,Nueva Ecija
+Cabisuculan,Science City of Muñoz,Nueva Ecija
+Calabalabaan,Science City of Muñoz,Nueva Ecija
+Calisitan,Science City of Muñoz,Nueva Ecija
+Catalanacan,Science City of Muñoz,Nueva Ecija
+Curva,Science City of Muñoz,Nueva Ecija
+Franza,Science City of Muñoz,Nueva Ecija
+Gabaldon,Science City of Muñoz,Nueva Ecija
+Labney,Science City of Muñoz,Nueva Ecija
+Licaong,Science City of Muñoz,Nueva Ecija
+Linglingay,Science City of Muñoz,Nueva Ecija
+Mangandingay,Science City of Muñoz,Nueva Ecija
+Magtanggol,Science City of Muñoz,Nueva Ecija
+Maligaya,Science City of Muñoz,Nueva Ecija
+Mapangpang,Science City of Muñoz,Nueva Ecija
+Maragol,Science City of Muñoz,Nueva Ecija
+Matingkis,Science City of Muñoz,Nueva Ecija
+Naglabrahan,Science City of Muñoz,Nueva Ecija
+Palusapis,Science City of Muñoz,Nueva Ecija
+Pandalla,Science City of Muñoz,Nueva Ecija
+Poblacion East,Science City of Muñoz,Nueva Ecija
+Poblacion North,Science City of Muñoz,Nueva Ecija
+Poblacion South,Science City of Muñoz,Nueva Ecija
+Poblacion West,Science City of Muñoz,Nueva Ecija
+Rang-ayan,Science City of Muñoz,Nueva Ecija
+Rizal,Science City of Muñoz,Nueva Ecija
+San Andres,Science City of Muñoz,Nueva Ecija
+San Antonio,Science City of Muñoz,Nueva Ecija
+San Felipe,Science City of Muñoz,Nueva Ecija
+Sapang Cawayan,Science City of Muñoz,Nueva Ecija
+Villa Isla,Science City of Muñoz,Nueva Ecija
+Villa Nati,Science City of Muñoz,Nueva Ecija
+Villa Santos,Science City of Muñoz,Nueva Ecija
+Villa Cuizon,Science City of Muñoz,Nueva Ecija
+Alemania,Nampicuan,Nueva Ecija
+Ambasador Alzate Village,Nampicuan,Nueva Ecija
+Cabaducan East,Nampicuan,Nueva Ecija
+Cabaducan West,Nampicuan,Nueva Ecija
+Cabawangan,Nampicuan,Nueva Ecija
+East Central Poblacion,Nampicuan,Nueva Ecija
+Edy,Nampicuan,Nueva Ecija
+Maeling,Nampicuan,Nueva Ecija
+Mayantoc,Nampicuan,Nueva Ecija
+Medico,Nampicuan,Nueva Ecija
+Monic,Nampicuan,Nueva Ecija
+North Poblacion,Nampicuan,Nueva Ecija
+Northwest Poblacion,Nampicuan,Nueva Ecija
+Estacion,Nampicuan,Nueva Ecija
+West Poblacion,Nampicuan,Nueva Ecija
+Recuerdo,Nampicuan,Nueva Ecija
+South Central Poblacion,Nampicuan,Nueva Ecija
+Southeast Poblacion,Nampicuan,Nueva Ecija
+Southwest Poblacion,Nampicuan,Nueva Ecija
+Tony,Nampicuan,Nueva Ecija
+West Central Poblacion,Nampicuan,Nueva Ecija
+Aulo,City of Palayan,Nueva Ecija
+Bo. Militar,City of Palayan,Nueva Ecija
+Ganaderia,City of Palayan,Nueva Ecija
+Maligaya,City of Palayan,Nueva Ecija
+Manacnac,City of Palayan,Nueva Ecija
+Mapait,City of Palayan,Nueva Ecija
+Marcos Village,City of Palayan,Nueva Ecija
+Malate,City of Palayan,Nueva Ecija
+Sapang Buho,City of Palayan,Nueva Ecija
+Singalat,City of Palayan,Nueva Ecija
+Atate,City of Palayan,Nueva Ecija
+Caballero,City of Palayan,Nueva Ecija
+Caimito,City of Palayan,Nueva Ecija
+Doña Josefa,City of Palayan,Nueva Ecija
+Imelda Valley,City of Palayan,Nueva Ecija
+Langka,City of Palayan,Nueva Ecija
+Santolan,City of Palayan,Nueva Ecija
+Popolon Pagas,City of Palayan,Nueva Ecija
+Bagong Buhay,City of Palayan,Nueva Ecija
+Cadaclan,Pantabangan,Nueva Ecija
+Cambitala,Pantabangan,Nueva Ecija
+Conversion,Pantabangan,Nueva Ecija
+Ganduz,Pantabangan,Nueva Ecija
+Liberty,Pantabangan,Nueva Ecija
+Malbang,Pantabangan,Nueva Ecija
+Marikit,Pantabangan,Nueva Ecija
+Napon-Napon,Pantabangan,Nueva Ecija
+Poblacion East,Pantabangan,Nueva Ecija
+Poblacion West,Pantabangan,Nueva Ecija
+Sampaloc,Pantabangan,Nueva Ecija
+San Juan,Pantabangan,Nueva Ecija
+Villarica,Pantabangan,Nueva Ecija
+Fatima,Pantabangan,Nueva Ecija
+Callos,Peñaranda,Nueva Ecija
+Las Piñas,Peñaranda,Nueva Ecija
+Poblacion I,Peñaranda,Nueva Ecija
+Poblacion II,Peñaranda,Nueva Ecija
+Poblacion III,Peñaranda,Nueva Ecija
+Poblacion IV,Peñaranda,Nueva Ecija
+Santo Tomas,Peñaranda,Nueva Ecija
+Sinasajan,Peñaranda,Nueva Ecija
+San Josef,Peñaranda,Nueva Ecija
+San Mariano,Peñaranda,Nueva Ecija
+Bertese,Quezon,Nueva Ecija
+Doña Lucia,Quezon,Nueva Ecija
+Dulong Bayan,Quezon,Nueva Ecija
+Ilog Baliwag,Quezon,Nueva Ecija
+Barangay I,Quezon,Nueva Ecija
+Barangay II,Quezon,Nueva Ecija
+Pulong Bahay,Quezon,Nueva Ecija
+San Alejandro,Quezon,Nueva Ecija
+San Andres I,Quezon,Nueva Ecija
+San Andres II,Quezon,Nueva Ecija
+San Manuel,Quezon,Nueva Ecija
+Santa Clara,Quezon,Nueva Ecija
+Santa Rita,Quezon,Nueva Ecija
+Santo Cristo,Quezon,Nueva Ecija
+Santo Tomas Feria,Quezon,Nueva Ecija
+San Miguel,Quezon,Nueva Ecija
+Agbannawag,Rizal,Nueva Ecija
+Bicos,Rizal,Nueva Ecija
+Cabucbucan,Rizal,Nueva Ecija
+Calaocan District,Rizal,Nueva Ecija
+Canaan East,Rizal,Nueva Ecija
+Canaan West,Rizal,Nueva Ecija
+Casilagan,Rizal,Nueva Ecija
+Aglipay,Rizal,Nueva Ecija
+Del Pilar,Rizal,Nueva Ecija
+Estrella,Rizal,Nueva Ecija
+General Luna,Rizal,Nueva Ecija
+Macapsing,Rizal,Nueva Ecija
+Maligaya,Rizal,Nueva Ecija
+Paco Roman,Rizal,Nueva Ecija
+Pag-asa,Rizal,Nueva Ecija
+Poblacion Central,Rizal,Nueva Ecija
+Poblacion East,Rizal,Nueva Ecija
+Poblacion Norte,Rizal,Nueva Ecija
+Poblacion Sur,Rizal,Nueva Ecija
+Poblacion West,Rizal,Nueva Ecija
+Portal,Rizal,Nueva Ecija
+San Esteban,Rizal,Nueva Ecija
+Santa Monica,Rizal,Nueva Ecija
+Villa Labrador,Rizal,Nueva Ecija
+Villa Paraiso,Rizal,Nueva Ecija
+San Gregorio,Rizal,Nueva Ecija
+Buliran,San Antonio,Nueva Ecija
+Cama Juan,San Antonio,Nueva Ecija
+Julo,San Antonio,Nueva Ecija
+Lawang Kupang,San Antonio,Nueva Ecija
+Luyos,San Antonio,Nueva Ecija
+Maugat,San Antonio,Nueva Ecija
+Panabingan,San Antonio,Nueva Ecija
+Papaya,San Antonio,Nueva Ecija
+Poblacion,San Antonio,Nueva Ecija
+San Francisco,San Antonio,Nueva Ecija
+San Jose,San Antonio,Nueva Ecija
+San Mariano,San Antonio,Nueva Ecija
+Santa Cruz,San Antonio,Nueva Ecija
+Santo Cristo,San Antonio,Nueva Ecija
+Santa Barbara,San Antonio,Nueva Ecija
+Tikiw,San Antonio,Nueva Ecija
+Alua,San Isidro,Nueva Ecija
+Calaba,San Isidro,Nueva Ecija
+Malapit,San Isidro,Nueva Ecija
+Mangga,San Isidro,Nueva Ecija
+Poblacion,San Isidro,Nueva Ecija
+Pulo,San Isidro,Nueva Ecija
+San Roque,San Isidro,Nueva Ecija
+Sto. Cristo,San Isidro,Nueva Ecija
+Tabon,San Isidro,Nueva Ecija
+A. Pascual,San Jose City,Nueva Ecija
+Abar Ist,San Jose City,Nueva Ecija
+Abar 2nd,San Jose City,Nueva Ecija
+Bagong Sikat,San Jose City,Nueva Ecija
+Caanawan,San Jose City,Nueva Ecija
+Calaocan,San Jose City,Nueva Ecija
+Camanacsacan,San Jose City,Nueva Ecija
+Culaylay,San Jose City,Nueva Ecija
+Dizol,San Jose City,Nueva Ecija
+Kaliwanagan,San Jose City,Nueva Ecija
+Kita-Kita,San Jose City,Nueva Ecija
+Malasin,San Jose City,Nueva Ecija
+Manicla,San Jose City,Nueva Ecija
+Palestina,San Jose City,Nueva Ecija
+Parang Mangga,San Jose City,Nueva Ecija
+Villa Joson,San Jose City,Nueva Ecija
+Pinili,San Jose City,Nueva Ecija
+Ferdinand E. Marcos Pob.,San Jose City,Nueva Ecija
+Canuto Ramos Pob.,San Jose City,Nueva Ecija
+Raymundo Eugenio Pob.,San Jose City,Nueva Ecija
+Crisanto Sanchez Pob.,San Jose City,Nueva Ecija
+Porais,San Jose City,Nueva Ecija
+San Agustin,San Jose City,Nueva Ecija
+San Juan,San Jose City,Nueva Ecija
+San Mauricio,San Jose City,Nueva Ecija
+Santo Niño 1st,San Jose City,Nueva Ecija
+Santo Niño 2nd,San Jose City,Nueva Ecija
+Santo Tomas,San Jose City,Nueva Ecija
+Sibut,San Jose City,Nueva Ecija
+Sinipit Bubon,San Jose City,Nueva Ecija
+Santo Niño 3rd,San Jose City,Nueva Ecija
+Tabulac,San Jose City,Nueva Ecija
+Tayabo,San Jose City,Nueva Ecija
+Tondod,San Jose City,Nueva Ecija
+Tulat,San Jose City,Nueva Ecija
+Villa Floresca,San Jose City,Nueva Ecija
+Villa Marina,San Jose City,Nueva Ecija
+Bonifacio District,San Leonardo,Nueva Ecija
+Burgos District,San Leonardo,Nueva Ecija
+Castellano,San Leonardo,Nueva Ecija
+Diversion,San Leonardo,Nueva Ecija
+Magpapalayoc,San Leonardo,Nueva Ecija
+Mallorca,San Leonardo,Nueva Ecija
+Mambangnan,San Leonardo,Nueva Ecija
+Nieves,San Leonardo,Nueva Ecija
+San Bartolome,San Leonardo,Nueva Ecija
+Rizal District,San Leonardo,Nueva Ecija
+San Anton,San Leonardo,Nueva Ecija
+San Roque,San Leonardo,Nueva Ecija
+Tabuating,San Leonardo,Nueva Ecija
+Tagumpay,San Leonardo,Nueva Ecija
+Tambo Adorable,San Leonardo,Nueva Ecija
+Cojuangco,Santa Rosa,Nueva Ecija
+La Fuente,Santa Rosa,Nueva Ecija
+Liwayway,Santa Rosa,Nueva Ecija
+Malacañang,Santa Rosa,Nueva Ecija
+Maliolio,Santa Rosa,Nueva Ecija
+Mapalad,Santa Rosa,Nueva Ecija
+Rizal,Santa Rosa,Nueva Ecija
+Rajal Centro,Santa Rosa,Nueva Ecija
+Rajal Norte,Santa Rosa,Nueva Ecija
+Rajal Sur,Santa Rosa,Nueva Ecija
+San Gregorio,Santa Rosa,Nueva Ecija
+San Mariano,Santa Rosa,Nueva Ecija
+San Pedro,Santa Rosa,Nueva Ecija
+Santo Rosario,Santa Rosa,Nueva Ecija
+Soledad,Santa Rosa,Nueva Ecija
+Valenzuela,Santa Rosa,Nueva Ecija
+Zamora,Santa Rosa,Nueva Ecija
+Aguinaldo,Santa Rosa,Nueva Ecija
+Berang,Santa Rosa,Nueva Ecija
+Burgos,Santa Rosa,Nueva Ecija
+Del Pilar,Santa Rosa,Nueva Ecija
+Gomez,Santa Rosa,Nueva Ecija
+Inspector,Santa Rosa,Nueva Ecija
+Isla,Santa Rosa,Nueva Ecija
+Lourdes,Santa Rosa,Nueva Ecija
+Luna,Santa Rosa,Nueva Ecija
+Mabini,Santa Rosa,Nueva Ecija
+San Isidro,Santa Rosa,Nueva Ecija
+San Josep,Santa Rosa,Nueva Ecija
+Santa Teresita,Santa Rosa,Nueva Ecija
+Sapsap,Santa Rosa,Nueva Ecija
+Tagpos,Santa Rosa,Nueva Ecija
+Tramo,Santa Rosa,Nueva Ecija
+Baloc,Santo Domingo,Nueva Ecija
+Buasao,Santo Domingo,Nueva Ecija
+Burgos,Santo Domingo,Nueva Ecija
+Cabugao,Santo Domingo,Nueva Ecija
+Casulucan,Santo Domingo,Nueva Ecija
+Comitang,Santo Domingo,Nueva Ecija
+Concepcion,Santo Domingo,Nueva Ecija
+Dolores,Santo Domingo,Nueva Ecija
+General Luna,Santo Domingo,Nueva Ecija
+Hulo,Santo Domingo,Nueva Ecija
+Mabini,Santo Domingo,Nueva Ecija
+Malasin,Santo Domingo,Nueva Ecija
+Malayantoc,Santo Domingo,Nueva Ecija
+Mambarao,Santo Domingo,Nueva Ecija
+Poblacion,Santo Domingo,Nueva Ecija
+Malaya,Santo Domingo,Nueva Ecija
+Pulong Buli,Santo Domingo,Nueva Ecija
+Sagaba,Santo Domingo,Nueva Ecija
+San Agustin,Santo Domingo,Nueva Ecija
+San Fabian,Santo Domingo,Nueva Ecija
+San Francisco,Santo Domingo,Nueva Ecija
+San Pascual,Santo Domingo,Nueva Ecija
+Santa Rita,Santo Domingo,Nueva Ecija
+Santo Rosario,Santo Domingo,Nueva Ecija
+Andal Alino,Talavera,Nueva Ecija
+Bagong Sikat,Talavera,Nueva Ecija
+Bagong Silang,Talavera,Nueva Ecija
+Bakal I,Talavera,Nueva Ecija
+Bakal II,Talavera,Nueva Ecija
+Bakal III,Talavera,Nueva Ecija
+Baluga,Talavera,Nueva Ecija
+Bantug,Talavera,Nueva Ecija
+Bantug Hacienda,Talavera,Nueva Ecija
+Bantug Hamog,Talavera,Nueva Ecija
+Bugtong na Buli,Talavera,Nueva Ecija
+Bulac,Talavera,Nueva Ecija
+Burnay,Talavera,Nueva Ecija
+Calipahan,Talavera,Nueva Ecija
+Campos,Talavera,Nueva Ecija
+Casulucan Este,Talavera,Nueva Ecija
+Collado,Talavera,Nueva Ecija
+Dimasalang Norte,Talavera,Nueva Ecija
+Dimasalang Sur,Talavera,Nueva Ecija
+Dinarayat,Talavera,Nueva Ecija
+Esguerra District,Talavera,Nueva Ecija
+Gulod,Talavera,Nueva Ecija
+Homestead I,Talavera,Nueva Ecija
+Homestead II,Talavera,Nueva Ecija
+Cabubulaonan,Talavera,Nueva Ecija
+Caaniplahan,Talavera,Nueva Ecija
+Caputican,Talavera,Nueva Ecija
+Kinalanguyan,Talavera,Nueva Ecija
+La Torre,Talavera,Nueva Ecija
+Lomboy,Talavera,Nueva Ecija
+Mabuhay,Talavera,Nueva Ecija
+Maestrang Kikay,Talavera,Nueva Ecija
+Mamandil,Talavera,Nueva Ecija
+Marcos District,Talavera,Nueva Ecija
+Purok Matias,Talavera,Nueva Ecija
+Matingkis,Talavera,Nueva Ecija
+Minabuyoc,Talavera,Nueva Ecija
+Pag-asa,Talavera,Nueva Ecija
+Paludpod,Talavera,Nueva Ecija
+Pantoc Bulac,Talavera,Nueva Ecija
+Pinagpanaan,Talavera,Nueva Ecija
+Poblacion Sur,Talavera,Nueva Ecija
+Pula,Talavera,Nueva Ecija
+Pulong San Miguel,Talavera,Nueva Ecija
+Sampaloc,Talavera,Nueva Ecija
+San Miguel na Munti,Talavera,Nueva Ecija
+San Pascual,Talavera,Nueva Ecija
+San Ricardo,Talavera,Nueva Ecija
+Sibul,Talavera,Nueva Ecija
+Sicsican Matanda,Talavera,Nueva Ecija
+Tabacao,Talavera,Nueva Ecija
+Tagaytay,Talavera,Nueva Ecija
+Valle,Talavera,Nueva Ecija
+Alula,Talugtug,Nueva Ecija
+Baybayabas,Talugtug,Nueva Ecija
+Buted,Talugtug,Nueva Ecija
+Cabiangan,Talugtug,Nueva Ecija
+Calisitan,Talugtug,Nueva Ecija
+Cinense,Talugtug,Nueva Ecija
+Culiat,Talugtug,Nueva Ecija
+Maasin,Talugtug,Nueva Ecija
+Magsaysay,Talugtug,Nueva Ecija
+Mayamot I,Talugtug,Nueva Ecija
+Mayamot II,Talugtug,Nueva Ecija
+Nangabulan,Talugtug,Nueva Ecija
+Osmeña,Talugtug,Nueva Ecija
+Pangit,Talugtug,Nueva Ecija
+Patola,Talugtug,Nueva Ecija
+Quezon,Talugtug,Nueva Ecija
+Quirino,Talugtug,Nueva Ecija
+Roxas,Talugtug,Nueva Ecija
+Saguing,Talugtug,Nueva Ecija
+Sampaloc,Talugtug,Nueva Ecija
+Santa Catalina,Talugtug,Nueva Ecija
+Santo Domingo,Talugtug,Nueva Ecija
+Saringaya,Talugtug,Nueva Ecija
+Saverona,Talugtug,Nueva Ecija
+Tandoc,Talugtug,Nueva Ecija
+Tibag,Talugtug,Nueva Ecija
+Villa Rosario,Talugtug,Nueva Ecija
+Villa Boado,Talugtug,Nueva Ecija
+Batitang,Zaragoza,Nueva Ecija
+Carmen,Zaragoza,Nueva Ecija
+Concepcion,Zaragoza,Nueva Ecija
+Del Pilar,Zaragoza,Nueva Ecija
+General Luna,Zaragoza,Nueva Ecija
+H. Romero,Zaragoza,Nueva Ecija
+Macarse,Zaragoza,Nueva Ecija
+Manaul,Zaragoza,Nueva Ecija
+Mayamot,Zaragoza,Nueva Ecija
+Pantoc,Zaragoza,Nueva Ecija
+San Vicente,Zaragoza,Nueva Ecija
+San Isidro,Zaragoza,Nueva Ecija
+San Rafael,Zaragoza,Nueva Ecija
+Santa Cruz,Zaragoza,Nueva Ecija
+Santa Lucia Old,Zaragoza,Nueva Ecija
+Santa Lucia Young,Zaragoza,Nueva Ecija
+Santo Rosario Old,Zaragoza,Nueva Ecija
+Santo Rosario Young,Zaragoza,Nueva Ecija
+Valeriana,Zaragoza,Nueva Ecija
+Agtipalo,Baler,Aurora
+Babat,Baler,Aurora
+Bacong,Baler,Aurora
+Baliag,Baler,Aurora
+Bansaan,Baler,Aurora
+Bantay,Baler,Aurora
+Bukal,Baler,Aurora
+Buru-Buru,Baler,Aurora
+Calabuanan,Baler,Aurora
+Calantas,Baler,Aurora
+Calungayan,Baler,Aurora
+Caniogan,Baler,Aurora
+Colongcolong,Baler,Aurora
+Dibalo,Baler,Aurora
+Dibut,Baler,Aurora
+Dimalangat,Baler,Aurora
+Ditumabo,Baler,Aurora
+Duongan,Baler,Aurora
+Fulgador,Baler,Aurora
+Sabang,Baler,Aurora
+San Isidro,Baler,Aurora
+San Jose,Baler,Aurora
+San Luis,Baler,Aurora
+San Pablo,Baler,Aurora
+San Pedro,Baler,Aurora
+Santa Maria,Baler,Aurora
+Suklayin,Baler,Aurora
+Suclayin,Baler,Aurora
+Zabali,Baler,Aurora
+Bato,Casiguran,Aurora
+Bibitinan,Casiguran,Aurora
+Bilao,Casiguran,Aurora
+Biniguni,Casiguran,Aurora
+Bulawit,Casiguran,Aurora
+Calabgan,Casiguran,Aurora
+Calatagan,Casiguran,Aurora
+Culaba,Casiguran,Aurora
+Dibaraybay,Casiguran,Aurora
+Dibet,Casiguran,Aurora
+Dikapinisan,Casiguran,Aurora
+Dingasan,Casiguran,Aurora
+Dita,Casiguran,Aurora
+Esteves,Casiguran,Aurora
+Hinipaan,Casiguran,Aurora
+Ilot,Casiguran,Aurora
+Lual,Casiguran,Aurora
+Lual Bati,Casiguran,Aurora
+Lual Malalim,Casiguran,Aurora
+Marikit,Casiguran,Aurora
+Molave,Casiguran,Aurora
+Pinaglabasan,Casiguran,Aurora
+Poblacion,Casiguran,Aurora
+San Isidro,Casiguran,Aurora
+Tanada,Casiguran,Aurora
+Tawag,Casiguran,Aurora
+Umiray,Casiguran,Aurora
+Agtasa,Dilasag,Aurora
+Bacong,Dilasag,Aurora
+Bagto,Dilasag,Aurora
+Barangay 1,Dilasag,Aurora
+Barangay 2,Dilasag,Aurora
+Barangay 3,Dilasag,Aurora
+Barangay 4,Dilasag,Aurora
+Barangay 5,Dilasag,Aurora
+Barangay 6,Dilasag,Aurora
+Barangay 7,Dilasag,Aurora
+Barangay 8,Dilasag,Aurora
+Barangay 9,Dilasag,Aurora
+Barangay 10,Dilasag,Aurora
+Barangay 11,Dilasag,Aurora
+Calabagan,Dilasag,Aurora
+Dimalangat,Dilasag,Aurora
+Diwayan,Dilasag,Aurora
+Ditumabo,Dilasag,Aurora
+Lawang Kawayan,Dilasag,Aurora
+Masese,Dilasag,Aurora
+Poblacion,Dilasag,Aurora
+San Isidro,Dilasag,Aurora
+Tanag,Dilasag,Aurora
+Yapara,Dilasag,Aurora
+Babat,Dinalungan,Aurora
+Bacuit,Dinalungan,Aurora
+Bucay,Dinalungan,Aurora
+Caragsacan,Dinalungan,Aurora
+Dibaraybay,Dinalungan,Aurora
+Dibet,Dinalungan,Aurora
+Dimalangat,Dinalungan,Aurora
+Dipaculao,Dinalungan,Aurora
+Gumabat,Dinalungan,Aurora
+Lual,Dinalungan,Aurora
+Poblacion,Dinalungan,Aurora
+Simbahan,Dinalungan,Aurora
+Umiray,Dinalungan,Aurora
+Yapara,Dinalungan,Aurora
+Agtipalo,Dipaculao,Aurora
+Babat,Dipaculao,Aurora
+Bacong,Dipaculao,Aurora
+Baliag,Dipaculao,Aurora
+Bansaan,Dipaculao,Aurora
+Bantay,Dipaculao,Aurora
+Bukal,Dipaculao,Aurora
+Buru-Buru,Dipaculao,Aurora
+Calabuanan,Dipaculao,Aurora
+Calantas,Dipaculao,Aurora
+Calungayan,Dipaculao,Aurora
+Caniogan,Dipaculao,Aurora
+Colongcolong,Dipaculao,Aurora
+Dibalo,Dipaculao,Aurora
+Dibut,Dipaculao,Aurora
+Dimalangat,Dipaculao,Aurora
+Ditumabo,Dipaculao,Aurora
+Duongan,Dipaculao,Aurora
+Fulgador,Dipaculao,Aurora
+Gumabat,Dipaculao,Aurora
+Poblacion,Dipaculao,Aurora
+Simbahan,Dipaculao,Aurora
+Umiray,Dipaculao,Aurora
+Yapara,Dipaculao,Aurora
+Agtipalo,Maria Aurora,Aurora
+Babat,Maria Aurora,Aurora
+Bacong,Maria Aurora,Aurora
+Baliag,Maria Aurora,Aurora
+Bansaan,Maria Aurora,Aurora
+Bantay,Maria Aurora,Aurora
+Bukal,Maria Aurora,Aurora
+Buru-Buru,Maria Aurora,Aurora
+Calabuanan,Maria Aurora,Aurora
+Calantas,Maria Aurora,Aurora
+Calungayan,Maria Aurora,Aurora
+Caniogan,Maria Aurora,Aurora
+Colongcolong,Maria Aurora,Aurora
+Dibalo,Maria Aurora,Aurora
+Dibut,Maria Aurora,Aurora
+Dimalangat,Maria Aurora,Aurora
+Ditumabo,Maria Aurora,Aurora
+Duongan,Maria Aurora,Aurora
+Fulgador,Maria Aurora,Aurora
+Gumabat,Maria Aurora,Aurora
+Poblacion,Maria Aurora,Aurora
+Simbahan,Maria Aurora,Aurora
+Umiray,Maria Aurora,Aurora
+Yapara,Maria Aurora,Aurora
+Agtipalo,San Luis,Aurora
+Babat,San Luis,Aurora
+Bacong,San Luis,Aurora
+Baliag,San Luis,Aurora
+Bansaan,San Luis,Aurora
+Bantay,San Luis,Aurora
+Bukal,San Luis,Aurora
+Buru-Buru,San Luis,Aurora
+Calabuanan,San Luis,Aurora
+Calantas,San Luis,Aurora
+Calungayan,San Luis,Aurora
+Caniogan,San Luis,Aurora
+Colongcolong,San Luis,Aurora
+Dibalo,San Luis,Aurora
+Dibut,San Luis,Aurora
+Dimalangat,San Luis,Aurora
+Ditumabo,San Luis,Aurora
+Duongan,San Luis,Aurora
+Fulgador,San Luis,Aurora
+Gumabat,San Luis,Aurora
+Poblacion,San Luis,Aurora
+Simbahan,San Luis,Aurora
+Umiray,San Luis,Aurora
+Yapara,San Luis,Aurora
+Agtipalo,Dingalan,Aurora
+Babat,Dingalan,Aurora
+Bacong,Dingalan,Aurora
+Baliag,Dingalan,Aurora
+Bansaan,Dingalan,Aurora
+Bantay,Dingalan,Aurora
+Bukal,Dingalan,Aurora
+Buru-Buru,Dingalan,Aurora
+Calabuanan,Dingalan,Aurora
+Calantas,Dingalan,Aurora
+Calungayan,Dingalan,Aurora
+Caniogan,Dingalan,Aurora
+Colongcolong,Dingalan,Aurora
+Dibalo,Dingalan,Aurora
+Dibut,Dingalan,Aurora
+Dimalangat,Dingalan,Aurora
+Ditumabo,Dingalan,Aurora
+Duongan,Dingalan,Aurora
+Fulgador,Dingalan,Aurora
+Gumabat,Dingalan,Aurora
+Poblacion,Dingalan,Aurora
+Simbahan,Dingalan,Aurora
+Umiray,Dingalan,Aurora
+Yapara,Dingalan,Aurora`;
+
+            function parseLocationData(csv) {
+                var data = {};
+                var lines = csv.split(/\r?\n/).filter(function(line) { return line.trim().length > 0; });
+
+                for (var i = 1; i < lines.length; i++) {
+                    var parts = parseCsvLine(lines[i]);
+                    var barangay = parts[0];
+                    var municipality = parts[1];
+                    var province = parts[2];
+
+                    if (!province || !municipality || !barangay) {
+                        continue;
+                    }
+
+                    if (!data[province]) {
+                        data[province] = {};
+                    }
+                    if (!data[province][municipality]) {
+                        data[province][municipality] = [];
+                    }
+                    if (data[province][municipality].indexOf(barangay) === -1) {
+                        data[province][municipality].push(barangay);
+                    }
+                }
+
+                for (var province in data) {
+                    for (var municipality in data[province]) {
+                        data[province][municipality].sort(function(a, b) { return a.localeCompare(b, 'en', { sensitivity: 'base' }); });
+                    }
+                }
+
+                return data;
+            }
+
+            function parseCsvLine(line) {
+                var values = [];
+                var current = '';
+                var inQuotes = false;
+
+                for (var i = 0; i < line.length; i++) {
+                    var char = line[i];
+                    if (char === '"') {
+                        inQuotes = !inQuotes;
+                    } else if (char === ',' && !inQuotes) {
+                        values.push(current);
+                        current = '';
+                    } else {
+                        current += char;
+                    }
+                }
+
+                values.push(current);
+                return values;
+            }
+
+            var locationData = parseLocationData(locationCsv);
+
+            // Cascading dropdown functionality for table filters
+            (function () {
+                var tableProvince = document.getElementById('tableProvince');
+                var tableMunicipality = document.getElementById('tableMunicipality');
+                var tableBarangay = document.getElementById('tableBarangay');
+
+                if (!tableProvince || !tableMunicipality || !tableBarangay) {
+                    return;
+                }
+
+                function populateSelect(selectElement, options, placeholder) {
+                    selectElement.innerHTML = '';
+                    var defaultOption = document.createElement('option');
+                    defaultOption.value = '';
+                    defaultOption.textContent = placeholder;
+                    selectElement.appendChild(defaultOption);
+
+                    options.forEach(function (option) {
+                        var optionItem = document.createElement('option');
+                        optionItem.value = option;
+                        optionItem.textContent = option;
+                        selectElement.appendChild(optionItem);
+                    });
+                }
+
+                function updateMunicipalities() {
+                    if (!tableProvince.value) {
+                        populateSelect(tableMunicipality, [], 'All Municipalities');
+                        populateSelect(tableBarangay, [], 'All Barangays');
+                        return;
+                    }
+                    var municipalities = Object.keys(locationData[tableProvince.value] || {});
+                    populateSelect(tableMunicipality, municipalities, 'All Municipalities');
+                    populateSelect(tableBarangay, [], 'All Barangays');
+                }
+
+                function updateBarangays() {
+                    if (!tableProvince.value || !tableMunicipality.value) {
+                        populateSelect(tableBarangay, [], 'All Barangays');
+                        return;
+                    }
+                    var barangays = locationData[tableProvince.value]?.[tableMunicipality.value] || [];
+                    populateSelect(tableBarangay, barangays, 'All Barangays');
+                }
+
+                tableProvince.addEventListener('change', function() {
+                    updateMunicipalities();
+                });
+
+                tableMunicipality.addEventListener('change', function() {
+                    updateBarangays();
+                });
+
+                // Initialize on page load based on selected province
+                if (tableProvince.value) {
+                    updateMunicipalities();
+                    if (tableMunicipality.value) {
+                        tableMunicipality.value = '{{ request("municipality") }}';
+                        updateBarangays();
+                        if (tableBarangay.value) {
+                            tableBarangay.value = '{{ request("barangay") }}';
+                        }
+                    }
+                }
             })();
         </script>
     </div>

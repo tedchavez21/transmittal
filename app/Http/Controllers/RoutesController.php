@@ -379,15 +379,15 @@ class RoutesController extends Controller
             $query->whereDate('created_at', $request->date_encoded);
         }
         
-        // Date filters
+        // Date received filters
         if ($request->filled('date_single')) {
-            $query->whereDate('created_at', $request->date_single);
+            $query->whereDate('date_received', $request->date_single);
         }
         if ($request->filled('date_from')) {
-            $query->whereDate('created_at', '>=', $request->date_from);
+            $query->whereDate('date_received', '>=', $request->date_from);
         }
         if ($request->filled('date_to')) {
-            $query->whereDate('created_at', '<=', $request->date_to);
+            $query->whereDate('date_received', '<=', $request->date_to);
         }
         if ($request->filled('date_month')) {
             $query->whereMonth('created_at', $request->date_month)
