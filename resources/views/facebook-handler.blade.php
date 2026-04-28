@@ -68,6 +68,24 @@
                     <p class="text-xs text-gray-500 font-semibold mt-0.5">Actions</p>
                 </div>
                 <div class="px-5 py-4 flex flex-col gap-3">
+                    <div class="filter-container">
+                        <form action="{{ route('facebook-handler') }}" method="GET">
+                            <div class="date-received-container border border-gray-200 bg-gray-50 rounded-lg p-3">
+                                <div class="flex flex-col gap-2">
+                                    <label class="text-xs font-bold text-gray-700 mb-1">Date Received</label>
+                                    <div class="flex items-center gap-2">
+                                        <input type="date" name="date_received" value="{{ request('date_received', now()->format('Y-m-d')) }}" class="h-10 px-3 rounded-lg border border-gray-300 focus:border-pcic-500 focus:ring-2 focus:ring-pcic-100 bg-white outline-none text-sm shadow-sm w-full">
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="filter-actions-container border border-gray-200 rounded-lg p-3 bg-gray-50">
+                                <div class="flex gap-2">
+                                    <button type="submit" class="h-10 px-4 rounded-lg bg-green-600 text-white text-xs font-semibold hover:bg-green-700 transition-colors cursor-pointer shadow-sm flex items-center justify-center">Filter Date</button>
+                                    <a href="{{ route('facebook-handler') }}" class="h-10 px-4 rounded-lg bg-white text-gray-700 text-xs font-semibold hover:bg-gray-50 transition-colors cursor-pointer shadow-sm flex items-center justify-center">Clear Filters</a>
+                                </div>
+                            </div>
+                        </form>
+                    </div>
                     <button type="button" class="addRecordButton h-10 rounded-xl bg-pcic-700 text-white text-sm font-bold hover:bg-pcic-800 transition-colors cursor-pointer">Add Record</button>
                     @if($records->count() > 0)
                     <a href="{{ route('facebook.export-csv') }}" class="h-10 rounded-xl bg-white border border-gray-200 text-gray-700 text-sm font-bold hover:bg-gray-50 transition-colors cursor-pointer flex items-center justify-center gap-2">
@@ -250,5 +268,27 @@
     @endif
         </div>
     </div>
+
+@push('scripts')
+<script>
+// Automatic logout on browser/tab close
+window.addEventListener('beforeunload', function(e) {
+    // Send logout request using navigator.sendBeacon for reliable delivery
+    navigator.sendBeacon('{{ route('facebook.logout') }}', new FormData());
+});
+
+// Also handle page visibility change (user switches tabs)
+document.addEventListener('visibilitychange', function() {
+    if (document.visibilityState === 'hidden') {
+        // User switched away from the tab, mark as away after a delay
+        setTimeout(function() {
+            if (document.visibilityState === 'hidden') {
+                navigator.sendBeacon('{{ route('facebook.logout') }}', new FormData());
+            }
+        }, 30000); // 30 seconds delay
+    }
+});
+</script>
+@endpush
 
 @endsection

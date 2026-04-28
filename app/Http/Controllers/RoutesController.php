@@ -662,6 +662,10 @@ class RoutesController extends Controller
 
         $sessionRecordIds = $request->session()->get('admin_print_preview_record_ids', []);
 
+        // Log for debugging - remove this in production
+        \Log::info('Print Preview - Session Record IDs: ' . json_encode($sessionRecordIds));
+        \Log::info('Print Preview - Request Params: ' . json_encode($request->all()));
+
         // ALSO support ids from URL query parameter
         if ($request->filled('ids')) {
             $urlIds = explode(',', $request->input('ids'));
@@ -682,6 +686,8 @@ class RoutesController extends Controller
 
         // Get all records (not paginated) - will be split in view
         $records = $recordsQuery->get();
+        
+        \Log::info('Print Preview - Total Records Found: ' . $records->count());
         $totalRecords = $records->count();
         $perPage = 40;
 
@@ -789,6 +795,10 @@ class RoutesController extends Controller
 
         $sessionRecordIds = $request->session()->get('admin_print_preview_record_ids', []);
 
+        // Log for debugging - remove this in production
+        \Log::info('CSV Export - Session Record IDs: ' . json_encode($sessionRecordIds));
+        \Log::info('CSV Export - Request Params: ' . json_encode($request->all()));
+
         // ALSO support ids from URL query parameter
         if ($request->filled('ids')) {
             $urlIds = explode(',', $request->input('ids'));
@@ -799,37 +809,46 @@ class RoutesController extends Controller
         }
 
         if (!empty($sessionRecordIds)) {
-            $recordsQuery = Record::whereIn('id', $sessionRecordIds)->orderBy('id', 'desc');
+            $recordsQuery = Record::whereIn('id', $sessionRecordIds)
+                ->orderBy('id', 'desc');
         } else {
+            // If no session IDs, use the same filters as print preview
             $query = Record::query();
             $this->applyFilters($request, $query);
             $recordsQuery = $query->orderBy('id', 'desc');
         }
 
-        // Get all records with all columns
+        // Get all records - same as printPreview
         $records = $recordsQuery->get();
+        
+        \Log::info('CSV Export - Total Records Found: ' . $records->count());
 
-        // Get all column names from the records model
-        $columns = array_keys($records->first()?->getAttributes() ?? []);
-
+        // Use the specific columns requested by the user
+        $headers = ['ID', 'FarmerName', 'Province', 'Municipality', 'Barangay', 'Line', 'Program', 'CauseOfDamage', 'ModeOfPayment', 'Remarks', 'Source', 'Admin_Transmittal_Number', 'EncoderName', 'Date_Occurrence', 'Date_Received'];
+        
         // Generate CSV headers
         $csv = fopen('php://temp', 'r+');
-        fputcsv($csv, $columns);
+        fputcsv($csv, $headers);
 
-        // Add data rows
+        // Add data rows with all requested columns
         foreach ($records as $record) {
-            $row = [];
-            foreach ($columns as $column) {
-                $value = $record->$column;
-                // Handle null values and format dates
-                if ($value === null) {
-                    $row[] = '';
-                } elseif ($value instanceof \Carbon\Carbon) {
-                    $row[] = $value->format('Y-m-d H:i:s');
-                } else {
-                    $row[] = (string)$value;
-                }
-            }
+            $row = [
+                $record->id,
+                $record->farmerName,
+                $record->province,
+                $record->municipality,
+                $record->barangay,
+                $record->line,
+                $record->program,
+                $record->causeOfDamage,
+                $record->modeOfPayment,
+                $record->remarks ?: '—',
+                $record->source,
+                $record->admin_transmittal_number ?: '—',
+                $record->encoderName,
+                $record->date_occurrence ? (is_string($record->date_occurrence) ? $record->date_occurrence : $record->date_occurrence->format('Y-m-d')) : '—',
+                $record->date_received ? (is_string($record->date_received) ? $record->date_received : $record->date_received->format('Y-m-d')) : '—'
+            ];
             fputcsv($csv, $row);
         }
 
@@ -1352,18 +1371,18 @@ class RoutesController extends Controller
                 ];
             }
 
-            // Get recently approved officers and email handlers
+            // Get all approved officers and email handlers with proper timeout
             try {
-                $recentOfficers = Officer::where('approved', true)
+                $officers = Officer::where('approved', true)
                     ->where('active', true)
-                    ->where('updated_at', '>=', $now->subMinutes(30))
                     ->get();
 
-                foreach ($recentOfficers as $officer) {
+                foreach ($officers as $officer) {
                     $lastActivity = $this->getUserLastActivity($officer->id, 'officer');
                     $status = $this->getUserStatus($lastActivity, $now);
                     
-                    if ($status !== 'away') {
+                    // Only include users who are not offline (more than 2 hours inactive)
+                    if ($status !== 'offline') {
                         $activeUsers[] = [
                             'id' => $officer->id,
                             'name' => $officer->name ?? 'Officer',
@@ -1379,16 +1398,16 @@ class RoutesController extends Controller
             }
 
             try {
-                $recentEmailHandlers = EmailHandler::where('approved', true)
+                $emailHandlers = EmailHandler::where('approved', true)
                     ->where('active', true)
-                    ->where('updated_at', '>=', $now->subMinutes(30))
                     ->get();
 
-                foreach ($recentEmailHandlers as $emailHandler) {
+                foreach ($emailHandlers as $emailHandler) {
                     $lastActivity = $this->getUserLastActivity($emailHandler->id, 'email');
                     $status = $this->getUserStatus($lastActivity, $now);
                     
-                    if ($status !== 'away') {
+                    // Only include users who are not offline (more than 2 hours inactive)
+                    if ($status !== 'offline') {
                         $activeUsers[] = [
                             'id' => $emailHandler->id,
                             'name' => $emailHandler->name ?? 'Email Handler',
@@ -1441,8 +1460,10 @@ class RoutesController extends Controller
             return 'active';
         } elseif ($diffInMinutes < 30) {
             return 'idle';
-        } else {
+        } elseif ($diffInMinutes < 120) { // 2 hours
             return 'away';
+        } else {
+            return 'offline'; // More than 2 hours = offline
         }
     }
 }

@@ -364,4 +364,27 @@
     @endif
         </div>
     </div>
+
+@push('scripts')
+<script>
+// Automatic logout on browser/tab close
+window.addEventListener('beforeunload', function(e) {
+    // Send logout request using navigator.sendBeacon for reliable delivery
+    navigator.sendBeacon('{{ route('officer.logout') }}', new FormData());
+});
+
+// Also handle page visibility change (user switches tabs)
+document.addEventListener('visibilitychange', function() {
+    if (document.visibilityState === 'hidden') {
+        // User switched away from the tab, mark as away after a delay
+        setTimeout(function() {
+            if (document.visibilityState === 'hidden') {
+                navigator.sendBeacon('{{ route('officer.logout') }}', new FormData());
+            }
+        }, 30000); // 30 seconds delay
+    }
+});
+</script>
+@endpush
+
 @endsection

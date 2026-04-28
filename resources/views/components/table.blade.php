@@ -701,10 +701,7 @@ function getSortIndicator($column, $currentSort, $currentOrder) {
             </td>
             @endif
         </tr>
-        @if($loop->iteration % 40 == 0 && !$loop->last)
-        <tr class="page-break"><td colspan="{{ 14 + ($showCheckbox ? 1 : 0) + ($showDelete ? 1 : 0) + ($showEncoder ? 1 : 0) + ($showAdminTransmittal ? 1 : 0) + ($showApproval ? 1 : 0) + ($showAction ? 1 : 0) - ($hideAccountsColumn ? 1 : 0) - ($hideDateReceivedColumn ? 1 : 0) }}" style="border: none; height: 50px;"></td></tr>
-        @endif
-    @endforeach
+            @endforeach
     @if($records->isEmpty())
     </tbody>
 </table>
