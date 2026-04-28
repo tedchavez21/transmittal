@@ -368,29 +368,7 @@
                     </div>
                 </div>
 
-                <div class="admin-card dash3-chart-card">
-                    <div class="card-header">
-                        <div>
-                            <h3 class="card-title">By Municipality</h3>
-                            <p class="card-subtitle">Top municipalities</p>
-                        </div>
-                    </div>
-                    <div class="card-body dash3-chart-body">
-                        @foreach($recordsByMunicipality as $municipality => $count)
-                        <div class="dash3-chart-bar-row">
-                            <span class="dash3-chart-label">{{ $municipality }}</span>
-                            <div class="dash3-chart-bar-track">
-                                <div class="dash3-chart-bar-fill dash3-chart-bar-fill--muni" style="width: {{ $chartMax > 0 ? round($count / $chartMax * 100) : 0 }}%"></div>
-                            </div>
-                            <span class="dash3-chart-value">{{ number_format($count) }}</span>
-                        </div>
-                        @endforeach
-                        @if($recordsByMunicipality->isEmpty())
-                            <div class="dash3-empty">No data</div>
-                        @endif
-                    </div>
-                </div>
-
+                
                 <div class="admin-card dash3-chart-card">
                     <div class="card-header">
                         <div>
