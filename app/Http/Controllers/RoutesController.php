@@ -29,12 +29,23 @@ class RoutesController extends Controller
             if ($emailUserApproved) {
                 $query = Record::where('source', 'Email')
                     ->where('encoderName', $emailUserName);
-                
-                // Apply date filter if provided
-                if ($request->filled('date_encoded')) {
-                    $query->whereDate('created_at', $request->date_encoded);
+
+                // Apply date encoded filter - only if not disabled
+                if (!$request->filled('disable_date_encoded')) {
+                    if ($request->filled('date_encoded')) {
+                        $query->whereDate('created_at', $request->date_encoded);
+                    } else {
+                        $query->whereDate('created_at', today());
+                    }
                 }
-                
+
+                // Apply date received filter - only if not disabled
+                if (!$request->filled('disable_date_received')) {
+                    if ($request->filled('date_received')) {
+                        $query->whereDate('date_received', $request->date_received);
+                    }
+                }
+
                 $records = $query->orderBy('id', 'desc')
                     ->paginate(25)
                     ->withQueryString();
@@ -156,15 +167,17 @@ class RoutesController extends Controller
                 ['approved' => false]
             );
             $officerApproved = $officer->approved;
-            
+
             $query = Record::where('encoderName', $officerName)
                 ->where('source', 'OD');
-            
-            // Apply date filter if provided
+
+            // Apply date filter - default to today if not provided
             if ($request->filled('date_encoded')) {
                 $query->whereDate('created_at', $request->date_encoded);
+            } else {
+                $query->whereDate('created_at', today());
             }
-            
+
             $records = $query->orderBy('id', 'desc')
                 ->paginate(25)
                 ->withQueryString();

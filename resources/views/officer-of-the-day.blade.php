@@ -91,26 +91,24 @@
                     <p class="text-xs text-gray-500 font-semibold mt-0.5">Status and actions</p>
                 </div>
                 <div class="px-5 py-4 flex flex-col gap-3">
-                    <form action="{{ route('officer-of-the-day') }}" method="GET">
-                    <div class="flex items-center gap-2">
-                        <label class="text-xs font-bold text-gray-600">Filter by date encoded:</label>
-                        <div class="flex items-center gap-2">
-                            <input type="date" name="date_encoded" value="{{ request('date_encoded') }}" class="h-10 px-3 rounded-xl border border-gray-200 focus:border-pcic-500 focus:ring-2 focus:ring-pcic-100 outline-none text-sm bg-white">
-                            <button type="submit" class="h-10 px-3 rounded-xl bg-green-600 text-white text-xs font-bold hover:bg-green-700 transition-colors cursor-pointer">Filter</button>
-                            @if(request('date_encoded'))
-                            <a href="{{ route('officer-of-the-day') }}" class="h-10 px-3 rounded-xl border border-gray-200 text-gray-700 text-xs font-bold hover:bg-gray-50 transition-colors cursor-pointer">Clear</a>
-                            @endif
-                        </div>
-                    </div>
-                    </form>
-                    <script>
-                        document.addEventListener('DOMContentLoaded', function() {
-                            const dateInput = document.querySelector('input[name="date_encoded"]');
-                            if (dateInput && !dateInput.value) {
-                                dateInput.value = new Date().toISOString().split('T')[0];
-                            }
-                        });
-                    </script>
+	<div class="filter-container">
+		<form action="{{ route('officer-of-the-day') }}" method="GET">
+						<div class="date-received-container border border-gray-200 bg-gray-50 rounded-lg p-3">
+				<div class="flex flex-col gap-2">
+					<label class="text-xs font-bold text-gray-700 mb-1">Date Received</label>
+					<div class="flex items-center gap-2">
+						<input type="date" name="created_at" value="{{ request('created_at', now()->format('Y-m-d')) }}" class="h-10 px-3 rounded-lg border border-gray-300 focus:border-pcic-500 focus:ring-2 focus:ring-pcic-100 bg-white outline-none text-sm shadow-sm w-full">
+					</div>
+				</div>
+			</div>
+			<div class="filter-actions-container border border-gray-200 rounded-lg p-3 bg-gray-50">
+				<div class="flex gap-2">
+					<button type="submit" class="h-10 px-4 rounded-lg bg-green-600 text-white text-xs font-semibold hover:bg-green-700 transition-colors cursor-pointer shadow-sm flex items-center justify-center">Filter Date</button>
+					<a href="{{ route('officer-of-the-day') }}" class="h-10 px-4 rounded-lg bg-white text-gray-700 text-xs font-semibold hover:bg-gray-50 transition-colors cursor-pointer shadow-sm flex items-center justify-center">Clear Filters</a>
+				</div>
+			</div>
+		</form>
+	</div>
                     @if($officerApproved)
                         <div class="px-3 py-2.5 rounded-lg bg-green-50 border border-green-200 text-green-800 text-xs font-semibold">Your login is approved. You may add records.</div>
                         <button type="button" class="addRecordButton h-10 px-3 rounded-xl bg-green-600 text-white text-sm font-bold hover:bg-green-700 transition-colors cursor-pointer">Add Record</button>

@@ -77,34 +77,32 @@
     @else
         <div class="grid grid-cols-1 lg:grid-cols-3 gap-4 w-full">
             <div class="no-print bg-white rounded-2xl shadow-lg border border-gray-100/80 overflow-hidden">
-                <div class="px-5 py-4 border-b border-gray-100 bg-gradient-to-b from-harvest-50/60 to-white">
+                <div class="px-5 py-4 border-b border-gray-100 bg-gradient-to-b from-pcic-50/60 to-white">
                     <h3 class="text-sm font-black text-gray-900">Session</h3>
                     <p class="text-xs text-gray-500 font-semibold mt-0.5">Status and actions</p>
                 </div>
                 <div class="px-5 py-4 flex flex-col gap-3">
-                    <form action="{{ route('email-handler') }}" method="GET">
-                    <div class="flex items-center gap-2">
-                        <label class="text-xs font-bold text-gray-600">Filter by date encoded:</label>
-                        <div class="flex items-center gap-2">
-                            <input type="date" name="date_encoded" value="{{ request('date_encoded') }}" class="h-10 px-3 rounded-xl border border-gray-200 focus:border-pcic-500 focus:ring-2 focus:ring-pcic-100 outline-none text-sm bg-white">
-                            <button type="submit" class="h-10 px-3 rounded-xl bg-green-600 text-white text-xs font-bold hover:bg-green-700 transition-colors cursor-pointer">Filter</button>
-                            @if(request('date_encoded'))
-                            <a href="{{ route('email-handler') }}" class="h-10 px-3 rounded-xl border border-gray-200 text-gray-700 text-xs font-bold hover:bg-gray-50 transition-colors cursor-pointer">Clear</a>
-                            @endif
-                        </div>
-                    </div>
-                    </form>
-                    <script>
-                        document.addEventListener('DOMContentLoaded', function() {
-                            const dateInput = document.querySelector('input[name="date_encoded"]');
-                            if (dateInput && !dateInput.value) {
-                                dateInput.value = new Date().toISOString().split('T')[0];
-                            }
-                        });
-                    </script>
+	<div class="filter-container">
+		<form action="{{ route('email-handler') }}" method="GET">
+						<div class="date-received-container border border-gray-200 bg-gray-50 rounded-lg p-3">
+				<div class="flex flex-col gap-2">
+					<label class="text-xs font-bold text-gray-700 mb-1">Date Received</label>
+					<div class="flex items-center gap-2">
+						<input type="date" name="date_received" value="{{ request('date_received', now()->format('Y-m-d')) }}" class="h-10 px-3 rounded-lg border border-gray-300 focus:border-pcic-500 focus:ring-2 focus:ring-pcic-100 bg-white outline-none text-sm shadow-sm w-full">
+					</div>
+				</div>
+			</div>
+			<div class="filter-actions-container border border-gray-200 rounded-lg p-3 bg-gray-50">
+				<div class="flex gap-2">
+					<button type="submit" class="h-10 px-4 rounded-lg bg-green-600 text-white text-xs font-semibold hover:bg-green-700 transition-colors cursor-pointer shadow-sm flex items-center justify-center">Filter Date</button>
+					<a href="{{ route('email-handler') }}" class="h-10 px-4 rounded-lg bg-white text-gray-700 text-xs font-semibold hover:bg-gray-50 transition-colors cursor-pointer shadow-sm flex items-center justify-center">Clear Filters</a>
+				</div>
+			</div>
+		</form>
+	</div>
                     @if($emailUserApproved)
                         <div class="px-3 py-2.5 rounded-lg bg-green-50 border border-green-200 text-green-800 text-xs font-semibold">Your account is approved. You may add records.</div>
-                        <button type="button" class="addRecordButton h-10 rounded-xl bg-pcic-700 text-white text-sm font-bold hover:bg-pcic-800 transition-colors cursor-pointer">Add Record</button>
+                        <button type="button" class="addRecordButton h-10 rounded-xl bg-green-600 text-white text-sm font-bold hover:bg-green-700 transition-colors cursor-pointer">Add Record</button>
                         @if($records->count() > 0)
                         <a href="{{ route('email.export-csv') }}" class="h-10 rounded-xl bg-white border border-gray-200 text-gray-700 text-sm font-bold hover:bg-gray-50 transition-colors cursor-pointer flex items-center justify-center gap-2">
                             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
@@ -290,3 +288,17 @@
         </div>
     </div>
 @endsection
+
+@push('scripts')
+<script>
+function clearFilter(filterName) {
+    const form = document.querySelector('form[action="{{ route('email-handler') }}"]');
+    const input = form.querySelector(`input[name="${filterName}"]`);
+    if (input) {
+        input.value = '';
+        form.submit();
+    }
+}
+</script>
+@endpush
+
