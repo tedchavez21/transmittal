@@ -239,9 +239,9 @@ class RecordsController extends Controller
                 'string',
                 'max:5000',
                 Rule::requiredIf(function () use ($request) {
-                    return $request->input('source') === 'Facebook' && $request->has('facebook_page_url');
+                    return $request->input('source') === 'Facebook' && !empty($request->input('facebook_page_url'));
                 }),
-                Rule::when($request->filled('facebook_page_url'), ['regex:/^https?:\/\/.+/i']),
+                Rule::when(!empty($request->input('facebook_page_url')), ['regex:/^https?:\/\/.+/i']),
             ],
             'date_occurrence' => 'nullable|string|max:500',
             'date_received' => 'nullable|date',
@@ -286,22 +286,30 @@ class RecordsController extends Controller
         try {
             // Use database transaction to ensure data consistency
             DB::beginTransaction();
-            
+
             Log::info('About to update record', ['id' => $id, 'updateData' => $updateData]);
-            
+
             $record->update($updateData);
-            
+
             Log::info('Record updated successfully', ['id' => $id, 'updated_record' => $record->fresh()]);
-            
+
             DB::commit();
-            
+
             Log::info('Transaction committed, returning success');
-            
+
+            // Return JSON response for AJAX requests
+            if ($request->ajax() || $request->wantsJson()) {
+                return response()->json([
+                    'success' => true,
+                    'message' => 'Record updated successfully!'
+                ]);
+            }
+
             return redirect()->back()->with('success', 'Record updated successfully!');
-            
+
         } catch (\Exception $e) {
             DB::rollBack();
-            
+
             // Log the error for debugging
             Log::error('Record update failed', [
                 'error' => $e->getMessage(),
@@ -309,7 +317,15 @@ class RecordsController extends Controller
                 'user' => $request->session()->get('email_user_name') ?? $request->session()->get('facebook_user_name') ?? $request->session()->get('officer_name') ?? 'admin',
                 'data' => $updateData
             ]);
-            
+
+            // Return JSON response for AJAX requests
+            if ($request->ajax() || $request->wantsJson()) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Unable to update record. Please try again.'
+                ], 500);
+            }
+
             // Return user-friendly error message
             return redirect()->back()
                 ->with('error', 'Unable to update record. Please try again. If the problem persists, contact an administrator.')

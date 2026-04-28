@@ -17,6 +17,7 @@
     padding: 8px 12px;
     text-align: left;
     white-space: nowrap;
+    border-bottom: 2px solid #005a2b;
 }
 
 /* Make account text bold only when it's a link */

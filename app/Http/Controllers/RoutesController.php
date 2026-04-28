@@ -378,7 +378,10 @@ class RoutesController extends Controller
         if ($request->filled('date_encoded')) {
             $query->whereDate('created_at', $request->date_encoded);
         }
-        
+        if ($request->filled('created_at')) {
+            $query->whereDate('created_at', $request->created_at);
+        }
+
         // Date received filters
         if ($request->filled('date_single')) {
             $query->whereDate('date_received', $request->date_single);

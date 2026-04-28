@@ -1477,18 +1477,9 @@ Zarah,San Luis,Aurora`;
     // Function to initialize form submission handlers
     function initializeFormHandlers() {
         const addRecordForms = document.querySelectorAll('form[action*="records"]');
-        const editRecordForm = document.getElementById('recordEditForm');
-        
-        // Completely exclude the edit record form from any JavaScript handling
-        // Let it submit naturally without any interference
-        if (editRecordForm) {
-            console.log('Excluding edit record form from JavaScript handling');
-            // Remove any existing event listeners
-            const newEditForm = editRecordForm.cloneNode(true);
-            editRecordForm.parentNode.replaceChild(newEditForm, editRecordForm);
-        }
-        
+
         // Filter out the edit record form from the forms to handle
+        // The edit record form has its own submit handler defined above (line 1456-1461)
         const formsToHandle = Array.from(addRecordForms).filter(form => form.id !== 'recordEditForm');
         
         console.log('Found forms to handle:', formsToHandle.length);
