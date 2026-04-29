@@ -400,6 +400,7 @@ function getSortIndicator($column, $currentSort, $currentOrder) {
             <th class="no-print col-edit">Edit</th>
             @if($showDelete)
             <th class="no-print col-delete">Delete</th>
+            <th class="no-print col-view">View</th>
             @endif
             <!-- 1. Date Received -->
             @if(!$hideDateReceivedColumn)
@@ -604,6 +605,15 @@ function getSortIndicator($column, $currentSort, $currentOrder) {
             <td class="no-print col-delete">
                 <button type="button" class="deleteButton" data-id="{{ $record->id }}" data-farmer-name="{{ $record->farmerName }}">
                     delete
+                </button>
+            </td>
+            <td class="no-print col-view">
+                <button class="view-record-btn" data-record-id="{{ $record->id }}">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/>
+                        <circle cx="12" cy="12" r="3"/>
+                    </svg>
+                    View
                 </button>
             </td>
             @endif
@@ -888,6 +898,316 @@ document.addEventListener('DOMContentLoaded', function() {
                 rangeDiv.style.display = 'none';
             }
         });
+    }
+});
+
+</script>
+
+<!-- Simple View Record Modal -->
+<div id="viewRecordModal" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 9999; padding: 20px; box-sizing: border-box;">
+    <div style="background: white; max-width: 800px; margin: 0 auto; border-radius: 12px; max-height: 90vh; overflow: hidden; position: relative; top: 50%; transform: translateY(-50%);">
+        <!-- Modal Header -->
+        <div style="background: linear-gradient(135deg, #3b82f6 0%, #1d4ed8 100%); color: white; padding: 20px; display: flex; justify-content: space-between; align-items: center;">
+            <h3 style="margin: 0; font-size: 18px; font-weight: bold;">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="display: inline-block; vertical-align: middle; margin-right: 8px;">
+                    <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/>
+                    <circle cx="12" cy="12" r="3"/>
+                </svg>
+                Record Details
+            </h3>
+            <button type="button" id="closeModalBtn" style="background: none; border: none; color: white; font-size: 24px; cursor: pointer; padding: 0; width: 30px; height: 30px; display: flex; align-items: center; justify-content: center; border-radius: 6px; transition: background 0.2s;">
+                ×
+            </button>
+        </div>
+
+        <!-- Modal Body -->
+        <div style="padding: 20px; max-height: 60vh; overflow-y: auto;">
+            <div id="recordDetails">
+                <!-- Record details will be loaded here -->
+            </div>
+        </div>
+
+        <!-- Modal Footer -->
+        <div style="background: #f8f9fa; padding: 15px 20px; border-top: 1px solid #e9ecef; text-align: right;">
+            <button type="button" id="closeModalFooterBtn" style="background: #6c757d; color: white; border: none; padding: 8px 20px; border-radius: 6px; cursor: pointer; font-size: 14px;">Close</button>
+        </div>
+    </div>
+</div>
+
+<style>
+/* View Record Button Styling */
+.view-record-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 6px 12px;
+    background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);
+    color: white;
+    border: none;
+    border-radius: 8px;
+    font-size: 12px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    box-shadow: 0 2px 4px rgba(59, 130, 246, 0.2);
+}
+
+.view-record-btn:hover {
+    background: linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%);
+    transform: translateY(-1px);
+    box-shadow: 0 4px 8px rgba(59, 130, 246, 0.3);
+}
+
+.view-record-btn:active {
+    transform: translateY(0);
+}
+
+/* Modal Animations */
+#viewRecordModal[style*="block"] {
+    animation: fadeIn 0.3s ease-out;
+}
+
+#viewRecordModal[style*="block"] > div {
+    animation: slideUp 0.3s ease-out;
+}
+
+@keyframes fadeIn {
+    from { opacity: 0; }
+    to { opacity: 1; }
+}
+
+@keyframes slideUp {
+    from { 
+        opacity: 0;
+        transform: translateY(20px);
+    }
+    to { 
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+/* Record Details Styling */
+.detail-section {
+    background: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%);
+    border-radius: 12px;
+    padding: 20px;
+    border: 1px solid #e2e8f0;
+    transition: all 0.2s ease;
+}
+
+.detail-section:hover {
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+    transform: translateY(-2px);
+}
+
+.detail-section h4 {
+    color: #1e293b;
+    font-size: 14px;
+    font-weight: 600;
+    margin-bottom: 16px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.detail-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 12px;
+}
+
+.detail-item {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
+
+.detail-label {
+    font-size: 11px;
+    font-weight: 500;
+    color: #64748b;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.detail-value {
+    font-size: 14px;
+    color: #1e293b;
+    font-weight: 500;
+    word-break: break-word;
+}
+
+.detail-value.empty {
+    color: #94a3b8;
+    font-style: italic;
+}
+
+/* Remarks Section */
+.remarks-section {
+    background: linear-gradient(135deg, #fef7f0 0%, #fef3e2 100%);
+    border: 1px solid #fbbf24;
+}
+
+.remarks-content {
+    background: white;
+    border-radius: 8px;
+    padding: 16px;
+    min-height: 80px;
+    max-height: 200px;
+    overflow-y: auto;
+    white-space: pre-wrap;
+    font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', monospace;
+    font-size: 13px;
+    line-height: 1.5;
+    color: #374151;
+}
+
+.remarks-content:empty::before {
+    content: "No remarks available";
+    color: #9ca3af;
+    font-style: italic;
+}
+</style>
+
+<script>
+// Simple View Record Modal Functionality
+document.addEventListener('DOMContentLoaded', function() {
+    const modal = document.getElementById('viewRecordModal');
+    const closeBtn = document.getElementById('closeModalBtn');
+    const closeFooterBtn = document.getElementById('closeModalFooterBtn');
+    const recordDetails = document.getElementById('recordDetails');
+
+    // Close modal functions
+    function closeModal() {
+        modal.style.display = 'none';
+        document.body.style.overflow = '';
+    }
+
+    // Event listeners
+    if (closeBtn) closeBtn.onclick = closeModal;
+    if (closeFooterBtn) closeFooterBtn.onclick = closeModal;
+
+    // Close on backdrop click
+    modal.onclick = function(e) {
+        if (e.target === modal) {
+            closeModal();
+        }
+    };
+
+    // Close on ESC key
+    document.onkeydown = function(e) {
+        if (e.key === 'Escape' && modal.style.display === 'block') {
+            closeModal();
+        }
+    };
+
+    // View record click handler
+    document.onclick = function(e) {
+        const viewBtn = e.target.closest('.view-record-btn');
+        if (viewBtn) {
+            const recordId = viewBtn.getAttribute('data-record-id');
+            if (recordId) {
+                openViewModal(recordId);
+            }
+        }
+    };
+
+    // Open view modal function
+    function openViewModal(recordId) {
+        // Find the record data from the table row
+        const row = document.querySelector(`.view-record-btn[data-record-id="${recordId}"]`).closest('tr');
+        if (!row) {
+            console.error('Record row not found');
+            return;
+        }
+
+        // Extract record data from the row
+        const recordData = extractRecordData(row);
+        
+        // Populate modal with record data
+        populateModal(recordData);
+        
+        // Show modal
+        modal.style.display = 'block';
+        document.body.style.overflow = 'hidden';
+    }
+
+    // Extract record data from table row
+    function extractRecordData(row) {
+        const cells = row.querySelectorAll('td');
+        const viewBtn = row.querySelector('.view-record-btn');
+        return {
+            id: viewBtn.getAttribute('data-record-id') || 'N/A',
+            farmerName: cells[0]?.textContent.trim() || 'N/A',
+            province: cells[1]?.textContent.trim() || 'N/A',
+            municipality: cells[2]?.textContent.trim() || 'N/A',
+            barangay: cells[3]?.textContent.trim() || 'N/A',
+            address: cells[4]?.textContent.trim() || 'N/A',
+            program: cells[5]?.textContent.trim() || 'N/A',
+            line: cells[6]?.textContent.trim() || 'N/A',
+            causeOfDamage: cells[7]?.textContent.trim() || 'N/A',
+            modeOfPayment: cells[8]?.textContent.trim() || 'N/A',
+            dateOccurrence: cells[9]?.textContent.trim() || 'N/A',
+            dateReceived: cells[10]?.textContent.trim() || 'N/A',
+            transmittalNumber: cells[11]?.textContent.trim() || 'N/A',
+            adminTransmittalNumber: cells[12]?.textContent.trim() || 'N/A',
+            createdAt: cells[13]?.textContent.trim() || 'N/A',
+            accounts: cells[14]?.textContent.trim() || 'N/A',
+            remarks: cells[15]?.textContent.trim() || ''
+        };
+    }
+
+    // Populate modal with record data
+    function populateModal(data) {
+        recordDetails.innerHTML = `
+            <div style="margin-bottom: 20px;">
+                <h4 style="color: #333; margin-bottom: 10px; font-size: 16px; font-weight: bold;">Basic Information</h4>
+                <div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px;">
+                    <div><strong>Record ID:</strong> ${data.id}</div>
+                    <div><strong>Farmer Name:</strong> ${data.farmerName}</div>
+                    <div><strong>Encoder:</strong> ${data.encoderName || 'N/A'}</div>
+                    <div><strong>Source:</strong> ${data.source || 'N/A'}</div>
+                </div>
+            </div>
+
+            <div style="margin-bottom: 20px;">
+                <h4 style="color: #333; margin-bottom: 10px; font-size: 16px; font-weight: bold;">Location Information</h4>
+                <div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px;">
+                    <div><strong>Province:</strong> ${data.province}</div>
+                    <div><strong>Municipality:</strong> ${data.municipality}</div>
+                    <div><strong>Barangay:</strong> ${data.barangay}</div>
+                    <div><strong>Address:</strong> ${data.address}</div>
+                </div>
+            </div>
+
+            <div style="margin-bottom: 20px;">
+                <h4 style="color: #333; margin-bottom: 10px; font-size: 16px; font-weight: bold;">Program Information</h4>
+                <div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px;">
+                    <div><strong>Program:</strong> ${data.program}</div>
+                    <div><strong>Line:</strong> ${data.line}</div>
+                    <div><strong>Cause of Damage:</strong> ${data.causeOfDamage}</div>
+                    <div><strong>Mode of Payment:</strong> ${data.modeOfPayment}</div>
+                </div>
+            </div>
+
+            <div style="margin-bottom: 20px;">
+                <h4 style="color: #333; margin-bottom: 10px; font-size: 16px; font-weight: bold;">Dates and Numbers</h4>
+                <div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px;">
+                    <div><strong>Date Occurrence:</strong> ${data.dateOccurrence}</div>
+                    <div><strong>Date Received:</strong> ${data.dateReceived}</div>
+                    <div><strong>Control Number:</strong> ${data.transmittalNumber}</div>
+                    <div><strong>Admin Transmittal:</strong> ${data.adminTransmittalNumber}</div>
+                    <div><strong>Created At:</strong> ${data.createdAt}</div>
+                    <div><strong>Account:</strong> ${data.accounts}</div>
+                </div>
+            </div>
+
+            <div style="margin-bottom: 20px;">
+                <h4 style="color: #333; margin-bottom: 10px; font-size: 16px; font-weight: bold;">Remarks</h4>
+                <div style="background: #f8f9fa; padding: 15px; border-radius: 6px; border: 1px solid #e9ecef; min-height: 60px; white-space: pre-wrap;">${data.remarks || 'No remarks available'}</div>
+            </div>
+        `;
     }
 });
 </script>
