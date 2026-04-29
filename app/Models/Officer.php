@@ -10,15 +10,6 @@ class Officer extends Model
         'name',
         'username',
         'password',
-        'active',
-        'approved',
-        'approved_at',
-    ];
-
-    protected $casts = [
-        'active' => 'boolean',
-        'approved' => 'boolean',
-        'approved_at' => 'datetime',
     ];
 
     protected $hidden = [

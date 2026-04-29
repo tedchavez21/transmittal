@@ -610,9 +610,9 @@ class RoutesController extends Controller
         $recentRecords = (clone $statsQuery)->where('created_at', '>=', now()->subDays(7))->count();
         
         // Unfiltered stats for reference
-        $pendingOfficers = Officer::where('approved', false)->where('active', true)->orderBy('created_at')->get();
+        $pendingOfficers = Officer::orderBy('created_at')->get();
         $pendingEmailHandlers = EmailHandler::where('approved', false)->where('active', true)->orderBy('created_at')->get();
-        $activeOfficers = Officer::where('active', true)->orderBy('name')->get();
+        $activeOfficers = Officer::orderBy('name')->get();
         $admins = Admin::all();
 
         // All available programs (9 total)
