@@ -56,43 +56,61 @@ class AuthController extends Controller
         $request->session()->put('officer_name', $officer->name);
         $request->session()->put('officer_id', $officer->id);
         $request->session()->put('officer_logged_in', true);
+        $request->session()->put('officer_last_activity', now());
 
         return redirect()->route('officer-of-the-day')->with('success', 'Login successful');
     }
 
     private function loginEmail(Request $request, $username, $password)
     {
-        // For email handlers, we'll use name as username for now
-        $handler = EmailHandler::where('name', $username)->first();
-
-        if (!$handler) {
-            // Create new handler if not exists
-            $handler = EmailHandler::create([
-                'name' => $username,
-                'approved' => true, // Auto-approve for now
-                'active' => true,
-            ]);
+        // Find the officer by exact username match only
+        $officer = Officer::where('username', $username)->first();
+        if (!$officer) {
+            return back()->with('error', 'Invalid username. Please select a valid user from the list.');
         }
 
-        // Store session
-        $request->session()->put('email_user_name', $handler->name);
+        // Check if officer has a password
+        if (!$officer->password) {
+            return back()->with('error', 'Account not configured. Please contact administrator.');
+        }
+
+        // Verify password
+        if (!Hash::check($password, $officer->password)) {
+            return back()->with('error', 'Invalid password. Please try again.');
+        }
+
+        // Store session data
+        $request->session()->put('email_user_name', $officer->name);
+        $request->session()->put('email_user_id', $officer->id);
         $request->session()->put('email_logged_in', true);
+        $request->session()->put('email_last_activity', now());
 
         return redirect()->route('email-handler')->with('success', 'Login successful');
     }
 
     private function loginFacebook(Request $request, $username, $password)
     {
-        // For Facebook, we'll use a simple password check
-        $correctPassword = env('FACEBOOK_HANDLER_PASSWORD', 'facebook2026');
-
-        if ($password !== $correctPassword) {
-            return back()->with('error', 'Invalid credentials');
+        // Find the officer by exact username match only
+        $officer = Officer::where('username', $username)->first();
+        if (!$officer) {
+            return back()->with('error', 'Invalid username. Please select a valid officer.');
         }
 
-        // Store session
+        // Check if officer has a password
+        if (!$officer->password) {
+            return back()->with('error', 'Account not configured. Please contact administrator.');
+        }
+
+        // Verify password
+        if (!Hash::check($password, $officer->password)) {
+            return back()->with('error', 'Invalid password. Please try again.');
+        }
+
+        // Store session data
+        $request->session()->put('facebook_user', $officer->name);
+        $request->session()->put('facebook_user_id', $officer->id);
         $request->session()->put('facebook_logged_in', true);
-        $request->session()->put('facebook_user', $username);
+        $request->session()->put('facebook_last_activity', now());
 
         return redirect()->route('facebook-handler')->with('success', 'Login successful');
     }

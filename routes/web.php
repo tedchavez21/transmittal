@@ -14,10 +14,13 @@ Route::post('/auth/logout', [AuthController::class, 'logout'])->name('auth.logou
 
 // Protected Channel Routes
 Route::get('/email-handler', [RoutesController::class, 'showEmailHandler'])->name('email-handler');
+Route::post('/email/login', [RoutesController::class, 'loginEmail'])->name('email.login');
 Route::post('/email/logout', [RoutesController::class, 'logoutEmail'])->name('email.logout');
 Route::get('/facebook-handler', [RoutesController::class, 'showFacebookHandler'])->name('facebook-handler');
+Route::post('/facebook/login', [RoutesController::class, 'loginFacebook'])->name('facebook.login');
 Route::post('/facebook/logout', [RoutesController::class, 'logoutFacebook'])->name('facebook.logout');
 Route::get('/officer-of-the-day', [RoutesController::class, 'showOfficerOfTheDay'])->name('officer-of-the-day');
+Route::post('/officer/login', [RoutesController::class, 'loginOfficer'])->name('officer.login');
 Route::post('/officer/logout', [RoutesController::class, 'logoutOfficer'])->name('officer.logout');
 
 Route::get('/all-records', [RoutesController::class, 'showAllRecords'])->name('all-records');
@@ -41,6 +44,20 @@ Route::post('/admin/clear-print-preview', [RoutesController::class, 'clearPrintP
 Route::get('/admin/export-preview-csv', [RoutesController::class, 'exportPreviewCsv'])->name('admin.export-preview-csv');
 Route::post('/admin/assign-transmittals', [RoutesController::class, 'assignTransmittals'])->name('admin.assign-transmittals');
 Route::get('/admin/api/pending-approvals', [RoutesController::class, 'pendingApprovalsApi'])->name('admin.api.pending-approvals');
+
+// Test authentication route
+Route::get('/test-auth', [RoutesController::class, 'testAuth'])->name('test.auth');
+
+// Auto-logout and activity tracking routes
+Route::post('/auto-logout', [RoutesController::class, 'autoLogout'])->name('auto.logout');
+Route::post('/update-activity', [RoutesController::class, 'updateActivity'])->name('update.activity');
+
+// Admin Officer Management Routes
+Route::get('/admin/officers', [RoutesController::class, 'getOfficers'])->name('admin.officers.index');
+Route::post('/admin/officers', [RoutesController::class, 'createOfficer'])->name('admin.officers.store');
+Route::get('/admin/officers/{id}', [RoutesController::class, 'getOfficer'])->name('admin.officers.show');
+Route::put('/admin/officers/{id}', [RoutesController::class, 'updateOfficer'])->name('admin.officers.update');
+Route::delete('/admin/officers/{id}', [RoutesController::class, 'deleteOfficer'])->name('admin.officers.destroy');
 
 Route::post('/records', [RecordsController::class, 'storeRecord'])->name('records');
 Route::post('/records/submit-transmittal', [RoutesController::class, 'submitTransmittal'])->name('records.submit-transmittal');

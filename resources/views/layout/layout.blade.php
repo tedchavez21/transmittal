@@ -191,6 +191,68 @@
                 }, 300);
             };
         })();
+
+        // Auto-logout on window close/tab close
+        (function() {
+            let logoutSent = false;
+            
+            // Send logout request when user leaves the page
+            function sendLogoutRequest() {
+                if (logoutSent) return; // Prevent multiple requests
+                
+                logoutSent = true;
+                
+                // Use navigator.sendBeacon for reliable delivery during page unload
+                const logoutData = new FormData();
+                logoutData.append('auto_logout', 'true');
+                logoutData.append('channel', getCurrentChannel());
+                
+                try {
+                    navigator.sendBeacon('/auto-logout', logoutData);
+                } catch (e) {
+                    // Fallback to fetch if sendBeacon fails
+                    fetch('/auto-logout', {
+                        method: 'POST',
+                        body: logoutData,
+                        headers: {
+                            'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') || ''
+                        },
+                        keepalive: true
+                    }).catch(() => {}); // Ignore errors during unload
+                }
+            }
+            
+            // Get current user channel
+            function getCurrentChannel() {
+                const path = window.location.pathname;
+                if (path.includes('officer-of-the-day')) return 'OD';
+                if (path.includes('email-handler')) return 'Email';
+                if (path.includes('facebook-handler')) return 'Facebook';
+                if (path.includes('admin')) return 'admin';
+                return 'unknown';
+            }
+            
+            // Add event listeners for page unload
+            window.addEventListener('beforeunload', sendLogoutRequest);
+            window.addEventListener('pagehide', sendLogoutRequest);
+            
+            // Also handle visibility change (when user switches tabs)
+            document.addEventListener('visibilitychange', function() {
+                if (document.visibilityState === 'hidden') {
+                    // User switched to another tab or minimized window
+                    // Mark as potentially away, but don't logout immediately
+                    const awayData = new FormData();
+                    awayData.append('away', 'true');
+                    awayData.append('channel', getCurrentChannel());
+                    
+                    try {
+                        navigator.sendBeacon('/update-activity', awayData);
+                    } catch (e) {
+                        // Ignore errors
+                    }
+                }
+            });
+        })();
     </script>
 
     <!-- Confirmation Modal -->

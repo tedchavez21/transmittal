@@ -4,9 +4,6 @@
 
 @push('styles')
 <style>
-.auto-caps {
-    text-transform: capitalize;
-}
 </style>
 @endpush
 
@@ -19,7 +16,6 @@
         <div class="odHeader sticky top-0 z-20 w-full bg-white/90 backdrop-blur-md border-b border-gray-200/60">
             <div class="max-w-6xl mx-auto px-4 py-3 flex items-center justify-between gap-3">
                 <div class="flex items-center gap-3 min-w-0">
-                    <a href="{{ route('welcome') }}" class="inline-flex items-center gap-1.5 h-8 px-3 rounded-lg border border-gray-200 bg-white text-xs font-bold text-gray-600 hover:bg-gray-50 hover:border-gray-300 transition-colors">← Back</a>
                     <div class="flex flex-col">
                         <h3 class="text-base font-black text-gray-900">Officer of the Day</h3>
                         <p class="text-xs text-gray-500 font-semibold">NL Entry Module</p>
@@ -53,32 +49,14 @@
             <select id="officerName" name="officerName" required
                 class="h-11 px-3 rounded-xl border border-gray-200 focus:border-pcic-500 focus:ring-2 focus:ring-pcic-100 outline-none text-sm w-full bg-white">
                 <option value="">Select Officer of the day</option>
-                <option value="Gemmary Eiden Chavez">Gemmary Eiden Chavez</option>
-                <option value="John Vincent Chico">John Vincent Chico</option>
-                <option value="John Daryl Cruz">John Daryl Cruz</option>
-                <option value="Shaila Jade Santos">Shaila Jade Santos</option>
-                <option value="Lorena Jane Policarpio">Lorena Jane Policarpio</option>
-                <option value="Bernadette Santiago">Bernadette Santiago</option>
-                <option value="Carol Lumibao">Carol Lumibao</option>
-                <option value="Romellyn Pornuevo">Romellyn Pornuevo</option>
-                <option value="Glen Bondoc">Glen Bondoc</option>
-                <option value="John Patrick Aceron">John Patrick Aceron</option>
-                <option value="Ted Eiden Chavez">Ted Eiden Chavez</option>
-                <option value="Uzziel Martinez">Uzziel Martinez</option>
-                <option value="Hanna Marie Lorica">Hanna Marie Lorica</option>
-                <option value="Jessica Rose Flores">Jessica Rose Flores</option>
-                <option value="Jenica Atchico">Jenica Atchico</option>
-                <option value="Julie Ann Espejo">Julie Ann Espejo</option>
-                <option value="Ian Marvic Lumibao">Ian Marvic Lumibao</option>
-                <option value="Nelson Alvaro">Nelson Alvaro</option>
-                <option value="Jia Joanna Paler">Jia Joanna Paler</option>
-                <option value="Jammie Padilla">Jammie Padilla</option>
-                <option value="Nicole Ann Carlos">Nicole Ann Carlos</option>
-                <option value="Myleen Concepcion">Myleen Concepcion</option>
-                <option value="Raven Guingon">Raven Guingon</option>
-                <option value="Melody Returban">Melody Returban</option>
-                <option value="Clarissa Centeno">Clarissa Centeno</option>
+                @php
+                    $officers = \App\Models\Officer::orderBy('name')->get();
+                @endphp
+                @foreach($officers as $officer)
+                    <option value="{{ $officer->username ?? $officer->name }}">{{ $officer->name }}</option>
+                @endforeach
             </select>
+            <input type="password" name="officer_password" id="officer_password" placeholder="Password" required class="h-11 px-3 rounded-xl border border-gray-200 focus:border-pcic-500 focus:ring-2 focus:ring-pcic-100 outline-none text-sm w-full">
             <button type="submit" class="h-10 rounded-xl bg-pcic-700 text-white text-sm font-bold hover:bg-pcic-800 transition-colors cursor-pointer">Enter</button>
         </form>
             </div>
@@ -111,7 +89,7 @@
 	</div>
                     @if($officerApproved)
                         <div class="px-3 py-2.5 rounded-lg bg-green-50 border border-green-200 text-green-800 text-xs font-semibold">Your login is approved. You may add records.</div>
-                        <button type="button" class="addRecordButton h-10 px-3 rounded-xl bg-green-600 text-white text-sm font-bold hover:bg-green-700 transition-colors cursor-pointer">Add Record</button>
+                        <button type="button" class="addRecordButton h-10 rounded-xl bg-green-600 text-white text-sm font-bold hover:bg-green-700 transition-colors cursor-pointer">add record</button>
                         @if($records->count() > 0)
                         <a href="{{ route('officer.export-csv') }}" class="h-10 rounded-xl bg-white border border-gray-200 text-gray-700 text-sm font-bold hover:bg-gray-50 transition-colors cursor-pointer flex items-center justify-center gap-2">
                             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
@@ -149,13 +127,13 @@
 
         <dialog class="addRecordDialog rounded-2xl shadow-2xl bg-white backdrop:bg-black/40 p-0 w-[min(640px,calc(100vw-2rem))]">
             <div class="px-5 pt-5 pb-3 border-b border-gray-100">
-                <h3 class="text-base font-black text-gray-900">Add Record</h3>
+                <h3 class="text-base font-black text-gray-900">Add record</h3>
             </div>
             <form action="{{ route('records') }}" method="POST" class="grid grid-cols-[auto_1fr] gap-x-4 gap-y-3 px-5 py-4 items-center">
                 @csrf
                 <input type="hidden" name="source" value="OD">
             <label for="farmerName" class="text-xs font-bold text-gray-600 text-right">Farmer Name:</label>
-            <input type="text" id="farmerName" name="farmerName" required class="h-9 px-3 rounded-lg border border-gray-200 focus:border-pcic-500 focus:ring-2 focus:ring-pcic-100 outline-none text-sm w-full auto-caps">
+            <input type="text" id="farmerName" name="farmerName" required class="h-9 px-3 rounded-lg border border-gray-200 focus:border-pcic-500 focus:ring-2 focus:ring-pcic-100 outline-none text-sm w-full">
             <label for="province" class="text-xs font-bold text-gray-600 text-right">Province:</label>
             <select name="province" id="province" required class="h-9 px-3 rounded-lg border border-gray-200 focus:border-pcic-500 focus:ring-2 focus:ring-pcic-100 outline-none text-sm w-full bg-white">
                 <option value="">Select Province</option>
@@ -199,7 +177,7 @@
             <label for="date_occurrence" class="text-xs font-bold text-gray-600 text-right">Date occurrence:</label>
             <input type="text" id="date_occurrence" name="date_occurrence" class="h-9 px-3 rounded-lg border border-gray-200 focus:border-pcic-500 focus:ring-2 focus:ring-pcic-100 outline-none text-sm w-full">
             <label for="causeOfDamage" class="text-xs font-bold text-gray-600 text-right">Cause of Damage:</label>
-            <input type="text" id="causeOfDamage" name="causeOfDamage" required class="h-9 px-3 rounded-lg border border-gray-200 focus:border-pcic-500 focus:ring-2 focus:ring-pcic-100 outline-none text-sm w-full auto-caps">
+            <input type="text" id="causeOfDamage" name="causeOfDamage" required class="h-9 px-3 rounded-lg border border-gray-200 focus:border-pcic-500 focus:ring-2 focus:ring-pcic-100 outline-none text-sm w-full">
             <label for="modeOfPayment" class="text-xs font-bold text-gray-600 text-right">Mode of payment:</label>
             <select name="modeOfPayment" id="modeOfPayment" required class="h-9 px-3 rounded-lg border border-gray-200 focus:border-pcic-500 focus:ring-2 focus:ring-pcic-100 outline-none text-sm w-full bg-white">
                 <option value="">Select Mode of payment</option>
@@ -209,10 +187,10 @@
                 <option value="not_indicated">Not indicated</option>
             </select>
             <label for="remarks" class="text-xs font-bold text-gray-600 text-right">Remarks - Care of:</label>
-            <input type="text" id="remarks" name="remarks" class="h-9 px-3 rounded-lg border border-gray-200 focus:border-pcic-500 focus:ring-2 focus:ring-pcic-100 outline-none text-sm w-full auto-caps">
+            <input type="text" id="remarks" name="remarks" class="h-9 px-3 rounded-lg border border-gray-200 focus:border-pcic-500 focus:ring-2 focus:ring-pcic-100 outline-none text-sm w-full">
             <div></div>
             <div class="flex gap-2 pt-1">
-                <button type="submit" class="h-9 px-4 rounded-lg bg-pcic-700 text-white text-xs font-bold hover:bg-pcic-800 transition-colors cursor-pointer">Add Record</button>
+                <button type="submit" class="h-9 px-4 rounded-lg bg-pcic-700 text-white text-xs font-bold hover:bg-pcic-800 transition-colors cursor-pointer">Add record</button>
                 <button type="button" class="closeAddRecordModal h-9 px-4 rounded-lg border border-gray-200 text-xs font-bold text-gray-600 hover:bg-gray-50 transition-colors cursor-pointer">Close</button>
             </div>
         </form>
@@ -386,6 +364,7 @@ document.addEventListener('visibilitychange', function() {
 });
 </script>
 
+<script>
 // Edit Record Modal
 const editRecordDialog = document.getElementById('recordEditDialog');
 const closeEditRecordModal = document.querySelector('.closeEditRecordDialog');
@@ -558,3 +537,6 @@ if (editRecordForm) {
 }
 
 // Automatic logout on browser/tab close
+</script>
+
+@endsection

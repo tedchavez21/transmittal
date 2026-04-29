@@ -26,6 +26,7 @@ class Record extends Model
         'admin_transmittal_number',
         'admin_transmittal_assigned_at',
         'encoderName',
+        'encoder_id',
         'approved',
         'approved_at',
     ];

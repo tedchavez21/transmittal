@@ -703,10 +703,10 @@ function getSortIndicator($column, $currentSort, $currentOrder) {
             @endif
         </tr>
             @endforeach
-    @if($records->isEmpty())
     </tbody>
 </table>
 </div>
+    @if($records->isEmpty())
 <div class="empty-state" style="display:flex;flex-direction:column;align-items:center;justify-content:center;padding:48px 20px;text-align:center;">
     <svg width="80" height="80" viewBox="0 0 80 80" fill="none" xmlns="http://www.w3.org/2000/svg" style="margin-bottom:16px;opacity:0.5;">
         <rect x="18" y="8" width="44" height="56" rx="6" stroke="#006c35" stroke-width="2.5" fill="#f0fdf4"/>
@@ -717,12 +717,8 @@ function getSortIndicator($column, $currentSort, $currentOrder) {
         <circle cx="58" cy="58" r="14" fill="#006c35"/>
         <path d="M51 58l4 4 9-9" stroke="#fff" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>
     </svg>
-    <div style="font-size:16px;font-weight:900;color:#0f172a;">No records yet</div>
+    <div style="font-size:16px;color:#475569;font-weight:600;margin-bottom:8px;">No records found</div>
     <div style="font-size:13px;color:#64748b;margin-top:4px;font-weight:600;">Records will appear here once they are added.</div>
-</div>
-    @else
-    </tbody>
-</table>
 </div>
     @endif
 

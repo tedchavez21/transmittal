@@ -217,7 +217,7 @@ document.addEventListener('DOMContentLoaded', function() {
             icon: 'EM',
             title: 'Email Handler Login',
             usernameLabel: 'Name',
-            usernamePlaceholder: 'Enter your full name'
+            usernamePlaceholder: 'Enter your username'
         },
         'Facebook': {
             icon: 'FB',

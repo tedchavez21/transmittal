@@ -4,9 +4,6 @@
 
 @push('styles')
 <style>
-.auto-caps {
-    text-transform: capitalize;
-}
 </style>
 @endpush
 
@@ -24,7 +21,6 @@
         <div class="odHeader sticky top-0 z-20 w-full bg-white/90 backdrop-blur-md border-b border-gray-200/60">
             <div class="max-w-6xl mx-auto px-4 py-3 flex items-center justify-between gap-3">
                 <div class="flex items-center gap-3 min-w-0">
-                    <a href="{{ route('welcome') }}" class="inline-flex items-center gap-1.5 h-8 px-3 rounded-lg border border-gray-200 bg-white text-xs font-bold text-gray-600 hover:bg-gray-50 hover:border-gray-300 transition-colors">← Back</a>
                     <div class="flex flex-col">
                         <h3 class="text-base font-black text-gray-900">Facebook</h3>
                         <p class="text-xs text-gray-500 font-semibold">NL Entry Module</p>
@@ -34,7 +30,7 @@
                 <div class="flex items-center gap-3">
                     <div class="flex flex-col items-end">
                         <div class="text-[10px] text-gray-400 font-bold uppercase tracking-wider">FB</div>
-                        <div class="text-xs font-black text-gray-900">Facebook Handler</div>
+                        <div class="text-xs font-black text-gray-900">{{ $facebookUserFullName }}</div>
                     </div>
                     <form action="{{ route('facebook.logout') }}" method="POST">
                         @csrf
@@ -49,18 +45,34 @@
         <div class="w-full max-w-md bg-white rounded-2xl shadow-lg border border-gray-100/80 overflow-hidden">
             <div class="px-6 pt-6 pb-4 border-b border-gray-100 bg-gradient-to-b from-pcic-50/60 to-white text-center">
                 <div class="w-12 h-12 rounded-xl bg-pcic-50 text-pcic-600 flex items-center justify-center text-sm font-black border border-pcic-100 mx-auto mb-3">FB</div>
-                <h1 class="text-xl font-black text-gray-900">Facebook entry</h1>
-                <p class="text-sm text-gray-500 font-semibold mt-1">Enter the access password to continue.</p>
+                <h1 class="text-xl font-black text-gray-900">Facebook Login</h1>
+                <p class="text-sm text-gray-500 font-semibold mt-1">Enter your credentials to continue.</p>
             </div>
             <div class="px-6 py-5">
-        <form action="{{ route('facebook.login') }}" method="POST" class="officerOfTheDayNames flex flex-col gap-3">
+        <form action="{{ route('facebook.login') }}" method="POST" class="officerOfTheDayNames flex flex-col gap-3" id="facebookLoginForm">
             @csrf
-            <input type="password" id="password" name="password" required placeholder="Password" aria-label="Password" class="h-11 px-4 rounded-xl border border-gray-200 focus:border-pcic-500 focus:ring-2 focus:ring-pcic-100 outline-none text-sm w-full">
-            <button type="submit" class="h-10 rounded-xl bg-pcic-700 text-white text-sm font-bold hover:bg-pcic-800 transition-colors cursor-pointer">Enter</button>
+            <select name="facebook_user" id="facebook_user" required class="h-11 px-3 rounded-xl border border-gray-200 focus:border-pcic-500 focus:ring-2 focus:ring-pcic-100 outline-none text-sm w-full bg-white">
+                <option value="">Select user</option>
+                @php
+                    $officers = \App\Models\Officer::orderBy('name')->get();
+                @endphp
+                @foreach($officers as $officer)
+                    <option value="{{ $officer->username ?? $officer->name }}">{{ $officer->name }}</option>
+                @endforeach
+            </select>
+            <input type="password" name="facebook_password" id="facebook_password" placeholder="Password" required class="h-11 px-3 rounded-xl border border-gray-200 focus:border-pcic-500 focus:ring-2 focus:ring-pcic-100 outline-none text-sm w-full">
+            <button type="submit" class="h-10 rounded-xl bg-pcic-700 text-white text-sm font-bold hover:bg-pcic-800 transition-colors cursor-pointer">Login</button>
         </form>
             </div>
         </div>
         @else
+        @if(session('error'))
+            <div class="mb-4 mx-auto max-w-2xl">
+                <div class="bg-red-50 border border-red-200 text-red-800 px-4 py-3 rounded-lg text-sm">
+                    {{ session('error') }}
+                </div>
+            </div>
+        @endif
         <div class="grid grid-cols-1 lg:grid-cols-3 gap-4 w-full">
             <div class="no-print bg-white rounded-2xl shadow-lg border border-gray-100/80 overflow-hidden">
                 <div class="px-5 py-4 border-b border-gray-100 bg-gradient-to-b from-pcic-50/60 to-white">
@@ -118,7 +130,7 @@
                 @csrf
                 <input type="hidden" name="source" value="Facebook">
             <label for="farmerName" class="text-xs font-bold text-gray-600 text-right">Farmer Name:</label>
-            <input type="text" id="farmerName" name="farmerName" required class="h-9 px-3 rounded-lg border border-gray-200 focus:border-pcic-500 focus:ring-2 focus:ring-pcic-100 outline-none text-sm w-full auto-caps">
+            <input type="text" id="farmerName" name="farmerName" required class="h-9 px-3 rounded-lg border border-gray-200 focus:border-pcic-500 focus:ring-2 focus:ring-pcic-100 outline-none text-sm w-full">
             <label for="province" class="text-xs font-bold text-gray-600 text-right">Province:</label>
             <select name="province" id="province" required class="h-9 px-3 rounded-lg border border-gray-200 focus:border-pcic-500 focus:ring-2 focus:ring-pcic-100 outline-none text-sm w-full bg-white">
                 <option value="">Select Province</option>
@@ -163,7 +175,7 @@
             <label for="date_received" class="text-xs font-bold text-gray-600 text-right">Date received:</label>
             <input type="date" id="date_received" name="date_received" value="{{ now()->format('Y-m-d') }}" class="h-9 px-3 rounded-lg border border-gray-200 focus:border-pcic-500 focus:ring-2 focus:ring-pcic-100 outline-none text-sm w-full">
             <label for="causeOfDamage" class="text-xs font-bold text-gray-600 text-right">Cause of Damage:</label>
-            <input type="text" id="causeOfDamage" name="causeOfDamage" required class="h-9 px-3 rounded-lg border border-gray-200 focus:border-pcic-500 focus:ring-2 focus:ring-pcic-100 outline-none text-sm w-full auto-caps">
+            <input type="text" id="causeOfDamage" name="causeOfDamage" required class="h-9 px-3 rounded-lg border border-gray-200 focus:border-pcic-500 focus:ring-2 focus:ring-pcic-100 outline-none text-sm w-full">
             <label for="modeOfPayment" class="text-xs font-bold text-gray-600 text-right">Mode of payment:</label>
             <select name="modeOfPayment" id="modeOfPayment" required class="h-9 px-3 rounded-lg border border-gray-200 focus:border-pcic-500 focus:ring-2 focus:ring-pcic-100 outline-none text-sm w-full bg-white">
                 <option value="">Select Mode of payment</option>
@@ -173,9 +185,9 @@
                 <option value="not_indicated">Not indicated</option>
             </select>
             <label for="remarks" class="text-xs font-bold text-gray-600 text-right">Remarks - Care of:</label>
-            <input type="text" id="remarks" name="remarks" class="h-9 px-3 rounded-lg border border-gray-200 focus:border-pcic-500 focus:ring-2 focus:ring-pcic-100 outline-none text-sm w-full auto-caps">
+            <input type="text" id="remarks" name="remarks" class="h-9 px-3 rounded-lg border border-gray-200 focus:border-pcic-500 focus:ring-2 focus:ring-pcic-100 outline-none text-sm w-full ">
             <label for="accounts" class="text-xs font-bold text-gray-600 text-right">Account / page:</label>
-            <input type="text" id="accounts" name="accounts" required placeholder="Name of Facebook page or account" class="h-9 px-3 rounded-lg border border-gray-200 focus:border-pcic-500 focus:ring-2 focus:ring-pcic-100 outline-none text-sm w-full auto-caps">
+            <input type="text" id="accounts" name="accounts" required placeholder="Name of Facebook page or account" class="h-9 px-3 rounded-lg border border-gray-200 focus:border-pcic-500 focus:ring-2 focus:ring-pcic-100 outline-none text-sm w-full">
             <label for="facebook_page_url" class="text-xs font-bold text-gray-600 text-right">FB page link:</label>
             <input type="url" id="facebook_page_url" name="facebook_page_url" placeholder="https://www.facebook.com/..." class="h-9 px-3 rounded-lg border border-gray-200 focus:border-pcic-500 focus:ring-2 focus:ring-pcic-100 outline-none text-sm w-full">
             <div></div>
@@ -253,7 +265,7 @@
             <label for="facebook_page_url" class="text-xs font-bold text-gray-600 text-right">FB page link:</label>
             <input type="url" id="facebook_page_url" name="facebook_page_url" placeholder="https://www.facebook.com/..." class="h-9 px-3 rounded-lg border border-gray-200 focus:border-pcic-500 focus:ring-2 focus:ring-pcic-100 outline-none text-sm w-full">
             <label for="remarks" class="text-xs font-bold text-gray-600 text-right">Remarks - Care of:</label>
-            <input type="text" id="remarks" name="remarks" class="h-9 px-3 rounded-lg border border-gray-200 focus:border-pcic-500 focus:ring-2 focus:ring-pcic-100 outline-none text-sm w-full auto-caps">
+            <input type="text" id="remarks" name="remarks" class="h-9 px-3 rounded-lg border border-gray-200 focus:border-pcic-500 focus:ring-2 focus:ring-pcic-100 outline-none text-sm w-full ">
             <label for="transmittal_number" class="text-xs font-bold text-gray-600 text-right">Control number:</label>
             <input type="text" id="transmittal_number" name="transmittal_number" readonly class="h-9 px-3 rounded-lg border border-gray-200 bg-gray-50 text-sm w-full">
             <label for="admin_transmittal_number" class="text-xs font-bold text-gray-600 text-right">Admin transmittal #:</label>

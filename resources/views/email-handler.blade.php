@@ -4,9 +4,6 @@
 
 @push('styles')
 <style>
-.auto-caps {
-    text-transform: capitalize;
-}
 </style>
 @endpush
 
@@ -24,7 +21,6 @@
         <div class="odHeader sticky top-0 z-20 w-full bg-white/90 backdrop-blur-md border-b border-gray-200/60">
             <div class="max-w-6xl mx-auto px-4 py-3 flex items-center justify-between gap-3">
                 <div class="flex items-center gap-3 min-w-0">
-                    <a href="{{ route('welcome') }}" class="inline-flex items-center gap-1.5 h-8 px-3 rounded-lg border border-gray-200 bg-white text-xs font-bold text-gray-600 hover:bg-gray-50 hover:border-gray-300 transition-colors">← Back</a>
                     <div class="flex flex-col">
                         <h3 class="text-base font-black text-gray-900">Email</h3>
                         <p class="text-xs text-gray-500 font-semibold">NL Entry Module</p>
@@ -45,6 +41,13 @@
             </div>
         </div>
         <div class="contentContainer">
+    @if(session('error'))
+        <div class="mb-4 mx-auto max-w-2xl">
+            <div class="bg-red-50 border border-red-200 text-red-800 px-4 py-3 rounded-lg text-sm">
+                {{ session('error') }}
+            </div>
+        </div>
+    @endif
     @if(!$isLoggedIn)
         <div class="w-full max-w-md bg-white rounded-2xl shadow-lg border border-gray-100/80 overflow-hidden">
             <div class="px-6 pt-6 pb-4 border-b border-gray-100 bg-gradient-to-b from-harvest-50/60 to-white text-center">
@@ -57,24 +60,26 @@
             @csrf
             <select name="email_user" id="email_user" required class="h-11 px-3 rounded-xl border border-gray-200 focus:border-pcic-500 focus:ring-2 focus:ring-pcic-100 outline-none text-sm w-full bg-white">
                 <option value="">Select user</option>
-                <option value="juvielyn">Juvielyn Fiesta</option>
-                <option value="hanna">Hanna Marie Lorica</option>
-                <option value="other">Other (type name)</option>
+                @php
+                    $officers = \App\Models\Officer::orderBy('name')->get();
+                @endphp
+                @foreach($officers as $officer)
+                    <option value="{{ $officer->username ?? $officer->name }}">{{ $officer->name }}</option>
+                @endforeach
             </select>
-            <div id="email-other-wrap" class="hidden">
-                <input type="text" name="email_user_other" id="email_user_other" placeholder="Full name" class="h-11 px-3 rounded-xl border border-gray-200 focus:border-pcic-500 focus:ring-2 focus:ring-pcic-100 outline-none text-sm w-full">
-            </div>
+            <input type="password" name="email_password" id="email_password" placeholder="Password" required class="h-11 px-3 rounded-xl border border-gray-200 focus:border-pcic-500 focus:ring-2 focus:ring-pcic-100 outline-none text-sm w-full">
             <button type="submit" class="h-10 rounded-xl bg-pcic-700 text-white text-sm font-bold hover:bg-pcic-800 transition-colors cursor-pointer">Continue</button>
         </form>
             </div>
         </div>
-        <script>
-            document.getElementById('email_user')?.addEventListener('change', function () {
-                const wrap = document.getElementById('email-other-wrap');
-                if (this.value === 'other') { wrap.classList.remove('hidden'); } else { wrap.classList.add('hidden'); }
-            });
-        </script>
-    @else
+                    @else
+        @if(session('error'))
+            <div class="mb-4 mx-auto max-w-2xl">
+                <div class="bg-red-50 border border-red-200 text-red-800 px-4 py-3 rounded-lg text-sm">
+                    {{ session('error') }}
+                </div>
+            </div>
+        @endif
         <div class="grid grid-cols-1 lg:grid-cols-3 gap-4 w-full">
             <div class="no-print bg-white rounded-2xl shadow-lg border border-gray-100/80 overflow-hidden">
                 <div class="px-5 py-4 border-b border-gray-100 bg-gradient-to-b from-pcic-50/60 to-white">
@@ -90,7 +95,7 @@
 						<label class="text-xs font-bold text-gray-700">Date Received</label>
 						<div class="toggle-container">
 							<label class="toggle-switch">
-								<input type="checkbox" id="enable_date_received" name="enable_date_received" value="1" {{ request('enable_date_received') ? 'checked' : 'checked' }}>
+								<input type="checkbox" id="enable_date_received" name="enable_date_received" value="1" {{ request('enable_date_received') ? 'checked' : '' }}>
 								<span class="toggle-slider"></span>
 							</label>
 							<span class="toggle-label-text">Enable filter</span>
@@ -107,7 +112,7 @@
 						<label class="text-xs font-bold text-gray-700">Date Encoded</label>
 						<div class="toggle-container">
 							<label class="toggle-switch">
-								<input type="checkbox" id="enable_date_encoded" name="enable_date_encoded" value="1" {{ request('enable_date_encoded') ? 'checked' : 'checked' }}>
+								<input type="checkbox" id="enable_date_encoded" name="enable_date_encoded" value="1" {{ request('enable_date_encoded') ? 'checked' : '' }}>
 								<span class="toggle-slider"></span>
 							</label>
 							<span class="toggle-label-text">Enable filter</span>
@@ -126,18 +131,13 @@
 			</div>
 		</form>
 	</div>
-                    @if($emailUserApproved)
-                        <div class="px-3 py-2.5 rounded-lg bg-green-50 border border-green-200 text-green-800 text-xs font-semibold">Your account is approved. You may add records.</div>
-                        <button type="button" class="addRecordButton h-10 rounded-xl bg-green-600 text-white text-sm font-bold hover:bg-green-700 transition-colors cursor-pointer">Add Record</button>
+                    <button type="button" class="addRecordButton h-10 rounded-xl bg-green-600 text-white text-sm font-bold hover:bg-green-700 transition-colors cursor-pointer">Add Record</button>
                         @if($records->count() > 0)
                         <a href="{{ route('email.export-csv') }}" class="h-10 rounded-xl bg-white border border-gray-200 text-gray-700 text-sm font-bold hover:bg-gray-50 transition-colors cursor-pointer flex items-center justify-center gap-2">
                             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
                             Export CSV
                         </a>
                         @endif
-                    @else
-                        <div class="px-3 py-2.5 rounded-lg bg-amber-50 border border-amber-200 text-amber-800 text-xs font-semibold">Your account is pending admin approval. You cannot add records until an admin approves you.</div>
-                    @endif
                 </div>
             </div>
 
@@ -155,7 +155,6 @@
             </div>
         </div>
 
-        @if($emailUserApproved)
         <dialog class="addRecordDialog rounded-2xl shadow-2xl bg-white backdrop:bg-black/40 p-0 w-[min(640px,calc(100vw-2rem))]">
             <div class="px-5 pt-5 pb-3 border-b border-gray-100">
                 <h3 class="text-base font-black text-gray-900">Add Record</h3>
@@ -164,7 +163,7 @@
                 @csrf
                 <input type="hidden" name="source" value="Email">
             <label for="farmerName" class="text-xs font-bold text-gray-600 text-right">Farmer Name:</label>
-            <input type="text" id="farmerName" name="farmerName" required class="h-9 px-3 rounded-lg border border-gray-200 focus:border-pcic-500 focus:ring-2 focus:ring-pcic-100 outline-none text-sm w-full auto-caps">
+            <input type="text" id="farmerName" name="farmerName" required class="h-9 px-3 rounded-lg border border-gray-200 focus:border-pcic-500 focus:ring-2 focus:ring-pcic-100 outline-none text-sm w-full ">
             <label for="province" class="text-xs font-bold text-gray-600 text-right">Province:</label>
             <select name="province" id="province" required class="h-9 px-3 rounded-lg border border-gray-200 focus:border-pcic-500 focus:ring-2 focus:ring-pcic-100 outline-none text-sm w-full bg-white">
                 <option value="">Select Province</option>
@@ -209,7 +208,7 @@
             <label for="date_received" class="text-xs font-bold text-gray-600 text-right">Date received:</label>
             <input type="date" id="date_received" name="date_received" value="{{ now()->format('Y-m-d') }}" class="h-9 px-3 rounded-lg border border-gray-200 focus:border-pcic-500 focus:ring-2 focus:ring-pcic-100 outline-none text-sm w-full">
             <label for="causeOfDamage" class="text-xs font-bold text-gray-600 text-right">Cause of Damage:</label>
-            <input type="text" id="causeOfDamage" name="causeOfDamage" required class="h-9 px-3 rounded-lg border border-gray-200 focus:border-pcic-500 focus:ring-2 focus:ring-pcic-100 outline-none text-sm w-full auto-caps">
+            <input type="text" id="causeOfDamage" name="causeOfDamage" required class="h-9 px-3 rounded-lg border border-gray-200 focus:border-pcic-500 focus:ring-2 focus:ring-pcic-100 outline-none text-sm w-full ">
             <label for="modeOfPayment" class="text-xs font-bold text-gray-600 text-right">Mode of payment:</label>
             <select name="modeOfPayment" id="modeOfPayment" required class="h-9 px-3 rounded-lg border border-gray-200 focus:border-pcic-500 focus:ring-2 focus:ring-pcic-100 outline-none text-sm w-full bg-white">
                 <option value="">Select Mode of payment</option>
@@ -219,9 +218,11 @@
                 <option value="not_indicated">Not indicated</option>
             </select>
             <label for="remarks" class="text-xs font-bold text-gray-600 text-right">Remarks - Care of:</label>
-            <input type="text" id="remarks" name="remarks" class="h-9 px-3 rounded-lg border border-gray-200 focus:border-pcic-500 focus:ring-2 focus:ring-pcic-100 outline-none text-sm w-full auto-caps">
+            <input type="text" id="remarks" name="remarks" class="h-9 px-3 rounded-lg border border-gray-200 focus:border-pcic-500 focus:ring-2 focus:ring-pcic-100 outline-none text-sm w-full ">
+            <label for="date_received" class="text-xs font-bold text-gray-600 text-right">Date Received:</label>
+            <input type="date" id="date_received" name="date_received" value="{{ now()->format('Y-m-d') }}" class="h-9 px-3 rounded-lg border border-gray-200 focus:border-pcic-500 focus:ring-2 focus:ring-pcic-100 outline-none text-sm w-full bg-white">
             <label for="accounts" class="text-xs font-bold text-gray-600 text-right">Account (email):</label>
-            <input type="text" id="accounts" name="accounts" placeholder="Email address or username" class="h-9 px-3 rounded-lg border border-gray-200 focus:border-pcic-500 focus:ring-2 focus:ring-pcic-100 outline-none text-sm w-full auto-caps">
+            <input type="text" id="accounts" name="accounts" placeholder="Email address or username" class="h-9 px-3 rounded-lg border border-gray-200 focus:border-pcic-500 focus:ring-2 focus:ring-pcic-100 outline-none text-sm w-full ">
             <div></div>
             <div class="flex gap-2 pt-1">
                 <button type="submit" class="h-9 px-4 rounded-lg bg-pcic-700 text-white text-xs font-bold hover:bg-pcic-800 transition-colors cursor-pointer">Add Record</button>
@@ -229,7 +230,6 @@
             </div>
         </form>
     </dialog>
-    @endif
     <dialog class="editRecordDialog rounded-2xl shadow-2xl bg-white backdrop:bg-black/40 p-0 w-[min(640px,calc(100vw-2rem))]" id="recordEditDialog">
         <div class="px-5 pt-5 pb-3 border-b border-gray-100">
             <h3 class="text-base font-black text-gray-900">Edit Record</h3>
@@ -293,12 +293,14 @@
                 <option value="gcash">GCash</option>
                 <option value="not_indicated">Not indicated</option>
             </select>
+            <label for="date_received" class="text-xs font-bold text-gray-600 text-right">Date Received:</label>
+            <input type="date" id="date_received" name="date_received" class="h-9 px-3 rounded-lg border border-gray-200 focus:border-pcic-500 focus:ring-2 focus:ring-pcic-100 outline-none text-sm w-full bg-white">
             <label for="accounts" class="text-xs font-bold text-gray-600 text-right">Account (email):</label>
             <input type="text" id="accounts" name="accounts" class="h-9 px-3 rounded-lg border border-gray-200 focus:border-pcic-500 focus:ring-2 focus:ring-pcic-100 outline-none text-sm w-full">
             <label for="facebook_page_url" class="text-xs font-bold text-gray-600 text-right">FB link:</label>
             <input type="url" id="facebook_page_url" name="facebook_page_url" placeholder="https://www.facebook.com/..." class="h-9 px-3 rounded-lg border border-gray-200 focus:border-pcic-500 focus:ring-2 focus:ring-pcic-100 outline-none text-sm w-full">
             <label for="remarks" class="text-xs font-bold text-gray-600 text-right">Remarks - Care of:</label>
-            <input type="text" id="remarks" name="remarks" class="h-9 px-3 rounded-lg border border-gray-200 focus:border-pcic-500 focus:ring-2 focus:ring-pcic-100 outline-none text-sm w-full auto-caps">
+            <input type="text" id="remarks" name="remarks" class="h-9 px-3 rounded-lg border border-gray-200 focus:border-pcic-500 focus:ring-2 focus:ring-pcic-100 outline-none text-sm w-full ">
             <label for="transmittal_number" class="text-xs font-bold text-gray-600 text-right">Control number:</label>
             <input type="text" id="transmittal_number" name="transmittal_number" readonly class="h-9 px-3 rounded-lg border border-gray-200 bg-gray-50 text-sm w-full">
             <label for="admin_transmittal_number" class="text-xs font-bold text-gray-600 text-right">Admin transmittal #:</label>
@@ -627,6 +629,7 @@ document.addEventListener('DOMContentLoaded', function() {
 });
 </script>
 
+<script>
 // Automatic logout on browser/tab close
 window.addEventListener('beforeunload', function(e) {
     // Send logout request using navigator.sendBeacon for reliable delivery

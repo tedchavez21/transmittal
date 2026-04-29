@@ -1,0 +1,88 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Test Auto-Logout</title>
+    <meta name="csrf-token" content="test-token">
+</head>
+<body>
+    <h1>Auto-Logout Test</h1>
+    <p>This page simulates the auto-logout functionality.</p>
+    
+    <script>
+        // Simulate the auto-logout functionality
+        let logoutSent = false;
+        
+        function sendLogoutRequest() {
+            if (logoutSent) return;
+            logoutSent = true;
+            
+            const logoutData = new FormData();
+            logoutData.append('auto_logout', 'true');
+            logoutData.append('channel', 'OD');
+            
+            console.log('Sending auto-logout request...');
+            
+            // Test the endpoint
+            fetch('http://localhost:8000/auto-logout', {
+                method: 'POST',
+                body: logoutData,
+                headers: {
+                    'X-CSRF-TOKEN': 'test-token',
+                    'Content-Type': 'application/x-www-form-urlencoded'
+                }
+            })
+            .then(response => response.json())
+            .then(data => {
+                console.log('Auto-logout response:', data);
+            })
+            .catch(error => {
+                console.error('Auto-logout error:', error);
+            });
+        }
+        
+        // Test the update-activity endpoint
+        function sendActivityUpdate() {
+            const activityData = new FormData();
+            activityData.append('away', 'false');
+            activityData.append('channel', 'OD');
+            
+            console.log('Sending activity update...');
+            
+            fetch('http://localhost:8000/update-activity', {
+                method: 'POST',
+                body: activityData,
+                headers: {
+                    'X-CSRF-TOKEN': 'test-token',
+                    'Content-Type': 'application/x-www-form-urlencoded'
+                }
+            })
+            .then(response => response.json())
+            .then(data => {
+                console.log('Activity update response:', data);
+            })
+            .catch(error => {
+                console.error('Activity update error:', error);
+            });
+        }
+        
+        // Test buttons
+        document.addEventListener('DOMContentLoaded', function() {
+            const logoutBtn = document.createElement('button');
+            logoutBtn.textContent = 'Test Auto-Logout';
+            logoutBtn.onclick = sendLogoutRequest;
+            document.body.appendChild(logoutBtn);
+            
+            const activityBtn = document.createElement('button');
+            activityBtn.textContent = 'Test Activity Update';
+            activityBtn.onclick = sendActivityUpdate;
+            document.body.appendChild(activityBtn);
+            
+            // Test window unload event
+            window.addEventListener('beforeunload', function() {
+                console.log('Window unloading - would send auto-logout');
+                // sendLogoutRequest(); // Commented out to avoid actual logout during testing
+            });
+        });
+    </script>
+</body>
+</html>

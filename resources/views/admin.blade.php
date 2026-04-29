@@ -62,6 +62,17 @@
                         <span class="label">Active users</span>
                     </div>
                 </button>
+                <button type="button" class="admin-sidebar-tool" id="openUserMaintenanceModal" title="User Maintenance - Manage Officers">
+                    <div class="tool-content">
+                        <span class="icon" aria-hidden="true">
+                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"></path>
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path>
+                            </svg>
+                        </span>
+                        <span class="label">User maintenance</span>
+                    </div>
+                </button>
                 <button type="button" class="admin-sidebar-tool" id="openAdminUsersModal" title="Admin Users">
                     <div class="tool-content">
                         <span class="icon" aria-hidden="true"><img src="/images/admin.svg" alt="" width="18" height="18"></span>
@@ -2411,6 +2422,356 @@ Yapara,Dingalan,Aurora`;
             });
         }
 
+        // User Maintenance Modal
+        const openUserMaintenanceModal = document.getElementById('openUserMaintenanceModal');
+        const userMaintenanceModal = document.getElementById('userMaintenanceModal');
+        const closeUserMaintenanceModal = document.querySelector('.closeUserMaintenanceModal');
+
+        if (openUserMaintenanceModal && userMaintenanceModal) {
+            openUserMaintenanceModal.addEventListener('click', function() {
+                console.log('Opening User Maintenance modal...');
+                
+                // Load officers data
+                fetch('/api/officers')
+                    .then(response => {
+                        console.log('Initial load response status:', response.status);
+                        if (!response.ok) {
+                            throw new Error(`HTTP error! status: ${response.status}`);
+                        }
+                        return response.json();
+                    })
+                    .then(data => {
+                        console.log('Initial users data received:', data);
+                        const content = document.getElementById('userMaintenanceContent');
+                        if (data.success && data.officers) {
+                            let html = `
+                                <div class="overflow-x-auto">
+                                    <table class="w-full border-collapse">
+                                        <thead>
+                                            <tr class="border-b border-gray-200">
+                                                <th class="text-left px-3 py-2 text-xs font-bold text-gray-500 w-1/6">ID</th>
+                                                <th class="text-left px-3 py-2 text-xs font-bold text-gray-500 w-1/4">Name</th>
+                                                <th class="text-left px-3 py-2 text-xs font-bold text-gray-500 w-1/4">Username</th>
+                                                <th class="text-left px-3 py-2 text-xs font-bold text-gray-500 w-1/6">Created</th>
+                                                <th class="text-left px-3 py-2 text-xs font-bold text-gray-500 w-1/4">Actions</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                            `;
+                            
+                            data.officers.forEach(officer => {
+                                const createdDate = new Date(officer.created_at).toLocaleDateString('en-US', { 
+                                    year: 'numeric', 
+                                    month: 'short', 
+                                    day: 'numeric' 
+                                });
+                                
+                                html += `
+                                    <tr class="border-b border-gray-100 hover:bg-gray-50 transition-colors">
+                                        <td class="px-3 py-2 text-sm text-gray-800 font-medium">${officer.id}</td>
+                                        <td class="px-3 py-2 text-sm text-gray-800">${officer.name}</td>
+                                        <td class="px-3 py-2 text-sm text-gray-600">${officer.username}</td>
+                                        <td class="px-3 py-2 text-sm text-gray-500">${createdDate}</td>
+                                        <td class="px-3 py-2">
+                                            <button data-user-id="${officer.id}" class="edit-user-btn h-7 px-3 rounded-lg border border-gray-200 text-xs font-bold text-gray-600 hover:bg-gray-50 transition-colors cursor-pointer mr-2">Edit</button>
+                                            <button data-user-id="${officer.id}" class="delete-user-btn h-7 px-3 rounded-lg bg-red-600 text-white text-xs font-bold hover:bg-red-700 transition-colors cursor-pointer">Delete</button>
+                                        </td>
+                                    </tr>
+                                `;
+                            });
+                            
+                            html += `
+                                        </tbody>
+                                    </table>
+                                </div>
+                            `;
+                            content.innerHTML = html;
+                        
+                        // Add event delegation for dynamically created buttons
+                        attachUserButtonListeners();
+                        
+                        } else {
+                            content.innerHTML = '<p class="text-center py-8 text-sm text-gray-400">No users found.</p>';
+                        }
+                        userMaintenanceModal.showModal();
+                    })
+                    .catch(error => {
+                        console.error('Error loading officers:', error);
+                        const content = document.getElementById('userMaintenanceContent');
+                        content.innerHTML = '<p class="text-center py-8 text-sm text-red-600">Error loading users. Please try again.</p>';
+                        userMaintenanceModal.showModal();
+                    });
+            });
+        }
+
+        if (closeUserMaintenanceModal && userMaintenanceModal) {
+            closeUserMaintenanceModal.addEventListener('click', function() {
+                userMaintenanceModal.close();
+            });
+        }
+
+        // Add Officer functionality
+        const addOfficerButton = document.querySelector('.addOfficerButton');
+        if (addOfficerButton) {
+            addOfficerButton.addEventListener('click', function() {
+                showUserForm();
+            });
+        }
+
+        function showUserForm(user = null) {
+            const content = document.getElementById('userMaintenanceContent');
+            const isEdit = user !== null;
+            
+            let html = `
+                <form id="officerForm" class="space-y-4">
+                    <input type="hidden" id="officerId" value="${user ? user.id : ''}">
+                    <div>
+                        <label class="block text-sm font-bold text-gray-700 mb-1">Name</label>
+                        <input type="text" id="officerName" name="name" value="${user ? user.name : ''}" 
+                               class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-pcic-500 focus:border-pcic-500 text-sm" required>
+                    </div>
+                    <div>
+                        <label class="block text-sm font-bold text-gray-700 mb-1">Username</label>
+                        <input type="text" id="officerUsername" name="username" value="${user ? user.username : ''}" 
+                               class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-pcic-500 focus:border-pcic-500 text-sm" required>
+                    </div>
+                    <div>
+                        <label class="block text-sm font-bold text-gray-700 mb-1">Password ${isEdit ? '<span class="text-gray-500 font-normal">(leave blank to keep current)</span>' : ''}</label>
+                        <input type="password" id="officerPassword" name="password" placeholder="${isEdit ? '••••••••' : 'Enter password'}"
+                               class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-pcic-500 focus:border-pcic-500 text-sm" ${!isEdit ? 'required' : ''}>
+                    </div>
+                    <div class="flex justify-end space-x-2 pt-4 border-t border-gray-100">
+                        <button type="button" class="cancel-user-form h-9 px-4 rounded-lg border border-gray-200 text-xs font-bold text-gray-600 hover:bg-gray-50 transition-colors cursor-pointer">Cancel</button>
+                        <button type="submit" class="h-9 px-4 rounded-lg bg-pcic-700 text-white text-xs font-bold hover:bg-pcic-800 transition-colors cursor-pointer">${isEdit ? 'Update' : 'Create'} User</button>
+                    </div>
+                </form>
+            `;
+            
+            content.innerHTML = html;
+            
+            // Add form submit handler
+            document.getElementById('officerForm').addEventListener('submit', function(e) {
+                e.preventDefault();
+                saveUser();
+            });
+        }
+
+        function saveUser() {
+            const officerId = document.getElementById('officerId').value;
+            const name = document.getElementById('officerName').value;
+            const username = document.getElementById('officerUsername').value;
+            const password = document.getElementById('officerPassword').value;
+            
+            console.log('Saving user:', {
+                officerId,
+                name,
+                username,
+                password: password || '(empty)'
+            });
+            
+            const url = officerId ? `/api/officers/${officerId}` : '/api/officers';
+            const method = officerId ? 'PUT' : 'POST';
+            
+            const requestData = {
+                name: name,
+                username: username,
+            };
+            
+            if (password || !officerId) {
+                requestData.password = password || 'default123';
+            }
+            
+            console.log('Request data:', requestData);
+            
+            fetch(url, {
+                method: method,
+                headers: {
+                    'X-CSRF-TOKEN': '{{ csrf_token() }}',
+                    'Accept': 'application/json',
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify(requestData)
+            })
+            .then(response => {
+                console.log('Save response status:', response.status);
+                return response.json();
+            })
+            .then(data => {
+                console.log('Save response data:', data);
+                if (data.success) {
+                    alert(data.message);
+                    loadUsers();
+                } else {
+                    alert('Error: ' + (data.message || 'Failed to save user'));
+                }
+            })
+            .catch(error => {
+                console.error('Error saving user:', error);
+                alert('Error saving user');
+            });
+        }
+
+        function editUser(id) {
+            console.log('Editing user with ID:', id);
+            
+            // Fetch user data and show form
+            fetch(`/api/officers/${id}`)
+                .then(response => {
+                    console.log('Response status:', response.status);
+                    if (!response.ok) {
+                        throw new Error(`HTTP error! status: ${response.status}`);
+                    }
+                    return response.json();
+                })
+                .then(data => {
+                    console.log('User data received:', data);
+                    showUserForm(data);
+                })
+                .catch(error => {
+                    console.error('Error fetching user:', error);
+                    alert('Error fetching user data: ' + error.message);
+                });
+        }
+
+        function deleteUser(id) {
+            console.log('Deleting user with ID:', id);
+            
+            if (confirm('Are you sure you want to delete this user?')) {
+                fetch(`/api/officers/${id}`, {
+                    method: 'DELETE',
+                    headers: {
+                        'X-CSRF-TOKEN': '{{ csrf_token() }}',
+                        'Accept': 'application/json'
+                    }
+                })
+                .then(response => {
+                    console.log('Delete response status:', response.status);
+                    if (!response.ok) {
+                        throw new Error(`HTTP error! status: ${response.status}`);
+                    }
+                    return response.json();
+                })
+                .then(data => {
+                    console.log('Delete response data:', data);
+                    if (data.success) {
+                        alert(data.message);
+                        loadUsers();
+                    } else {
+                        alert('Error: ' + (data.message || 'Failed to delete user'));
+                    }
+                })
+                .catch(error => {
+                    console.error('Error deleting user:', error);
+                    alert('Error deleting user: ' + error.message);
+                });
+            }
+        }
+
+        function attachUserButtonListeners() {
+            console.log('Attaching user button listeners...');
+            
+            // Remove existing listeners to prevent duplicates
+            document.removeEventListener('click', handleUserButtonClick);
+            
+            // Add event delegation listener
+            document.addEventListener('click', handleUserButtonClick);
+        }
+        
+        function handleUserButtonClick(event) {
+            const editButton = event.target.closest('.edit-user-btn');
+            const deleteButton = event.target.closest('.delete-user-btn');
+            const cancelButton = event.target.closest('.cancel-user-form');
+            
+            if (editButton) {
+                event.preventDefault();
+                const userId = editButton.getAttribute('data-user-id');
+                console.log('Edit button clicked for user ID:', userId);
+                editUser(userId);
+            } else if (deleteButton) {
+                event.preventDefault();
+                const userId = deleteButton.getAttribute('data-user-id');
+                console.log('Delete button clicked for user ID:', userId);
+                deleteUser(userId);
+            } else if (cancelButton) {
+                event.preventDefault();
+                console.log('Cancel button clicked');
+                loadUsers();
+            }
+        }
+
+        function loadUsers() {
+            console.log('Loading users...');
+            
+            // Reload users list
+            fetch('/api/officers')
+                .then(response => {
+                    console.log('Load users response status:', response.status);
+                    if (!response.ok) {
+                        throw new Error(`HTTP error! status: ${response.status}`);
+                    }
+                    return response.json();
+                })
+                .then(data => {
+                    console.log('Users data received:', data);
+                    const content = document.getElementById('userMaintenanceContent');
+                    if (data.success && data.officers) {
+                        let html = `
+                            <div class="overflow-x-auto">
+                                <table class="w-full border-collapse">
+                                    <thead>
+                                        <tr class="border-b border-gray-200">
+                                            <th class="text-left px-3 py-2 text-xs font-bold text-gray-500 w-1/6">ID</th>
+                                            <th class="text-left px-3 py-2 text-xs font-bold text-gray-500 w-1/4">Name</th>
+                                            <th class="text-left px-3 py-2 text-xs font-bold text-gray-500 w-1/4">Username</th>
+                                            <th class="text-left px-3 py-2 text-xs font-bold text-gray-500 w-1/6">Created</th>
+                                            <th class="text-left px-3 py-2 text-xs font-bold text-gray-500 w-1/4">Actions</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                        `;
+                        
+                        data.officers.forEach(officer => {
+                            const createdDate = new Date(officer.created_at).toLocaleDateString('en-US', { 
+                                year: 'numeric', 
+                                month: 'short', 
+                                day: 'numeric' 
+                            });
+                            
+                            html += `
+                                <tr class="border-b border-gray-100 hover:bg-gray-50 transition-colors">
+                                    <td class="px-3 py-2 text-sm text-gray-800 font-medium">${officer.id}</td>
+                                    <td class="px-3 py-2 text-sm text-gray-800">${officer.name}</td>
+                                    <td class="px-3 py-2 text-sm text-gray-600">${officer.username}</td>
+                                    <td class="px-3 py-2 text-sm text-gray-500">${createdDate}</td>
+                                    <td class="px-3 py-2">
+                                        <button data-user-id="${officer.id}" class="edit-user-btn h-7 px-3 rounded-lg border border-gray-200 text-xs font-bold text-gray-600 hover:bg-gray-50 transition-colors cursor-pointer mr-2">Edit</button>
+                                        <button data-user-id="${officer.id}" class="delete-user-btn h-7 px-3 rounded-lg bg-red-600 text-white text-xs font-bold hover:bg-red-700 transition-colors cursor-pointer">Delete</button>
+                                    </td>
+                                </tr>
+                            `;
+                        });
+                        
+                        html += `
+                                    </tbody>
+                                </table>
+                            </div>
+                        `;
+                        content.innerHTML = html;
+                        
+                        // Add event delegation for dynamically created buttons
+                        attachUserButtonListeners();
+                        
+                    } else {
+                        content.innerHTML = '<p class="text-center py-8 text-sm text-gray-400">No users found.</p>';
+                    }
+                })
+                .catch(error => {
+                    console.error('Error loading users:', error);
+                    const content = document.getElementById('userMaintenanceContent');
+                    content.innerHTML = '<p class="text-center py-8 text-sm text-red-600">Error loading users. Please try again.</p>';
+                });
+        }
+
         // Cascading Dropdowns for Dashboard Filters
         const dashProvince = document.querySelector('select[name="dash_province"]');
         const dashMunicipality = document.querySelector('select[name="dash_municipality"]');
@@ -3350,8 +3711,29 @@ Yapara,Dingalan,Aurora`;
 
     </div> <!-- END NL Records Section -->
 
+        </div>
+    </dialog>
+
+    <!-- User Maintenance Modal -->
+    <dialog class="largeModal rounded-2xl shadow-2xl bg-white backdrop:bg-black/40 p-0 w-[min(800px,calc(100vw-2rem))]" id="userMaintenanceModal">
+        <div class="px-5 pt-5 pb-3 border-b border-gray-100 flex items-center justify-between">
+            <h3 class="text-base font-black text-gray-900">User Maintenance - Users</h3>
+            <button type="button" class="addOfficerButton h-8 px-3 rounded-lg bg-pcic-700 text-white text-xs font-bold hover:bg-pcic-800 transition-colors cursor-pointer">Add New User</button>
+        </div>
+        <div class="px-5 py-4">
+            <div id="userMaintenanceContent">
+                <div class="text-center py-8">
+                    <div class="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-pcic-700"></div>
+                    <p class="text-sm text-gray-500 mt-2">Loading users...</p>
+                </div>
+            </div>
+            <div class="mt-5 flex justify-end">
+                <button type="button" class="closeUserMaintenanceModal h-9 px-4 rounded-lg border border-gray-200 text-xs font-bold text-gray-600 hover:bg-gray-50 transition-colors cursor-pointer">Close</button>
+            </div>
+        </div>
+    </dialog>
+
         </main>
     </div>
 
 @endsection
-

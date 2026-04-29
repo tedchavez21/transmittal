@@ -58,13 +58,6 @@ class RecordsController extends Controller
                 return $isAjax ? response()->json(['success' => false, 'message' => $message], 401) 
                               : redirect()->back()->with('error', $message);
             }
-            $emailName = $request->session()->get('email_user_name');
-            $approvedHandler = EmailHandler::where('name', $emailName)->where('approved', true)->exists();
-            if (!$approvedHandler) {
-                $message = 'Your email handler account is not approved yet.';
-                return $isAjax ? response()->json(['success' => false, 'message' => $message], 403) 
-                              : redirect()->back()->with('error', $message);
-            }
         } elseif ($source === 'Facebook') {
             if (!$request->session()->has('facebook_logged_in')) {
                 $message = 'Please log in to Facebook handler first.';
@@ -73,21 +66,44 @@ class RecordsController extends Controller
             }
         }
 
-        $encoderName = $request->session()->get('officer_name');
+        $encoderName = null;
+        $encoderId = null;
 
-        if (!$encoderName) {
-            if ($source === 'Email') {
-                $encoderName = $request->session()->get('email_user_name');
-                if (!$encoderName) {
-                    $message = 'Unauthorized access.';
-                    return $isAjax ? response()->json(['success' => false, 'message' => $message], 401) 
-                                  : redirect()->back()->with('error', $message);
-                }
-            } elseif ($source === 'Facebook') {
-                $encoderName = 'Facebook';
-            } else {
-                $message = 'Unauthorized access.';
-                return $isAjax ? response()->json(['success' => false, 'message' => $message], 401) 
+        if ($source === 'Email') {
+            $encoderName = $request->session()->get('email_user_name');
+            $encoderId = $request->session()->get('email_user_id');
+            
+            // Debug: Log session data to identify contamination
+            \Log::info('Email record creation session data', [
+                'email_user_name' => $request->session()->get('email_user_name'),
+                'email_user_id' => $request->session()->get('email_user_id'),
+                'facebook_user' => $request->session()->get('facebook_user'),
+                'facebook_user_id' => $request->session()->get('facebook_user_id'),
+                'officer_name' => $request->session()->get('officer_name'),
+                'officer_id' => $request->session()->get('officer_id'),
+                'all_session_data' => $request->session()->all(),
+            ]);
+            
+            if (!$encoderName || !$encoderId) {
+                $message = 'Unauthorized access. Please log in again.';
+                return $isAjax ? response()->json(['success' => false, 'message' => $message], 401)
+                              : redirect()->back()->with('error', $message);
+            }
+        } elseif ($source === 'Facebook') {
+            $encoderName = $request->session()->get('facebook_user');
+            $encoderId = $request->session()->get('facebook_user_id');
+            if (!$encoderName || !$encoderId) {
+                $message = 'Unauthorized access. Please log in again.';
+                return $isAjax ? response()->json(['success' => false, 'message' => $message], 401)
+                              : redirect()->back()->with('error', $message);
+            }
+        } else {
+            // For OD
+            $encoderName = $request->session()->get('officer_name');
+            $encoderId = $request->session()->get('officer_id');
+            if (!$encoderName || !$encoderId) {
+                $message = 'Unauthorized access. Please log in again.';
+                return $isAjax ? response()->json(['success' => false, 'message' => $message], 401)
                               : redirect()->back()->with('error', $message);
             }
         }
@@ -107,13 +123,26 @@ class RecordsController extends Controller
             // Use database transaction to ensure data consistency
             DB::beginTransaction();
             
-            $record = Record::create(array_merge($validatedData, [
+            // Prepare record data
+            $recordData = array_merge($validatedData, [
                 'address' => $address,
                 'encoderName' => $encoderName,
                 'source' => $request->source ?? 'OD',
                 'approved' => true,
                 'approved_at' => now(),
-            ]));
+            ]);
+
+            // Add encoder_id if available
+            if ($encoderId) {
+                $recordData['encoder_id'] = $encoderId;
+            }
+            
+            // Set date_received to today if not provided (especially for Email records)
+            if (!isset($recordData['date_received']) || empty($recordData['date_received'])) {
+                $recordData['date_received'] = now()->format('Y-m-d');
+            }
+            
+            $record = Record::create($recordData);
             
             DB::commit();
             
