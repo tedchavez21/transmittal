@@ -1071,50 +1071,59 @@ document.addEventListener('DOMContentLoaded', function() {
 </style>
 
 <script>
-// Simple View Record Modal Functionality
-document.addEventListener('DOMContentLoaded', function() {
-    const modal = document.getElementById('viewRecordModal');
-    const closeBtn = document.getElementById('closeModalBtn');
-    const closeFooterBtn = document.getElementById('closeModalFooterBtn');
-    const recordDetails = document.getElementById('recordDetails');
+// Isolated View Record Modal Functionality
+(function() {
+    let modal = null;
+    let closeBtn = null;
+    let closeFooterBtn = null;
+    let recordDetails = null;
+    let isModalOpen = false;
 
-    // Close modal functions
-    function closeModal() {
-        modal.style.display = 'none';
-        document.body.style.overflow = '';
+    // Initialize modal elements
+    function initModal() {
+        modal = document.getElementById('viewRecordModal');
+        closeBtn = document.getElementById('closeModalBtn');
+        closeFooterBtn = document.getElementById('closeModalFooterBtn');
+        recordDetails = document.getElementById('recordDetails');
+        
+        if (!modal || !closeBtn || !closeFooterBtn || !recordDetails) {
+            console.error('Modal elements not found');
+            return false;
+        }
+        return true;
     }
 
-    // Event listeners
-    if (closeBtn) closeBtn.onclick = closeModal;
-    if (closeFooterBtn) closeFooterBtn.onclick = closeModal;
-
-    // Close on backdrop click
-    modal.onclick = function(e) {
-        if (e.target === modal) {
-            closeModal();
+    // Close modal functions
+    function closeModal(e) {
+        if (e) {
+            e.preventDefault();
+            e.stopPropagation();
         }
-    };
-
-    // Close on ESC key
-    document.onkeydown = function(e) {
-        if (e.key === 'Escape' && modal.style.display === 'block') {
-            closeModal();
+        
+        if (modal && isModalOpen) {
+            modal.style.display = 'none';
+            document.body.style.overflow = '';
+            isModalOpen = false;
         }
-    };
-
-    // View record click handler
-    document.onclick = function(e) {
-        const viewBtn = e.target.closest('.view-record-btn');
-        if (viewBtn) {
-            const recordId = viewBtn.getAttribute('data-record-id');
-            if (recordId) {
-                openViewModal(recordId);
-            }
-        }
-    };
+    }
 
     // Open view modal function
-    function openViewModal(recordId) {
+    function openViewModal(recordId, e) {
+        if (e) {
+            e.preventDefault();
+            e.stopPropagation();
+        }
+        
+        if (!initModal()) {
+            console.error('Failed to initialize modal');
+            return;
+        }
+
+        // Prevent double opening
+        if (isModalOpen) {
+            return;
+        }
+
         // Find the record data from the table row
         const row = document.querySelector(`.view-record-btn[data-record-id="${recordId}"]`).closest('tr');
         if (!row) {
@@ -1131,83 +1140,192 @@ document.addEventListener('DOMContentLoaded', function() {
         // Show modal
         modal.style.display = 'block';
         document.body.style.overflow = 'hidden';
+        isModalOpen = true;
     }
 
     // Extract record data from table row
     function extractRecordData(row) {
-        const cells = row.querySelectorAll('td');
         const viewBtn = row.querySelector('.view-record-btn');
-        return {
+        const editBtn = row.querySelector('.editButton');
+        
+        // Use edit button data attributes for accurate data
+        const data = {
             id: viewBtn.getAttribute('data-record-id') || 'N/A',
-            farmerName: cells[0]?.textContent.trim() || 'N/A',
-            province: cells[1]?.textContent.trim() || 'N/A',
-            municipality: cells[2]?.textContent.trim() || 'N/A',
-            barangay: cells[3]?.textContent.trim() || 'N/A',
-            address: cells[4]?.textContent.trim() || 'N/A',
-            program: cells[5]?.textContent.trim() || 'N/A',
-            line: cells[6]?.textContent.trim() || 'N/A',
-            causeOfDamage: cells[7]?.textContent.trim() || 'N/A',
-            modeOfPayment: cells[8]?.textContent.trim() || 'N/A',
-            dateOccurrence: cells[9]?.textContent.trim() || 'N/A',
-            dateReceived: cells[10]?.textContent.trim() || 'N/A',
-            transmittalNumber: cells[11]?.textContent.trim() || 'N/A',
-            adminTransmittalNumber: cells[12]?.textContent.trim() || 'N/A',
-            createdAt: cells[13]?.textContent.trim() || 'N/A',
-            accounts: cells[14]?.textContent.trim() || 'N/A',
-            remarks: cells[15]?.textContent.trim() || ''
+            farmerName: editBtn.getAttribute('data-farmer-name') || 'N/A',
+            province: editBtn.getAttribute('data-province') || 'N/A',
+            municipality: editBtn.getAttribute('data-municipality') || 'N/A',
+            barangay: editBtn.getAttribute('data-barangay') || 'N/A',
+            address: editBtn.getAttribute('data-address') || 'N/A',
+            program: editBtn.getAttribute('data-program') || 'N/A',
+            line: editBtn.getAttribute('data-line') || 'N/A',
+            causeOfDamage: editBtn.getAttribute('data-cause-of-damage') || 'N/A',
+            modeOfPayment: editBtn.getAttribute('data-mode-of-payment') || 'N/A',
+            accounts: editBtn.getAttribute('data-accounts') || 'N/A',
+            dateOccurrence: editBtn.getAttribute('data-date-occurrence') || 'N/A',
+            dateReceived: editBtn.getAttribute('data-date-received') || 'N/A',
+            remarks: editBtn.getAttribute('data-remarks') || '',
+            source: editBtn.getAttribute('data-source') || 'N/A',
+            encoderName: editBtn.getAttribute('data-encoder-name') || 'N/A'
         };
+
+        // Get encoder from table cell if not in data attributes
+        if (data.encoderName === 'N/A') {
+            const encoderCell = row.querySelector('.col-encoder');
+            if (encoderCell) {
+                data.encoderName = encoderCell.textContent.trim() || 'N/A';
+            }
+        }
+
+        // Get transmittal number from table cell
+        const transmittalCell = row.querySelector('.col-control-number');
+        if (transmittalCell) {
+            data.transmittalNumber = transmittalCell.textContent.trim() || 'N/A';
+        }
+
+        return data;
     }
 
     // Populate modal with record data
     function populateModal(data) {
         recordDetails.innerHTML = `
-            <div style="margin-bottom: 20px;">
-                <h4 style="color: #333; margin-bottom: 10px; font-size: 16px; font-weight: bold;">Basic Information</h4>
-                <div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px;">
-                    <div><strong>Record ID:</strong> ${data.id}</div>
-                    <div><strong>Farmer Name:</strong> ${data.farmerName}</div>
-                    <div><strong>Encoder:</strong> ${data.encoderName || 'N/A'}</div>
-                    <div><strong>Source:</strong> ${data.source || 'N/A'}</div>
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 30px;">
+                <!-- FARMER DETAILS Section -->
+                <div style="background: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%); border-radius: 12px; padding: 20px; border: 1px solid #e2e8f0;">
+                    <h3 style="color: #1e293b; font-size: 18px; font-weight: bold; margin-bottom: 20px; display: flex; align-items: center; gap: 8px;">
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/>
+                            <circle cx="9" cy="7" r="4"/>
+                            <path d="m22 21-3-3"/>
+                        </svg>
+                        FARMER DETAILS
+                    </h3>
+                    <div style="display: grid; gap: 12px;">
+                        <div style="display: flex; justify-content: space-between; align-items: center; padding-bottom: 8px; border-bottom: 1px solid #e2e8f0;">
+                            <span style="font-size: 12px; font-weight: 600; color: #64748b; text-transform: uppercase;">NAME</span>
+                            <span style="font-size: 14px; color: #1e293b; font-weight: 500;">${data.farmerName}</span>
+                        </div>
+                        <div style="display: flex; justify-content: space-between; align-items: center; padding-bottom: 8px; border-bottom: 1px solid #e2e8f0;">
+                            <span style="font-size: 12px; font-weight: 600; color: #64748b; text-transform: uppercase;">PROVINCE</span>
+                            <span style="font-size: 14px; color: #1e293b; font-weight: 500;">${data.province}</span>
+                        </div>
+                        <div style="display: flex; justify-content: space-between; align-items: center; padding-bottom: 8px; border-bottom: 1px solid #e2e8f0;">
+                            <span style="font-size: 12px; font-weight: 600; color: #64748b; text-transform: uppercase;">MUNICIPALITY</span>
+                            <span style="font-size: 14px; color: #1e293b; font-weight: 500;">${data.municipality}</span>
+                        </div>
+                        <div style="display: flex; justify-content: space-between; align-items: center; padding-bottom: 8px; border-bottom: 1px solid #e2e8f0;">
+                            <span style="font-size: 12px; font-weight: 600; color: #64748b; text-transform: uppercase;">BARANGAY</span>
+                            <span style="font-size: 14px; color: #1e293b; font-weight: 500;">${data.barangay}</span>
+                        </div>
+                        <div style="display: flex; justify-content: space-between; align-items: center; padding-bottom: 8px; border-bottom: 1px solid #e2e8f0;">
+                            <span style="font-size: 12px; font-weight: 600; color: #64748b; text-transform: uppercase;">LINE</span>
+                            <span style="font-size: 14px; color: #1e293b; font-weight: 500;">${data.line}</span>
+                        </div>
+                        <div style="display: flex; justify-content: space-between; align-items: center; padding-bottom: 8px; border-bottom: 1px solid #e2e8f0;">
+                            <span style="font-size: 12px; font-weight: 600; color: #64748b; text-transform: uppercase;">PROGRAM</span>
+                            <span style="font-size: 14px; color: #1e293b; font-weight: 500;">${data.program}</span>
+                        </div>
+                        <div style="display: flex; justify-content: space-between; align-items: center; padding-bottom: 8px; border-bottom: 1px solid #e2e8f0;">
+                            <span style="font-size: 12px; font-weight: 600; color: #64748b; text-transform: uppercase;">ACCOUNT</span>
+                            <span style="font-size: 14px; color: #1e293b; font-weight: 500;">${data.accounts}</span>
+                        </div>
+                        <div style="display: flex; justify-content: space-between; align-items: center;">
+                            <span style="font-size: 12px; font-weight: 600; color: #64748b; text-transform: uppercase;">MODE OF PAYMENT</span>
+                            <span style="font-size: 14px; color: #1e293b; font-weight: 500;">${data.modeOfPayment}</span>
+                        </div>
+                    </div>
                 </div>
-            </div>
 
-            <div style="margin-bottom: 20px;">
-                <h4 style="color: #333; margin-bottom: 10px; font-size: 16px; font-weight: bold;">Location Information</h4>
-                <div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px;">
-                    <div><strong>Province:</strong> ${data.province}</div>
-                    <div><strong>Municipality:</strong> ${data.municipality}</div>
-                    <div><strong>Barangay:</strong> ${data.barangay}</div>
-                    <div><strong>Address:</strong> ${data.address}</div>
+                <!-- OTHER DETAILS Section -->
+                <div style="background: linear-gradient(135deg, #fef7f0 0%, #fef3e2 100%); border-radius: 12px; padding: 20px; border: 1px solid #fbbf24;">
+                    <h3 style="color: #1e293b; font-size: 18px; font-weight: bold; margin-bottom: 20px; display: flex; align-items: center; gap: 8px;">
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <rect x="3" y="4" width="18" height="18" rx="2" ry="2"/>
+                            <line x1="16" y1="2" x2="16" y2="6"/>
+                            <line x1="8" y1="2" x2="8" y2="6"/>
+                            <line x1="3" y1="10" x2="21" y2="10"/>
+                        </svg>
+                        OTHER DETAILS
+                    </h3>
+                    <div style="display: grid; gap: 12px;">
+                        <div style="display: flex; justify-content: space-between; align-items: center; padding-bottom: 8px; border-bottom: 1px solid #fbbf24;">
+                            <span style="font-size: 12px; font-weight: 600; color: #92400e; text-transform: uppercase;">DATE RECEIVED</span>
+                            <span style="font-size: 14px; color: #1e293b; font-weight: 500;">${data.dateReceived}</span>
+                        </div>
+                        <div style="display: flex; justify-content: space-between; align-items: center; padding-bottom: 8px; border-bottom: 1px solid #fbbf24;">
+                            <span style="font-size: 12px; font-weight: 600; color: #92400e; text-transform: uppercase;">DATE ENCODED</span>
+                            <span style="font-size: 14px; color: #1e293b; font-weight: 500;">${data.dateReceived}</span>
+                        </div>
+                        <div style="display: flex; justify-content: space-between; align-items: center; padding-bottom: 8px; border-bottom: 1px solid #fbbf24;">
+                            <span style="font-size: 12px; font-weight: 600; color: #92400e; text-transform: uppercase;">DATE OF OCCURRENCE</span>
+                            <span style="font-size: 14px; color: #1e293b; font-weight: 500;">${data.dateOccurrence}</span>
+                        </div>
+                        <div style="display: flex; justify-content: space-between; align-items: center; padding-bottom: 8px; border-bottom: 1px solid #fbbf24;">
+                            <span style="font-size: 12px; font-weight: 600; color: #92400e; text-transform: uppercase;">ENCODER</span>
+                            <span style="font-size: 14px; color: #1e293b; font-weight: 500;">${data.encoderName}</span>
+                        </div>
+                        <div style="display: flex; justify-content: space-between; align-items: center; padding-bottom: 8px; border-bottom: 1px solid #fbbf24;">
+                            <span style="font-size: 12px; font-weight: 600; color: #92400e; text-transform: uppercase;">CONTROL NUMBER</span>
+                            <span style="font-size: 14px; color: #1e293b; font-weight: 500;">${data.transmittalNumber}</span>
+                        </div>
+                        <div style="display: flex; justify-content: space-between; align-items: center; padding-bottom: 8px; border-bottom: 1px solid #fbbf24;">
+                            <span style="font-size: 12px; font-weight: 600; color: #92400e; text-transform: uppercase;">RECORD ID</span>
+                            <span style="font-size: 14px; color: #1e293b; font-weight: 500;">${data.id}</span>
+                        </div>
+                        <div style="margin-top: 20px;">
+                            <div style="font-size: 12px; font-weight: 600; color: #92400e; text-transform: uppercase; margin-bottom: 8px;">REMARKS</div>
+                            <div style="background: white; padding: 15px; border-radius: 8px; border: 1px solid #fbbf24; min-height: 80px; max-height: 150px; overflow-y: auto; white-space: pre-wrap; font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', monospace; font-size: 13px; line-height: 1.5; color: #374151;">${data.remarks || 'No remarks available'}</div>
+                        </div>
+                    </div>
                 </div>
-            </div>
-
-            <div style="margin-bottom: 20px;">
-                <h4 style="color: #333; margin-bottom: 10px; font-size: 16px; font-weight: bold;">Program Information</h4>
-                <div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px;">
-                    <div><strong>Program:</strong> ${data.program}</div>
-                    <div><strong>Line:</strong> ${data.line}</div>
-                    <div><strong>Cause of Damage:</strong> ${data.causeOfDamage}</div>
-                    <div><strong>Mode of Payment:</strong> ${data.modeOfPayment}</div>
-                </div>
-            </div>
-
-            <div style="margin-bottom: 20px;">
-                <h4 style="color: #333; margin-bottom: 10px; font-size: 16px; font-weight: bold;">Dates and Numbers</h4>
-                <div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px;">
-                    <div><strong>Date Occurrence:</strong> ${data.dateOccurrence}</div>
-                    <div><strong>Date Received:</strong> ${data.dateReceived}</div>
-                    <div><strong>Control Number:</strong> ${data.transmittalNumber}</div>
-                    <div><strong>Admin Transmittal:</strong> ${data.adminTransmittalNumber}</div>
-                    <div><strong>Created At:</strong> ${data.createdAt}</div>
-                    <div><strong>Account:</strong> ${data.accounts}</div>
-                </div>
-            </div>
-
-            <div style="margin-bottom: 20px;">
-                <h4 style="color: #333; margin-bottom: 10px; font-size: 16px; font-weight: bold;">Remarks</h4>
-                <div style="background: #f8f9fa; padding: 15px; border-radius: 6px; border: 1px solid #e9ecef; min-height: 60px; white-space: pre-wrap;">${data.remarks || 'No remarks available'}</div>
             </div>
         `;
     }
-});
+
+    // Initialize when DOM is ready
+    document.addEventListener('DOMContentLoaded', function() {
+        if (!initModal()) return;
+
+        // Close button event listeners with stopPropagation
+        closeBtn.addEventListener('click', function(e) {
+            e.preventDefault();
+            e.stopPropagation();
+            closeModal(e);
+        });
+
+        closeFooterBtn.addEventListener('click', function(e) {
+            e.preventDefault();
+            e.stopPropagation();
+            closeModal(e);
+        });
+
+        // Close on backdrop click (but not on modal content)
+        modal.addEventListener('click', function(e) {
+            if (e.target === modal) {
+                closeModal(e);
+            }
+        });
+
+        // Close on ESC key
+        document.addEventListener('keydown', function(e) {
+            if (e.key === 'Escape' && isModalOpen) {
+                closeModal(e);
+            }
+        });
+
+        // View record click handler with event delegation and stopPropagation
+        document.addEventListener('click', function(e) {
+            const viewBtn = e.target.closest('.view-record-btn');
+            if (viewBtn) {
+                e.preventDefault();
+                e.stopPropagation();
+                const recordId = viewBtn.getAttribute('data-record-id');
+                if (recordId) {
+                    setTimeout(function() {
+                        openViewModal(recordId, e);
+                    }, 50); // Small delay to prevent immediate closing
+                }
+            }
+        });
+    });
+})();
 </script>
