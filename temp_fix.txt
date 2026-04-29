@@ -1,3 +1,0 @@
-﻿            } else {
-                $query->whereDate('created_at', today());
-            }

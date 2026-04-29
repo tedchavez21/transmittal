@@ -2,7 +2,6 @@
 namespace App\Http\Controllers;
 
 use App\Models\Officer;
-use App\Models\EmailHandler;
 use App\Models\Admin;
 use App\Models\Record;
 use Carbon\Carbon;
@@ -17,10 +16,6 @@ class RoutesController extends Controller
 
     public function showEmailHandler(Request $request)
     {
-        // Debug: Log current session state
-        file_put_contents(storage_path('session_debug.txt'), date('Y-m-d H:i:s') . " - Email handler accessed\n", FILE_APPEND);
-        file_put_contents(storage_path('session_debug.txt'), "Session data: " . json_encode($request->session()->all()) . "\n", FILE_APPEND);
-        
         // Check authentication - show login form if not authenticated
         if (!$request->session()->get('email_logged_in')) {
             // Don't redirect, just show the login form in the view
@@ -35,28 +30,13 @@ class RoutesController extends Controller
 
         $emailUserName = $request->session()->get('email_user_name');
         
-        // Debug: Log current session status
-        \Log::info('Email handler session check', [
-            'email_user_name' => $emailUserName,
-            'email_logged_in' => $request->session()->get('email_logged_in'),
-            'email_user_id' => $request->session()->get('email_user_id'),
-            'all_session_data' => $request->session()->all(),
-        ]);
-        
         $records = collect();
 
-        // Get the logged-in user's full name from EmailHandler table
+        // Get the logged-in user's full name from session
         $emailUserFullName = $emailUserName;
 
-        // Get the logged-in user's encoder ID for user-specific filtering
-        $encoderId = null;
-        if ($emailUserFullName) {
-            // Find the email handler by name to get their ID
-            $emailHandler = \App\Models\EmailHandler::where('name', $emailUserFullName)->first();
-            if ($emailHandler) {
-                $encoderId = $emailHandler->id;
-            }
-        }
+        // Get the logged-in user's encoder ID from session
+        $encoderId = $request->session()->get('email_user_id');
 
         // Use encoder_id for efficient user-specific querying
         $query = Record::where('source', 'Email');
@@ -66,23 +46,22 @@ class RoutesController extends Controller
             $query->where('encoder_id', $encoderId);
         }
 
-        // Default to showing today's records if no date filters are enabled
-        $hasDateFilters = false;
+        // Apply flexible date filtering based on user selections
+        $useDateEncoded = $request->filled('use_date_encoded');
+        $useDateReceived = $request->filled('use_date_received');
         
-        // Apply date encoded filter - only if enabled AND date is specified
-        if ($request->filled('enable_date_encoded') && $request->filled('date_encoded')) {
+        // Apply date encoded filter (when record was created)
+        if ($useDateEncoded && $request->filled('date_encoded')) {
             $query->whereDate('created_at', $request->date_encoded);
-            $hasDateFilters = true;
         }
-
-        // Apply date received filter - only if enabled AND date is specified
-        if ($request->filled('enable_date_received') && $request->filled('date_received')) {
+        
+        // Apply date received filter (when NL was received)
+        if ($useDateReceived && $request->filled('date_received')) {
             $query->whereDate('date_received', $request->date_received);
-            $hasDateFilters = true;
         }
-
-        // If no date filters are enabled, default to today's records
-        if (!$hasDateFilters) {
+        
+        // If no filters are selected, default to today's records (by date encoded)
+        if (!$useDateEncoded && !$useDateReceived) {
             $query->whereDate('created_at', today());
         }
 
@@ -99,15 +78,6 @@ class RoutesController extends Controller
 
     public function loginEmail(Request $request)
     {
-        // Simple test - write to a file to verify this method is called
-        file_put_contents(storage_path('debug_login.txt'), date('Y-m-d H:i:s') . " - loginEmail called\n", FILE_APPEND);
-        
-        \Log::info('loginEmail method called', [
-            'request_method' => $request->method(),
-            'request_url' => $request->fullUrl(),
-            'all_input' => $request->all(),
-        ]);
-
         $request->validate([
             'email_user' => 'required|string',
             'email_password' => 'required|string',
@@ -116,45 +86,19 @@ class RoutesController extends Controller
         $username = $request->input('email_user');
         $password = $request->input('email_password');
 
-        // Debug logging
-        \Log::info('Email login attempt', [
-            'username' => $username,
-            'password_length' => strlen($password),
-            'password_first_char' => substr($password, 0, 1),
-        ]);
-
         // Find the officer by exact username match only
         $officer = \App\Models\Officer::where('username', $username)->first();
         if (!$officer) {
-            \Log::info('Email login failed: User not found', ['username' => $username]);
             return redirect()->route('email-handler')->with('error', 'Invalid username. Please select a valid user from the list.');
         }
 
-        // Debug logging officer info
-        \Log::info('Officer found', [
-            'username' => $officer->username,
-            'name' => $officer->name,
-            'has_password' => !empty($officer->password),
-            'password_hash_length' => strlen($officer->password),
-        ]);
-
         // Check if officer has a password
         if (!$officer->password) {
-            \Log::info('Email login failed: No password set', ['username' => $username]);
             return redirect()->route('email-handler')->with('error', 'Account not configured. Please contact administrator.');
         }
 
-        // Verify password with debug logging
-        $passwordCheck = Hash::check($password, $officer->password);
-        \Log::info('Password verification', [
-            'username' => $username,
-            'password_check_result' => $passwordCheck,
-            'provided_password' => $password,
-            'stored_hash' => $officer->password,
-        ]);
-
-        if (!$passwordCheck) {
-            \Log::info('Email login failed: Invalid password', ['username' => $username]);
+        // Verify password
+        if (!Hash::check($password, $officer->password)) {
             return redirect()->route('email-handler')->with('error', 'Invalid password. Please try again.');
         }
 
@@ -162,12 +106,6 @@ class RoutesController extends Controller
         $request->session()->put('email_user_name', $officer->name);
         $request->session()->put('email_user_id', $officer->id);
         $request->session()->put('email_logged_in', true);
-
-        \Log::info('Email login successful', [
-            'username' => $username,
-            'officer_name' => $officer->name,
-            'officer_id' => $officer->id,
-        ]);
 
         return redirect()->route('email-handler')->with('success', 'You are signed in successfully.');
     }
@@ -190,49 +128,60 @@ class RoutesController extends Controller
         return redirect()->route('welcome');
     }
 
-    public function testAuth()
+    public function logoutFacebook(Request $request)
     {
-        // Test authentication directly
-        $username = 'teddy';
-        $wrongPassword = 'wrongpassword';
-        $correctPassword = 'teddy123';
-        
-        $officer = \App\Models\Officer::where('username', $username)->first();
-        
-        $results = [
-            'username' => $username,
-            'officer_found' => $officer ? true : false,
-            'officer_name' => $officer ? $officer->name : null,
-            'has_password' => $officer ? !empty($officer->password) : false,
-            'wrong_password_check' => $officer ? Hash::check($wrongPassword, $officer->password) : null,
-            'correct_password_check' => $officer ? Hash::check($correctPassword, $officer->password) : null,
-            'should_login_with_wrong' => $officer ? (!Hash::check($wrongPassword, $officer->password) ? false : true) : null,
-            'should_login_with_correct' => $officer ? (!Hash::check($correctPassword, $officer->password) ? false : true) : null,
-        ];
-        
-        return response()->json($results);
+        $request->session()->forget('facebook_logged_in');
+        $request->session()->forget('facebook_user');
+        $request->session()->forget('facebook_user_id');
+
+        return redirect()->route('welcome');
     }
 
     
+    
     public function showFacebookHandler(Request $request)
     {
-        // Auto-login for Facebook - no authentication required
-        $facebookUser = 'Facebook Handler';
-        $facebookUserFullName = 'Facebook Handler';
+        // Check authentication - show login form if not authenticated
+        if (!$request->session()->get('facebook_logged_in')) {
+            $facebookUserName = null;
+            $records = collect();
+            return view('facebook-handler', [
+                'records' => $records,
+                'isLoggedIn' => false,
+                'facebookUserName' => $facebookUserName,
+            ]);
+        }
+
+        $facebookUserName = $request->session()->get('facebook_user');
+        $facebookUserId = $request->session()->get('facebook_user_id');
         $records = collect();
 
-        // Get records for Facebook source
-        $records = Record::where('source', 'Facebook')
-            ->whereDate('created_at', today())
-            ->orderBy('id', 'desc')
+        // Get the logged-in user's encoder ID from session
+        $encoderId = $facebookUserId;
+
+        // Use encoder_id for efficient user-specific querying
+        $query = Record::where('source', 'Facebook');
+        
+        // Filter by logged-in user's encoder ID (default behavior)
+        if ($encoderId) {
+            $query->where('encoder_id', $encoderId);
+        }
+
+        // Apply date received filter - always use the date from request or default to today
+        if ($request->filled('date_received')) {
+            $query->whereDate('date_received', $request->date_received);
+        } else {
+            $query->whereDate('date_received', today());
+        }
+
+        $records = $query->orderBy('id', 'desc')
             ->paginate(25)
             ->withQueryString();
 
         return view('facebook-handler', [
             'records' => $records,
-            'isLoggedIn' => true,
-            'facebookUser' => $facebookUser,
-            'facebookUserFullName' => $facebookUserFullName,
+            'isLoggedIn' => (bool) $facebookUserName,
+            'facebookUserName' => $facebookUserName,
         ]);
     }
 
@@ -270,14 +219,7 @@ class RoutesController extends Controller
         return redirect()->route('facebook-handler')->with('success', 'You are signed in successfully.');
     }
 
-    public function logoutFacebook(Request $request)
-    {
-        $request->session()->forget('facebook_logged_in');
-        $request->session()->forget('facebook_user');
-        $request->session()->forget('facebook_user_id');
-        return redirect()->route('welcome');
-    }
-
+    
     public function showOfficerOfTheDay(Request $request)
     {
         // Check authentication - redirect to login if not authenticated
@@ -359,11 +301,11 @@ class RoutesController extends Controller
 
     public function exportEmailCsv(Request $request)
     {
-        $emailUserName = $request->session()->get('email_user_name');
-        if (!$emailUserName) { return redirect()->route('email-handler'); }
+        $emailUserId = $request->session()->get('email_user_id');
+        if (!$emailUserId) { return redirect()->route('email-handler'); }
 
         $query = Record::where('source', 'Email')
-            ->where('encoderName', $emailUserName)
+            ->where('encoder_id', $emailUserId)
             ->whereDate('created_at', today())
             ->orderBy('id', 'asc');
 
@@ -696,7 +638,7 @@ class RoutesController extends Controller
         // Total records should be unfiltered to show accurate count
         $totalRecords = Record::count();
         $recordsByProgram = $statsQuery->selectRaw('program, count(*) as count')->groupBy('program')->orderByRaw('count(*) desc')->pluck('count', 'program');
-        $recordsByLine = $statsQuery->selectRaw('line, count(*) as count')->groupBy('line')->orderByRaw('count(*) desc')->pluck('count', 'line');
+        $recordsByLine = Record::selectRaw('line, count(*) as count')->groupBy('line')->orderByRaw('count(*) desc')->pluck('count', 'line');
         
         // Source counts should be unfiltered to show total records by source
         $recordsBySource = Record::selectRaw('source, count(*) as count')->groupBy('source')->orderByRaw('count(*) desc')->pluck('count', 'source');
@@ -721,7 +663,6 @@ class RoutesController extends Controller
         
         // Unfiltered stats for reference
         $pendingOfficers = Officer::orderBy('created_at')->get();
-        $pendingEmailHandlers = EmailHandler::where('approved', false)->where('active', true)->orderBy('created_at')->get();
         $activeOfficers = Officer::orderBy('name')->get();
         $admins = Admin::all();
 
@@ -786,7 +727,6 @@ class RoutesController extends Controller
             'dashBarangayBreakdown' => $dashBarangayBreakdown,
             'recentRecords' => $recentRecords,
             'pendingOfficers' => $pendingOfficers,
-            'pendingEmailHandlers' => $pendingEmailHandlers,
             'activeOfficers' => $activeOfficers,
             'admins' => $admins,
             'allPrograms' => $allPrograms,
@@ -1226,17 +1166,6 @@ class RoutesController extends Controller
         return redirect()->back()->with('success', 'Officer approved successfully.');
     }
 
-    public function approveEmailHandler($id)
-    {
-        $handler = EmailHandler::findOrFail($id);
-        $handler->update([
-            'approved' => true,
-            'approved_at' => Carbon::now(),
-        ]);
-
-        return redirect()->back()->with('success', 'Email handler approved successfully.');
-    }
-
     public function exportExcel(Request $request)
     {
         // Check if admin is logged in
@@ -1434,17 +1363,10 @@ class RoutesController extends Controller
             ->orderBy('created_at', 'desc')
             ->get(['id', 'name', 'created_at']);
 
-        $pendingEmailHandlers = EmailHandler::where('approved', false)
-            ->where('active', true)
-            ->orderBy('created_at', 'desc')
-            ->get(['id', 'name', 'created_at']);
-
         return response()->json([
             'officers' => $pendingOfficers,
-            'emailHandlers' => $pendingEmailHandlers,
             'officerCount' => $pendingOfficers->count(),
-            'emailHandlerCount' => $pendingEmailHandlers->count(),
-            'totalPending' => $pendingOfficers->count() + $pendingEmailHandlers->count(),
+            'totalPending' => $pendingOfficers->count(),
         ]);
     }
 
@@ -1559,31 +1481,6 @@ class RoutesController extends Controller
                 }
             } catch (\Exception $e) {
                 \Log::error('Error getting officers: ' . $e->getMessage());
-            }
-
-            try {
-                $emailHandlers = EmailHandler::where('approved', true)
-                    ->where('active', true)
-                    ->get();
-
-                foreach ($emailHandlers as $emailHandler) {
-                    $lastActivity = $this->getUserLastActivity($emailHandler->id, 'email');
-                    $status = $this->getUserStatus($lastActivity, $now);
-                    
-                    // Only include users who are not offline (more than 2 hours inactive)
-                    if ($status !== 'offline') {
-                        $activeUsers[] = [
-                            'id' => $emailHandler->id,
-                            'name' => $emailHandler->name ?? 'Email Handler',
-                            'email' => 'email@example.com',
-                            'channel' => 'Email',
-                            'last_activity' => $lastActivity,
-                            'status' => $status
-                        ];
-                    }
-                }
-            } catch (\Exception $e) {
-                \Log::error('Error getting email handlers: ' . $e->getMessage());
             }
 
             // Sort by last activity (most recent first)

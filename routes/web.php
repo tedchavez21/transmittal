@@ -34,7 +34,6 @@ Route::put('/admin/users/{id}', [RoutesController::class, 'updateAdmin'])->name(
 Route::post('/admin/users', [RoutesController::class, 'createAdmin'])->name('admin.users.create');
 Route::get('/admin/records/{id}/approve', [RoutesController::class, 'approveRecord'])->name('admin.records.approve');
 Route::post('/admin/officers/{id}/approve', [RoutesController::class, 'approveOfficer'])->name('admin.officers.approve');
-Route::post('/admin/email-handlers/{id}/approve', [RoutesController::class, 'approveEmailHandler'])->name('admin.email-handlers.approve');
 Route::delete('/admin/bulk-delete', [RoutesController::class, 'bulkDelete'])->name('admin.bulk-delete');
 Route::get('/admin/export-excel', [RoutesController::class, 'exportExcel'])->name('admin.export-excel');
 Route::get('/admin/export-pdf', [RoutesController::class, 'exportPdf'])->name('admin.export-pdf');
@@ -45,8 +44,6 @@ Route::get('/admin/export-preview-csv', [RoutesController::class, 'exportPreview
 Route::post('/admin/assign-transmittals', [RoutesController::class, 'assignTransmittals'])->name('admin.assign-transmittals');
 Route::get('/admin/api/pending-approvals', [RoutesController::class, 'pendingApprovalsApi'])->name('admin.api.pending-approvals');
 
-// Test authentication route
-Route::get('/test-auth', [RoutesController::class, 'testAuth'])->name('test.auth');
 
 // Auto-logout and activity tracking routes
 Route::post('/auto-logout', [RoutesController::class, 'autoLogout'])->name('auto.logout');
@@ -76,11 +73,6 @@ Route::get('/api/officers/{id}', [RoutesController::class, 'getOfficer'])->name(
 Route::put('/api/officers/{id}', [RoutesController::class, 'updateOfficer'])->name('api.officers.update');
 Route::delete('/api/officers/{id}', [RoutesController::class, 'deleteOfficer'])->name('api.officers.destroy');
 
-Route::get('/api/email-handlers', [RoutesController::class, 'getEmailHandlers'])->name('api.email-handlers.index');
-Route::post('/api/email-handlers', [RoutesController::class, 'createEmailHandler'])->name('api.email-handlers.store');
-Route::get('/api/email-handlers/{id}', [RoutesController::class, 'getEmailHandler'])->name('api.email-handlers.show');
-Route::put('/api/email-handlers/{id}', [RoutesController::class, 'updateEmailHandler'])->name('api.email-handlers.update');
-Route::delete('/api/email-handlers/{id}', [RoutesController::class, 'deleteEmailHandler'])->name('api.email-handlers.destroy');
 
 // Debug route for testing session
 Route::get('/debug-session', function(Request $request) {

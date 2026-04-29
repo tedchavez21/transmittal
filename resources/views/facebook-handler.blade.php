@@ -30,7 +30,7 @@
                 <div class="flex items-center gap-3">
                     <div class="flex flex-col items-end">
                         <div class="text-[10px] text-gray-400 font-bold uppercase tracking-wider">FB</div>
-                        <div class="text-xs font-black text-gray-900">{{ $facebookUserFullName }}</div>
+                        <div class="text-xs font-black text-gray-900">{{ $facebookUserName }}</div>
                     </div>
                     <form action="{{ route('facebook.logout') }}" method="POST">
                         @csrf

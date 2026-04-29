@@ -7,7 +7,6 @@ use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\Rule;
 use App\Models\Record;
-use App\Models\EmailHandler;
 
 class RecordsController extends Controller
 {
@@ -72,18 +71,6 @@ class RecordsController extends Controller
         if ($source === 'Email') {
             $encoderName = $request->session()->get('email_user_name');
             $encoderId = $request->session()->get('email_user_id');
-            
-            // Debug: Log session data to identify contamination
-            \Log::info('Email record creation session data', [
-                'email_user_name' => $request->session()->get('email_user_name'),
-                'email_user_id' => $request->session()->get('email_user_id'),
-                'facebook_user' => $request->session()->get('facebook_user'),
-                'facebook_user_id' => $request->session()->get('facebook_user_id'),
-                'officer_name' => $request->session()->get('officer_name'),
-                'officer_id' => $request->session()->get('officer_id'),
-                'all_session_data' => $request->session()->all(),
-            ]);
-            
             if (!$encoderName || !$encoderId) {
                 $message = 'Unauthorized access. Please log in again.';
                 return $isAjax ? response()->json(['success' => false, 'message' => $message], 401)

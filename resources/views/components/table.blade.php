@@ -401,14 +401,16 @@ function getSortIndicator($column, $currentSort, $currentOrder) {
             @if($showDelete)
             <th class="no-print col-delete">Delete</th>
             @endif
-            <!-- 1. Transmittal Number -->
-            <th class="col-control-number">
+            <!-- 1. Date Received -->
+            @if(!$hideDateReceivedColumn)
+            <th class="col-date-received">
                 @if($showSortableHeaders)
-                <a href="{{ getSortUrl('transmittal_number', $currentSort, $currentOrder, $oppositeOrder) }}" style="color: inherit; text-decoration: none; cursor: pointer;">Control Number{{ getSortIndicator('transmittal_number', $currentSort, $currentOrder) }}</a>
+                <a href="{{ getSortUrl('date_received', $currentSort, $currentOrder, $oppositeOrder) }}" style="color: inherit; text-decoration: none; cursor: pointer;">Date Received{{ getSortIndicator('date_received', $currentSort, $currentOrder) }}</a>
                 @else
-                Control Number
+                Date Received
                 @endif
             </th>
+            @endif
             
             <!-- 2. Encoder -->
             @if($showEncoder)
@@ -497,17 +499,16 @@ function getSortIndicator($column, $currentSort, $currentOrder) {
                 @endif
             </th>
             
-            @if(!$hideDateReceivedColumn)
-            <!-- 11. Date Received -->
-            <th class="col-date-received">
+            <!-- 11. Control Number -->
+            <th class="col-control-number">
                 @if($showSortableHeaders)
-                <a href="{{ getSortUrl('date_received', $currentSort, $currentOrder, $oppositeOrder) }}" style="color: inherit; text-decoration: none; cursor: pointer;">Date Received{{ getSortIndicator('date_received', $currentSort, $currentOrder) }}</a>
+                <a href="{{ getSortUrl('transmittal_number', $currentSort, $currentOrder, $oppositeOrder) }}" style="color: inherit; text-decoration: none; cursor: pointer;">Control Number{{ getSortIndicator('transmittal_number', $currentSort, $currentOrder) }}</a>
                 @else
-                Date Received
+                Control Number
                 @endif
             </th>
-            @endif
             
+                        
             <!-- 12. Account -->
             @if(!$hideAccountsColumn)
             <th class="col-accounts">
@@ -606,8 +607,16 @@ function getSortIndicator($column, $currentSort, $currentOrder) {
                 </button>
             </td>
             @endif
-            <!-- 1. Transmittal Number -->
-            <td class="col-control-number">{{ $record->transmittal_number ?? '—' }}</td>
+            @if(!$hideDateReceivedColumn)
+            <!-- 1. Date Received -->
+            <td class="col-date-received">
+                @if($useDateEncodedAsDateReceived)
+                    {{ $record->created_at ? $record->created_at->format('M d, Y') : '—' }}
+                @else
+                    {{ $record->date_received ? (is_string($record->date_received) ? $record->date_received : $record->date_received->format('M d, Y')) : '—' }}
+                @endif
+            </td>
+            @endif
             
             <!-- 2. Encoder -->
             @if($showEncoder)
@@ -648,16 +657,8 @@ function getSortIndicator($column, $currentSort, $currentOrder) {
             <!-- 10. Cause of Damage -->
             <td class="col-causeOfDamage">{{ $record->causeOfDamage }}</td>
             
-            @if(!$hideDateReceivedColumn)
-            <!-- 11. Date Received -->
-            <td class="col-date-received">
-                @if($useDateEncodedAsDateReceived)
-                    {{ $record->created_at ? $record->created_at->format('M d, Y') : '—' }}
-                @else
-                    {{ $record->date_received ? (is_string($record->date_received) ? $record->date_received : $record->date_received->format('M d, Y')) : '—' }}
-                @endif
-            </td>
-            @endif
+            <!-- 11. Control Number -->
+            <td class="col-control-number">{{ $record->transmittal_number ?? '—' }}</td>
             
             <!-- 12. Account -->
             @if(!$hideAccountsColumn)

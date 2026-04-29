@@ -3,7 +3,6 @@
 namespace App\Http\Controllers;
 
 use App\Models\Officer;
-use App\Models\EmailHandler;
 use App\Models\Admin;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
@@ -128,11 +127,7 @@ class AuthController extends Controller
                 $request->session()->forget(['officer_name', 'officer_id', 'officer_logged_in']);
                 break;
             case 'Email':
-                $emailUserName = $request->session()->get('email_user_name');
-                if ($emailUserName) {
-                    EmailHandler::where('name', $emailUserName)->update(['active' => false]);
-                }
-                $request->session()->forget(['email_user_name', 'email_logged_in']);
+                $request->session()->forget(['email_user_name', 'email_user_id', 'email_logged_in']);
                 break;
             case 'Facebook':
                 $request->session()->forget(['facebook_logged_in', 'facebook_user']);

@@ -7,7 +7,6 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Session;
 use Carbon\Carbon;
 use App\Models\Officer;
-use App\Models\EmailHandler;
 use App\Models\Admin;
 
 class SessionTimeout
@@ -83,13 +82,7 @@ class SessionTimeout
                     Officer::where('name', $officerName)->update(['active' => false]);
                 }
                 break;
-            case 'Email':
-                $emailUserName = $request->session()->get('email_user_name');
-                if ($emailUserName) {
-                    EmailHandler::where('name', $emailUserName)->update(['active' => false]);
-                }
-                break;
-            case 'Facebook':
+                        case 'Facebook':
                 // Facebook users don't have database records, just clear session
                 break;
             case 'admin':

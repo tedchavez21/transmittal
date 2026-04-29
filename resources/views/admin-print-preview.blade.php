@@ -359,7 +359,7 @@
             </div>
             <div class="actions">
                 <button type="button" class="btn btn-outline btn-sm" onclick="window.print()">Print</button>
-                <button type="button" class="btn btn-sm" onclick="window.close();">Back to Admin</button>
+                <a href="{{ route('admin') }}" class="btn btn-sm">Back to Admin</a>
             </div>
         </div>
 

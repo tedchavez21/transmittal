@@ -124,23 +124,7 @@
             <h3 class="text-base font-black text-gray-900">Pending user approvals</h3>
         </div>
         <div class="px-5 py-4">
-        <h4 class="text-sm font-bold text-gray-700 mt-2 mb-2 pb-1.5 border-b border-gray-200">Email (NL entry)</h4>
-        @if($pendingEmailHandlers->isEmpty())
-            <p class="text-center py-4 text-sm text-gray-400">No pending email handler approvals.</p>
-        @else
-            <ul class="max-h-72 overflow-y-auto mb-4">
-                @foreach($pendingEmailHandlers as $emailHandler)
-                    <li class="py-3 flex items-center justify-between border-b border-gray-100 list-none">
-                        <span class="text-sm font-semibold text-gray-800">{{ $emailHandler->name }}</span>
-                        <form action="{{ route('admin.email-handlers.approve', $emailHandler->id) }}" method="POST" style="display: inline;">
-                            @csrf
-                            <button type="submit" class="h-7 px-3 rounded-lg bg-pcic-700 text-white text-xs font-bold hover:bg-pcic-800 transition-colors cursor-pointer">Approve</button>
-                        </form>
-                    </li>
-                @endforeach
-            </ul>
-        @endif
-
+        
         <h4 class="text-sm font-bold text-gray-700 mt-2 mb-2 pb-1.5 border-b border-gray-200">Officer of the Day</h4>
         @if($pendingOfficers->isEmpty())
             <p class="text-center py-4 text-sm text-gray-400">No pending officer approvals.</p>
@@ -359,21 +343,21 @@
                 <div class="admin-card dash3-chart-card">
                     <div class="card-header">
                         <div>
-                            <h3 class="card-title">By Program</h3>
-                            <p class="card-subtitle">NL count per program</p>
+                            <h3 class="card-title">By Line</h3>
+                            <p class="card-subtitle">NL count per insurance line</p>
                         </div>
                     </div>
                     <div class="card-body dash3-chart-body">
-                        @foreach($recordsByProgram as $program => $count)
+                        @foreach($recordsByLine as $line => $count)
                         <div class="dash3-chart-bar-row">
-                            <span class="dash3-chart-label">{{ $program }}</span>
+                            <span class="dash3-chart-label">{{ $line }}</span>
                             <div class="dash3-chart-bar-track">
                                 <div class="dash3-chart-bar-fill" style="width: {{ $chartMax > 0 ? round($count / $chartMax * 100) : 0 }}%"></div>
                             </div>
                             <span class="dash3-chart-value">{{ number_format($count) }}</span>
                         </div>
                         @endforeach
-                        @if($recordsByProgram->isEmpty())
+                        @if($recordsByLine->isEmpty())
                             <div class="dash3-empty">No data</div>
                         @endif
                     </div>
