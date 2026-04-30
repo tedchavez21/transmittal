@@ -662,7 +662,6 @@ class RoutesController extends Controller
         $recentRecords = (clone $statsQuery)->where('created_at', '>=', now()->subDays(7))->count();
         
         // Unfiltered stats for reference
-        $pendingOfficers = Officer::orderBy('created_at')->get();
         $activeOfficers = Officer::orderBy('name')->get();
         $admins = Admin::all();
 
@@ -726,7 +725,6 @@ class RoutesController extends Controller
             'dashCountsByProvince' => $dashCountsByProvince,
             'dashBarangayBreakdown' => $dashBarangayBreakdown,
             'recentRecords' => $recentRecords,
-            'pendingOfficers' => $pendingOfficers,
             'activeOfficers' => $activeOfficers,
             'admins' => $admins,
             'allPrograms' => $allPrograms,
@@ -1155,16 +1153,6 @@ class RoutesController extends Controller
         return redirect()->back()->with('success', 'Record approved successfully.');
     }
 
-    public function approveOfficer($id)
-    {
-        $officer = Officer::findOrFail($id);
-        $officer->update([
-            'approved' => true,
-            'approved_at' => Carbon::now(),
-        ]);
-
-        return redirect()->back()->with('success', 'Officer approved successfully.');
-    }
 
     public function exportExcel(Request $request)
     {
@@ -1352,23 +1340,6 @@ class RoutesController extends Controller
         return redirect()->back()->with('success', "Transmittal $transmittalNumber created successfully with $count records.");
     }
 
-    public function pendingApprovalsApi(Request $request)
-    {
-        if (!$request->session()->has('admin_logged_in') || !$request->session()->get('admin_logged_in')) {
-            return response()->json(['error' => 'unauthorized'], 401);
-        }
-
-        $pendingOfficers = Officer::where('approved', false)
-            ->where('active', true)
-            ->orderBy('created_at', 'desc')
-            ->get(['id', 'name', 'created_at']);
-
-        return response()->json([
-            'officers' => $pendingOfficers,
-            'officerCount' => $pendingOfficers->count(),
-            'totalPending' => $pendingOfficers->count(),
-        ]);
-    }
 
     public function getActiveUsers(Request $request)
     {
@@ -1410,9 +1381,10 @@ class RoutesController extends Controller
                 $status = $this->getUserStatus($lastActivity, $now, $isAway);
                 
                 if ($status !== 'offline') {
+                    $facebookUserName = $request->session()->get('facebook_user', 'Facebook Handler');
                     $activeUsers[] = [
                         'id' => 'facebook_session',
-                        'name' => 'Facebook Handler',
+                        'name' => $facebookUserName,
                         'email' => 'facebook@handler.com',
                         'channel' => 'Facebook',
                         'last_activity' => $lastActivity,
@@ -1428,9 +1400,10 @@ class RoutesController extends Controller
                 $status = $this->getUserStatus($lastActivity, $now, $isAway);
                 
                 if ($status !== 'offline') {
+                    $emailUserName = $request->session()->get('email_user_name', 'Email Handler');
                     $activeUsers[] = [
                         'id' => 'email_session',
-                        'name' => 'Email Handler',
+                        'name' => $emailUserName,
                         'email' => 'email@handler.com',
                         'channel' => 'Email',
                         'last_activity' => $lastActivity,
@@ -1446,9 +1419,10 @@ class RoutesController extends Controller
                 $status = $this->getUserStatus($lastActivity, $now, $isAway);
                 
                 if ($status !== 'offline') {
+                    $officerName = $request->session()->get('officer_name', 'Officer of the Day');
                     $activeUsers[] = [
                         'id' => 'officer_session',
-                        'name' => 'Officer of the Day',
+                        'name' => $officerName,
                         'email' => 'officer@handler.com',
                         'channel' => 'Officer of the Day',
                         'last_activity' => $lastActivity,

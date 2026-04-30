@@ -45,13 +45,6 @@
             <div class="admin-sidebar-divider"></div>
             <div class="admin-sidebar-section-label">Tools</div>
             <div class="admin-sidebar-actions">
-                <button type="button" class="admin-sidebar-tool" id="openUserApprovalsModal" title="Pending user approvals (Email and OD)">
-                    <div class="tool-content">
-                        <span class="icon" aria-hidden="true"><img src="/images/user.svg" alt="" width="18" height="18"></span>
-                        <span class="label">User approvals</span>
-                    </div>
-                    <span id="pendingBadge" class="pending-badge" style="display:none;"></span>
-                </button>
                 <button type="button" class="admin-sidebar-tool" id="openActiveUsersModal" title="View active users">
                     <div class="tool-content">
                         <span class="icon" aria-hidden="true">
@@ -118,35 +111,6 @@
                 </div>
             </div>
 
-    <!-- User approvals: Email handlers + Officers of the Day -->
-    <dialog class="largeModal rounded-2xl shadow-2xl bg-white backdrop:bg-black/40 p-0 w-[min(640px,calc(100vw-2rem))]" id="userApprovalsModal">
-        <div class="px-5 pt-5 pb-3 border-b border-gray-100">
-            <h3 class="text-base font-black text-gray-900">Pending user approvals</h3>
-        </div>
-        <div class="px-5 py-4">
-        
-        <h4 class="text-sm font-bold text-gray-700 mt-2 mb-2 pb-1.5 border-b border-gray-200">Officer of the Day</h4>
-        @if($pendingOfficers->isEmpty())
-            <p class="text-center py-4 text-sm text-gray-400">No pending officer approvals.</p>
-        @else
-            <ul class="max-h-72 overflow-y-auto">
-                @foreach($pendingOfficers as $officer)
-                    <li class="py-3 flex items-center justify-between border-b border-gray-100 list-none">
-                        <span class="text-sm font-semibold text-gray-800">{{ $officer->name }}</span>
-                        <form action="{{ route('admin.officers.approve', $officer->id) }}" method="POST" style="display: inline;">
-                            @csrf
-                            <button type="submit" class="h-7 px-3 rounded-lg bg-pcic-700 text-white text-xs font-bold hover:bg-pcic-800 transition-colors cursor-pointer">Approve</button>
-                        </form>
-                    </li>
-                @endforeach
-            </ul>
-        @endif
-
-        <div class="mt-5 flex justify-end">
-            <button type="button" class="closeUserApprovalsModal h-9 px-4 rounded-lg border border-gray-200 text-xs font-bold text-gray-600 hover:bg-gray-50 transition-colors cursor-pointer">Close</button>
-        </div>
-        </div>
-    </dialog>
 
     <!-- Admin Users Modal -->
     <dialog class="largeModal rounded-2xl shadow-2xl bg-white backdrop:bg-black/40 p-0 w-[min(640px,calc(100vw-2rem))]" id="adminUsersModal">
@@ -2324,23 +2288,7 @@ Yapara,Dingalan,Aurora`;
             });
         }
 
-        // User approvals modal (Email + OD)
-        const openUserApprovalsModal = document.getElementById('openUserApprovalsModal');
-        const userApprovalsModal = document.getElementById('userApprovalsModal');
-        const closeUserApprovalsModal = document.querySelector('.closeUserApprovalsModal');
-
-        if (openUserApprovalsModal && userApprovalsModal) {
-            openUserApprovalsModal.addEventListener('click', function() {
-                userApprovalsModal.showModal();
-            });
-        }
-
-        if (closeUserApprovalsModal && userApprovalsModal) {
-            closeUserApprovalsModal.addEventListener('click', function() {
-                userApprovalsModal.close();
-            });
-        }
-
+        
         // Admin Users Modal
         const openAdminUsersModal = document.getElementById('openAdminUsersModal');
         const adminUsersModal = document.getElementById('adminUsersModal');
@@ -2583,15 +2531,15 @@ Yapara,Dingalan,Aurora`;
             .then(data => {
                 console.log('Save response data:', data);
                 if (data.success) {
-                    alert(data.message);
+                    showModalMessage(data.message, 'success');
                     loadUsers();
                 } else {
-                    alert('Error: ' + (data.message || 'Failed to save user'));
+                    showModalMessage('Error: ' + (data.message || 'Failed to save user'), 'error');
                 }
             })
             .catch(error => {
                 console.error('Error saving user:', error);
-                alert('Error saving user');
+                showModalMessage('Error saving user', 'error');
             });
         }
 
@@ -2613,14 +2561,14 @@ Yapara,Dingalan,Aurora`;
                 })
                 .catch(error => {
                     console.error('Error fetching user:', error);
-                    alert('Error fetching user data: ' + error.message);
+                    showModalMessage('Error fetching user data: ' + error.message, 'error');
                 });
         }
 
         function deleteUser(id) {
             console.log('Deleting user with ID:', id);
             
-            if (confirm('Are you sure you want to delete this user?')) {
+            showConfirmDialog('Are you sure you want to delete this user?', function() {
                 fetch(`/api/officers/${id}`, {
                     method: 'DELETE',
                     headers: {
@@ -2638,17 +2586,17 @@ Yapara,Dingalan,Aurora`;
                 .then(data => {
                     console.log('Delete response data:', data);
                     if (data.success) {
-                        alert(data.message);
+                        showModalMessage(data.message, 'success');
                         loadUsers();
                     } else {
-                        alert('Error: ' + (data.message || 'Failed to delete user'));
+                        showModalMessage('Error: ' + (data.message || 'Failed to delete user'), 'error');
                     }
                 })
                 .catch(error => {
                     console.error('Error deleting user:', error);
-                    alert('Error deleting user: ' + error.message);
+                    showModalMessage('Error deleting user: ' + error.message, 'error');
                 });
-            }
+            }); // Close showConfirmDialog callback
         }
 
         function attachUserButtonListeners() {
@@ -3653,12 +3601,12 @@ Yapara,Dingalan,Aurora`;
                         // Reload page to show updated data
                         window.location.reload();
                     } else {
-                        alert('Error updating record: ' + (data.message || 'Unknown error'));
+                        showModalMessage('Error updating record: ' + (data.message || 'Unknown error'), 'error');
                     }
                 })
                 .catch(function(error) {
                     console.error('Error:', error);
-                    alert('Error updating record. Please try again.');
+                    showModalMessage('Error updating record. Please try again.', 'error');
                 })
                 .finally(function() {
                     // Reset button state

@@ -40,18 +40,7 @@
         </div>
         
         <div class="px-6 py-5">
-            @if(session('error'))
-                <div class="mb-4 px-3 py-2.5 rounded-lg bg-red-50 border border-red-200 text-red-800 text-xs font-semibold">
-                    {{ session('error') }}
-                </div>
-            @endif
             
-            @if(session('success'))
-                <div class="mb-4 px-3 py-2.5 rounded-lg bg-green-50 border border-green-200 text-green-800 text-xs font-semibold">
-                    {{ session('success') }}
-                </div>
-            @endif
-
             <form action="{{ route('auth.login') }}" method="POST" class="flex flex-col gap-3">
                 @csrf
                 <input type="hidden" name="channel" value="{{ $channel }}">
