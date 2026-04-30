@@ -1,7 +1,9 @@
-<?php
+﻿<?php
+
 namespace App\Http\Controllers;
 
 use App\Models\Officer;
+use App\Models\EmailHandler;
 use App\Models\Admin;
 use App\Models\Record;
 use Carbon\Carbon;
@@ -29,14 +31,27 @@ class RoutesController extends Controller
         }
 
         $emailUserName = $request->session()->get('email_user_name');
-        
         $records = collect();
 
-        // Get the logged-in user's full name from session
-        $emailUserFullName = $emailUserName;
+        // Get the logged-in user's full name from EmailHandler table
+        $emailUserFullName = null;
+        if ($emailUserName) {
+            // Find the email handler by username to get their full name
+            $emailHandler = \App\Models\EmailHandler::where('username', $emailUserName)->first();
+            if ($emailHandler) {
+                $emailUserFullName = $emailHandler->name;
+            }
+        }
 
-        // Get the logged-in user's encoder ID from session
-        $encoderId = $request->session()->get('email_user_id');
+        // Get the logged-in user's encoder ID for user-specific filtering
+        $encoderId = null;
+        if ($emailUserFullName) {
+            // Find the email handler by name to get their ID
+            $emailHandler = \App\Models\EmailHandler::where('name', $emailUserFullName)->first();
+            if ($emailHandler) {
+                $encoderId = $emailHandler->id;
+            }
+        }
 
         // Use encoder_id for efficient user-specific querying
         $query = Record::where('source', 'Email');
@@ -46,22 +61,23 @@ class RoutesController extends Controller
             $query->where('encoder_id', $encoderId);
         }
 
-        // Apply flexible date filtering based on user selections
-        $useDateEncoded = $request->filled('use_date_encoded');
-        $useDateReceived = $request->filled('use_date_received');
+        // Default to showing today's records if no date filters are enabled
+        $hasDateFilters = false;
         
-        // Apply date encoded filter (when record was created)
-        if ($useDateEncoded && $request->filled('date_encoded')) {
+        // Apply date encoded filter - only if enabled AND date is specified
+        if ($request->filled('enable_date_encoded') && $request->filled('date_encoded')) {
             $query->whereDate('created_at', $request->date_encoded);
+            $hasDateFilters = true;
         }
-        
-        // Apply date received filter (when NL was received)
-        if ($useDateReceived && $request->filled('date_received')) {
+
+        // Apply date received filter - only if enabled AND date is specified
+        if ($request->filled('enable_date_received') && $request->filled('date_received')) {
             $query->whereDate('date_received', $request->date_received);
+            $hasDateFilters = true;
         }
-        
-        // If no filters are selected, default to today's records (by date encoded)
-        if (!$useDateEncoded && !$useDateReceived) {
+
+        // If no date filters are enabled, default to today's records
+        if (!$hasDateFilters) {
             $query->whereDate('created_at', today());
         }
 
@@ -79,168 +95,134 @@ class RoutesController extends Controller
     public function loginEmail(Request $request)
     {
         $request->validate([
-            'email_user' => 'required|string',
-            'email_password' => 'required|string',
+            'email_user' => 'required|string|in:juvielyn,hanna,other',
+            'email_user_other' => 'nullable|string|max:255',
         ]);
 
-        $username = $request->input('email_user');
-        $password = $request->input('email_password');
+        $presetNames = [
+            'juvielyn' => 'Juvielyn Fiesta',
+            'hanna' => 'Hanna Marie Lorica',
+        ];
 
-        // Find the officer by exact username match only
-        $officer = \App\Models\Officer::where('username', $username)->first();
-        if (!$officer) {
-            return redirect()->route('email-handler')->with('error', 'Invalid username. Please select a valid user from the list.');
+        $name = $presetNames[$request->input('email_user')] ?? null;
+        if ($request->input('email_user') === 'other') {
+            $name = trim((string) $request->input('email_user_other', ''));
+            if ($name === '') {
+                return redirect()->route('email-handler')->with('error', 'Please enter your name when selecting Other.');
+            }
         }
 
-        // Check if officer has a password
-        if (!$officer->password) {
-            return redirect()->route('email-handler')->with('error', 'Account not configured. Please contact administrator.');
-        }
+        EmailHandler::updateOrCreate(
+            ['name' => $name],
+            [
+                'approved' => false,
+                'approved_at' => null,
+                'active' => true,
+            ]
+        );
 
-        // Verify password
-        if (!Hash::check($password, $officer->password)) {
-            return redirect()->route('email-handler')->with('error', 'Invalid password. Please try again.');
-        }
-
-        // Store officer ID and full name in session
-        $request->session()->put('email_user_name', $officer->name);
-        $request->session()->put('email_user_id', $officer->id);
+        $request->session()->put('email_user_name', $name);
         $request->session()->put('email_logged_in', true);
 
-        return redirect()->route('email-handler')->with('success', 'You are signed in successfully.');
+        return redirect()->route('email-handler')->with('success', 'You are signed in. An admin must approve your account before you can add records.');
     }
 
     public function logoutEmail(Request $request)
     {
-        // Clear all email-related session data
+        $emailUserName = $request->session()->get('email_user_name');
+
+        if ($emailUserName) {
+            EmailHandler::where('name', $emailUserName)->update([
+                'approved' => false,
+                'approved_at' => null,
+                'active' => false,
+            ]);
+        }
+
         $request->session()->forget('email_logged_in');
         $request->session()->forget('email_user_name');
-        $request->session()->forget('email_user_id');
-        $request->session()->forget('email_last_activity');
-        $request->session()->forget('email_last_activity_away');
-        
-        // Force session to save and regenerate to ensure cleanup
-        $request->session()->save();
-        $request->session()->regenerate(true);
 
         return redirect()->route('welcome');
     }
 
-    public function logoutOfficer(Request $request)
-    {
-        // Clear all officer-related session data
-        $request->session()->forget('officer_logged_in');
-        $request->session()->forget('officer_name');
-        $request->session()->forget('officer_id');
-        $request->session()->forget('officer_last_activity');
-        $request->session()->forget('officer_last_activity_away');
-        
-        // Force session to save and regenerate to ensure cleanup
-        $request->session()->save();
-        $request->session()->regenerate(true);
-
-        return redirect()->route('welcome');
-    }
-
-    public function logoutFacebook(Request $request)
-    {
-        // Clear all facebook-related session data
-        $request->session()->forget('facebook_logged_in');
-        $request->session()->forget('facebook_user');
-        $request->session()->forget('facebook_user_id');
-        $request->session()->forget('facebook_last_activity');
-        $request->session()->forget('facebook_last_activity_away');
-        
-        // Force session to save and regenerate to ensure cleanup
-        $request->session()->save();
-        $request->session()->regenerate(true);
-
-        return redirect()->route('welcome');
-    }
-
-    
-    
     public function showFacebookHandler(Request $request)
     {
         // Check authentication - show login form if not authenticated
         if (!$request->session()->get('facebook_logged_in')) {
-            $facebookUserName = null;
+            // Don't redirect, just show the login form in the view
+            $facebookUser = null;
             $records = collect();
             return view('facebook-handler', [
                 'records' => $records,
                 'isLoggedIn' => false,
-                'facebookUserName' => $facebookUserName,
+                'facebookUser' => $facebookUser,
             ]);
         }
 
-        $facebookUserName = $request->session()->get('facebook_user');
-        $facebookUserId = $request->session()->get('facebook_user_id');
+        $facebookUser = $request->session()->get('facebook_user');
         $records = collect();
 
-        // Get the logged-in user's encoder ID from session
-        $encoderId = $facebookUserId;
+        if ($facebookUser) {
+            // Get the logged-in Facebook user's full name
+            $facebookUserFullName = null;
+            if ($facebookUser === 'juvielyn') {
+                $facebookUserFullName = 'Juvielyn Fiesta';
+            } elseif ($facebookUser === 'hanna') {
+                $facebookUserFullName = 'Hanna Marie Lorica';
+            } elseif ($facebookUser === 'other') {
+                // For 'other', get the custom name from session
+                $facebookUserFullName = $request->session()->get('facebook_user_other');
+            } else {
+                $facebookUserFullName = $facebookUser;
+            }
 
-        // Use encoder_id for efficient user-specific querying
-        $query = Record::where('source', 'Facebook');
-        
-        // Filter by logged-in user's encoder ID (default behavior)
-        if ($encoderId) {
-            $query->where('encoder_id', $encoderId);
+            $records = Record::where('source', 'Facebook')
+                ->whereDate('created_at', today())
+                ->orderBy('id', 'desc')
+                ->paginate(25)
+                ->withQueryString();
         }
-
-        // Apply date received filter - always use the date from request or default to today
-        if ($request->filled('date_received')) {
-            $query->whereDate('date_received', $request->date_received);
-        } else {
-            $query->whereDate('date_received', today());
-        }
-
-        $records = $query->orderBy('id', 'desc')
-            ->paginate(25)
-            ->withQueryString();
 
         return view('facebook-handler', [
             'records' => $records,
-            'isLoggedIn' => (bool) $facebookUserName,
-            'facebookUserName' => $facebookUserName,
+            'isLoggedIn' => true,
+            'facebookUser' => $facebookUser,
         ]);
     }
 
     public function loginFacebook(Request $request)
     {
         $request->validate([
-            'facebook_user' => 'required|string',
-            'facebook_password' => 'required|string',
+            'facebook_user' => 'required|string|in:juvielyn,hanna,other',
+            'facebook_user_other' => 'nullable|string|max:255',
         ]);
 
-        $username = $request->input('facebook_user');
-        $password = $request->input('facebook_password');
+        $presetNames = [
+            'juvielyn' => 'Juvielyn Fiesta',
+            'hanna' => 'Hanna Marie Lorica',
+        ];
 
-        // Find the officer by exact username match only
-        $officer = Officer::where('username', $username)->first();
-        if (!$officer) {
-            return redirect()->route('facebook-handler')->with('error', 'Invalid username. Please select a valid officer.');
+        $name = $presetNames[$request->input('facebook_user')] ?? null;
+        if ($request->input('facebook_user') === 'other') {
+            $name = trim((string) $request->input('facebook_user_other', ''));
+            if ($name === '') {
+                return redirect()->route('facebook-handler')->with('error', 'Please enter your name when selecting Other.');
+            }
         }
 
-        // Check if officer has a password
-        if (!$officer->password) {
-            return redirect()->route('facebook-handler')->with('error', 'Account not configured. Please contact administrator.');
-        }
-
-        // Verify password
-        if (!Hash::check($password, $officer->password)) {
-            return redirect()->route('facebook-handler')->with('error', 'Invalid password. Please try again.');
-        }
-
-        // Store session data
-        $request->session()->put('facebook_user', $officer->name);
-        $request->session()->put('facebook_user_id', $officer->id);
+        $request->session()->put('facebook_user', $name);
         $request->session()->put('facebook_logged_in', true);
 
-        return redirect()->route('facebook-handler')->with('success', 'You are signed in successfully.');
+        return redirect()->route('facebook-handler')->with('success', 'You are signed in as Facebook handler.');
     }
 
-    
+    public function logoutFacebook(Request $request)
+    {
+        $request->session()->forget('facebook_logged_in');
+        $request->session()->forget('facebook_user');
+        return redirect()->route('welcome');
+    }
+
     public function showOfficerOfTheDay(Request $request)
     {
         // Check authentication - redirect to login if not authenticated
@@ -304,6 +286,40 @@ class RoutesController extends Controller
         ]);
     }
 
+    public function loginOfficer(Request $request)
+    {
+        $request->validate([
+            'officerName' => 'required|string|max:255',
+        ]);
+
+        $officerName = trim($request->officerName);
+        Officer::updateOrCreate(
+            ['name' => $officerName],
+            [
+                'approved' => false,
+                'active' => true,
+            ]
+        );
+
+        $request->session()->put('officer_name', $officerName);
+
+        return redirect()->route('officer-of-the-day')->with('success', 'Officer name submitted. Waiting for admin approval.');
+    }
+
+    public function logoutOfficer(Request $request)
+    {
+        $officerName = $request->session()->get('officer_name');
+
+        if ($officerName) {
+            // No need to update officer status since approved, approved_at, and active columns don't exist
+            // Just clear the session
+        }
+
+        $request->session()->forget('officer_name');
+
+        return redirect()->route('welcome');
+    }
+
     public function exportOfficerCsv(Request $request)
     {
         $officerName = $request->session()->get('officer_name');
@@ -322,11 +338,11 @@ class RoutesController extends Controller
 
     public function exportEmailCsv(Request $request)
     {
-        $emailUserId = $request->session()->get('email_user_id');
-        if (!$emailUserId) { return redirect()->route('email-handler'); }
+        $emailUserName = $request->session()->get('email_user_name');
+        if (!$emailUserName) { return redirect()->route('email-handler'); }
 
         $query = Record::where('source', 'Email')
-            ->where('encoder_id', $emailUserId)
+            ->where('encoderName', $emailUserName)
             ->whereDate('created_at', today())
             ->orderBy('id', 'asc');
 
@@ -404,16 +420,8 @@ class RoutesController extends Controller
 
     public function logoutAdmin(Request $request)
     {
-        // Clear all admin-related session data
         $request->session()->forget('admin_logged_in');
         $request->session()->forget('admin_username');
-        $request->session()->forget('admin_last_activity');
-        $request->session()->forget('admin_last_activity_away');
-        
-        // Force session to save and regenerate to ensure cleanup
-        $request->session()->save();
-        $request->session()->regenerate(true);
-        
         return redirect()->route('welcome');
     }
 
@@ -667,7 +675,7 @@ class RoutesController extends Controller
         // Total records should be unfiltered to show accurate count
         $totalRecords = Record::count();
         $recordsByProgram = $statsQuery->selectRaw('program, count(*) as count')->groupBy('program')->orderByRaw('count(*) desc')->pluck('count', 'program');
-        $recordsByLine = Record::selectRaw('line, count(*) as count')->groupBy('line')->orderByRaw('count(*) desc')->pluck('count', 'line');
+        $recordsByLine = $statsQuery->selectRaw('line, count(*) as count')->groupBy('line')->orderByRaw('count(*) desc')->pluck('count', 'line');
         
         // Source counts should be unfiltered to show total records by source
         $recordsBySource = Record::selectRaw('source, count(*) as count')->groupBy('source')->orderByRaw('count(*) desc')->pluck('count', 'source');
@@ -692,6 +700,7 @@ class RoutesController extends Controller
         
         // Unfiltered stats for reference
         $pendingOfficers = Officer::orderBy('created_at')->get();
+        $pendingEmailHandlers = EmailHandler::where('approved', false)->where('active', true)->orderBy('created_at')->get();
         $activeOfficers = Officer::orderBy('name')->get();
         $admins = Admin::all();
 
@@ -756,6 +765,7 @@ class RoutesController extends Controller
             'dashBarangayBreakdown' => $dashBarangayBreakdown,
             'recentRecords' => $recentRecords,
             'pendingOfficers' => $pendingOfficers,
+            'pendingEmailHandlers' => $pendingEmailHandlers,
             'activeOfficers' => $activeOfficers,
             'admins' => $admins,
             'allPrograms' => $allPrograms,
@@ -957,12 +967,12 @@ class RoutesController extends Controller
                 $record->program,
                 $record->causeOfDamage,
                 $record->modeOfPayment,
-                $record->remarks ?: '—',
+                $record->remarks ?: 'â€”',
                 $record->source,
-                $record->admin_transmittal_number ?: '—',
+                $record->admin_transmittal_number ?: 'â€”',
                 $record->encoderName,
-                $record->date_occurrence ? (is_string($record->date_occurrence) ? $record->date_occurrence : $record->date_occurrence->format('Y-m-d')) : '—',
-                $record->date_received ? (is_string($record->date_received) ? $record->date_received : $record->date_received->format('Y-m-d')) : '—'
+                $record->date_occurrence ? (is_string($record->date_occurrence) ? $record->date_occurrence : $record->date_occurrence->format('Y-m-d')) : 'â€”',
+                $record->date_received ? (is_string($record->date_received) ? $record->date_received : $record->date_received->format('Y-m-d')) : 'â€”'
             ];
             fputcsv($csv, $row);
         }
@@ -1195,6 +1205,17 @@ class RoutesController extends Controller
         return redirect()->back()->with('success', 'Officer approved successfully.');
     }
 
+    public function approveEmailHandler($id)
+    {
+        $handler = EmailHandler::findOrFail($id);
+        $handler->update([
+            'approved' => true,
+            'approved_at' => Carbon::now(),
+        ]);
+
+        return redirect()->back()->with('success', 'Email handler approved successfully.');
+    }
+
     public function exportExcel(Request $request)
     {
         // Check if admin is logged in
@@ -1392,10 +1413,17 @@ class RoutesController extends Controller
             ->orderBy('created_at', 'desc')
             ->get(['id', 'name', 'created_at']);
 
+        $pendingEmailHandlers = EmailHandler::where('approved', false)
+            ->where('active', true)
+            ->orderBy('created_at', 'desc')
+            ->get(['id', 'name', 'created_at']);
+
         return response()->json([
             'officers' => $pendingOfficers,
+            'emailHandlers' => $pendingEmailHandlers,
             'officerCount' => $pendingOfficers->count(),
-            'totalPending' => $pendingOfficers->count(),
+            'emailHandlerCount' => $pendingEmailHandlers->count(),
+            'totalPending' => $pendingOfficers->count() + $pendingEmailHandlers->count(),
         ]);
     }
 
@@ -1510,6 +1538,31 @@ class RoutesController extends Controller
                 }
             } catch (\Exception $e) {
                 \Log::error('Error getting officers: ' . $e->getMessage());
+            }
+
+            try {
+                $emailHandlers = EmailHandler::where('approved', true)
+                    ->where('active', true)
+                    ->get();
+
+                foreach ($emailHandlers as $emailHandler) {
+                    $lastActivity = $this->getUserLastActivity($emailHandler->id, 'email');
+                    $status = $this->getUserStatus($lastActivity, $now);
+                    
+                    // Only include users who are not offline (more than 2 hours inactive)
+                    if ($status !== 'offline') {
+                        $activeUsers[] = [
+                            'id' => $emailHandler->id,
+                            'name' => $emailHandler->name ?? 'Email Handler',
+                            'email' => 'email@example.com',
+                            'channel' => 'Email',
+                            'last_activity' => $lastActivity,
+                            'status' => $status
+                        ];
+                    }
+                }
+            } catch (\Exception $e) {
+                \Log::error('Error getting email handlers: ' . $e->getMessage());
             }
 
             // Sort by last activity (most recent first)
