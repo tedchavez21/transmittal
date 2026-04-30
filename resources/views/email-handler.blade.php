@@ -41,6 +41,13 @@
             </div>
         </div>
         <div class="contentContainer">
+    @if(session('error'))
+        <div class="mb-4 mx-auto max-w-2xl">
+            <div class="bg-red-50 border border-red-200 text-red-800 px-4 py-3 rounded-lg text-sm">
+                {{ session('error') }}
+            </div>
+        </div>
+    @endif
     @if(!$isLoggedIn)
         <div class="w-full max-w-md bg-white rounded-2xl shadow-lg border border-gray-100/80 overflow-hidden">
             <div class="px-6 pt-6 pb-4 border-b border-gray-100 bg-gradient-to-b from-harvest-50/60 to-white text-center">
@@ -66,6 +73,13 @@
             </div>
         </div>
                     @else
+        @if(session('error'))
+            <div class="mb-4 mx-auto max-w-2xl">
+                <div class="bg-red-50 border border-red-200 text-red-800 px-4 py-3 rounded-lg text-sm">
+                    {{ session('error') }}
+                </div>
+            </div>
+        @endif
         <div class="grid grid-cols-1 lg:grid-cols-3 gap-4 w-full">
             <div class="no-print bg-white rounded-2xl shadow-lg border border-gray-100/80 overflow-hidden">
                 <div class="px-5 py-4 border-b border-gray-100 bg-gradient-to-b from-pcic-50/60 to-white">
@@ -460,12 +474,12 @@ if (editRecordForm) {
                 editRecordDialog.close();
                 window.location.reload();
             } else {
-                showModalMessage('Error updating record: ' + (data.message || 'Unknown error'), 'error');
+                alert('Error updating record: ' + (data.message || 'Unknown error'));
             }
         })
         .catch(function(error) {
             console.error('Error:', error);
-            showModalMessage('Error updating record. Please try again.', 'error');
+            alert('Error updating record. Please try again.');
         })
         .finally(function() {
             if (submitButton) {
