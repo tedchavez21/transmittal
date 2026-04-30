@@ -112,27 +112,48 @@ class RoutesController extends Controller
 
     public function logoutEmail(Request $request)
     {
+        // Clear all email-related session data
         $request->session()->forget('email_logged_in');
         $request->session()->forget('email_user_name');
         $request->session()->forget('email_user_id');
+        $request->session()->forget('email_last_activity');
+        $request->session()->forget('email_last_activity_away');
+        
+        // Force session to save and regenerate to ensure cleanup
+        $request->session()->save();
+        $request->session()->regenerate(true);
 
         return redirect()->route('welcome');
     }
 
     public function logoutOfficer(Request $request)
     {
+        // Clear all officer-related session data
         $request->session()->forget('officer_logged_in');
         $request->session()->forget('officer_name');
         $request->session()->forget('officer_id');
+        $request->session()->forget('officer_last_activity');
+        $request->session()->forget('officer_last_activity_away');
+        
+        // Force session to save and regenerate to ensure cleanup
+        $request->session()->save();
+        $request->session()->regenerate(true);
 
         return redirect()->route('welcome');
     }
 
     public function logoutFacebook(Request $request)
     {
+        // Clear all facebook-related session data
         $request->session()->forget('facebook_logged_in');
         $request->session()->forget('facebook_user');
         $request->session()->forget('facebook_user_id');
+        $request->session()->forget('facebook_last_activity');
+        $request->session()->forget('facebook_last_activity_away');
+        
+        // Force session to save and regenerate to ensure cleanup
+        $request->session()->save();
+        $request->session()->regenerate(true);
 
         return redirect()->route('welcome');
     }
@@ -383,8 +404,16 @@ class RoutesController extends Controller
 
     public function logoutAdmin(Request $request)
     {
+        // Clear all admin-related session data
         $request->session()->forget('admin_logged_in');
         $request->session()->forget('admin_username');
+        $request->session()->forget('admin_last_activity');
+        $request->session()->forget('admin_last_activity_away');
+        
+        // Force session to save and regenerate to ensure cleanup
+        $request->session()->save();
+        $request->session()->regenerate(true);
+        
         return redirect()->route('welcome');
     }
 

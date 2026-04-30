@@ -124,15 +124,19 @@ class AuthController extends Controller
                 if ($officerName) {
                     Officer::where('name', $officerName)->update(['active' => false]);
                 }
-                $request->session()->forget(['officer_name', 'officer_id', 'officer_logged_in']);
+                $request->session()->forget(['officer_name', 'officer_id', 'officer_logged_in', 'officer_last_activity', 'officer_last_activity_away']);
                 break;
             case 'Email':
-                $request->session()->forget(['email_user_name', 'email_user_id', 'email_logged_in']);
+                $request->session()->forget(['email_user_name', 'email_user_id', 'email_logged_in', 'email_last_activity', 'email_last_activity_away']);
                 break;
             case 'Facebook':
-                $request->session()->forget(['facebook_logged_in', 'facebook_user']);
+                $request->session()->forget(['facebook_logged_in', 'facebook_user', 'facebook_user_id', 'facebook_last_activity', 'facebook_last_activity_away']);
                 break;
         }
+
+        // Force session to save and regenerate to ensure cleanup
+        $request->session()->save();
+        $request->session()->regenerate(true);
 
         return redirect()->route('welcome');
     }
