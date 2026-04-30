@@ -29,11 +29,11 @@ Route::get('/admin', [RoutesController::class, 'showAdmin'])->name('admin');
 Route::post('/admin/login', [RoutesController::class, 'loginAdmin'])->name('admin.login');
 
 Route::post('/admin/logout', [RoutesController::class, 'logoutAdmin'])->name('admin.logout');
+Route::get('/admin/logout', [RoutesController::class, 'logoutAdmin']); // Fallback for accidental GET requests
 Route::get('/admin/active-users', [RoutesController::class, 'getActiveUsers'])->name('admin.active-users');
 Route::put('/admin/users/{id}', [RoutesController::class, 'updateAdmin'])->name('admin.users.update');
 Route::post('/admin/users', [RoutesController::class, 'createAdmin'])->name('admin.users.create');
 Route::get('/admin/records/{id}/approve', [RoutesController::class, 'approveRecord'])->name('admin.records.approve');
-Route::post('/admin/officers/{id}/approve', [RoutesController::class, 'approveOfficer'])->name('admin.officers.approve');
 Route::delete('/admin/bulk-delete', [RoutesController::class, 'bulkDelete'])->name('admin.bulk-delete');
 Route::get('/admin/export-excel', [RoutesController::class, 'exportExcel'])->name('admin.export-excel');
 Route::get('/admin/export-pdf', [RoutesController::class, 'exportPdf'])->name('admin.export-pdf');

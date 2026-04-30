@@ -65,19 +65,8 @@
         </form>
             </div>
         </div>
-<<<<<<< HEAD
     @else
-=======
-        @else
-        @if(session('error'))
-            <div class="mb-4 mx-auto max-w-2xl">
-                <div class="bg-red-50 border border-red-200 text-red-800 px-4 py-3 rounded-lg text-sm">
-                    {{ session('error') }}
-                </div>
-            </div>
-        @endif
->>>>>>> parent of 69c7c22 (DESIGN IMPLEMENTATION-MODAL)
-        <div class="grid grid-cols-1 lg:grid-cols-3 gap-4 w-full">
+                <div class="grid grid-cols-1 lg:grid-cols-3 gap-4 w-full">
             <div class="no-print bg-white rounded-2xl shadow-lg border border-gray-100/80 overflow-hidden">
                 <div class="px-5 py-4 border-b border-gray-100 bg-gradient-to-b from-pcic-50/60 to-white">
                     <h3 class="text-sm font-black text-gray-900">Session</h3>
@@ -505,12 +494,12 @@ document.addEventListener('DOMContentLoaded', function() {
                     // Reload page to show updated data
                     window.location.reload();
                 } else {
-                    alert('Error updating record: ' + (data.message || 'Unknown error'));
+                    showModalMessage('Error updating record: ' + (data.message || 'Unknown error'), 'error');
                 }
             })
             .catch(function(error) {
                 console.error('Fetch error:', error);
-                alert('Error updating record. Please try again.');
+                showModalMessage('Error updating record. Please try again.', 'error');
             })
             .finally(function() {
                 // Reset button state

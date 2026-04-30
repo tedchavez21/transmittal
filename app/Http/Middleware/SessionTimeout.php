@@ -79,16 +79,22 @@ class SessionTimeout
             case 'OD':
                 $officerName = $request->session()->get('officer_name');
                 if ($officerName) {
-                    Officer::where('name', $officerName)->update(['active' => false]);
+                    Officer::where('name', $officerName)->update([
+                        'active' => false,
+                        'last_activity' => Carbon::now()
+                    ]);
                 }
                 break;
-                        case 'Facebook':
+            case 'Facebook':
                 // Facebook users don't have database records, just clear session
                 break;
             case 'admin':
                 $adminUsername = $request->session()->get('admin_username');
                 if ($adminUsername) {
-                    Admin::where('username', $adminUsername)->update(['active' => false]);
+                    Admin::where('username', $adminUsername)->update([
+                        'active' => false,
+                        'last_activity' => Carbon::now()
+                    ]);
                 }
                 break;
         }

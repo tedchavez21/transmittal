@@ -1968,7 +1968,7 @@ Zarah,San Luis,Aurora`;
         bulkDeleteBtn.addEventListener('click', function () {
             const selectedCheckboxes = document.querySelectorAll('.record-checkbox:checked');
             if (selectedCheckboxes.length === 0) {
-                alert('Please select at least one record to delete.');
+                showModalMessage('Please select at least one record to delete.', 'warning');
                 return;
             }
 

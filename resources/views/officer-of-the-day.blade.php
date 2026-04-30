@@ -245,7 +245,7 @@
                 const suffix = suffixInput.value.trim();
                 
                 if (!suffix || suffix.length < 1 || suffix.length > 3 || isNaN(suffix)) {
-                    alert('Please enter a valid number between 1 and 999');
+                    showModalMessage('Please enter a valid number between 1 and 999', 'warning');
                     suffixInput.focus();
                     return;
                 }
@@ -520,12 +520,12 @@ if (editRecordForm) {
                 editRecordDialog.close();
                 window.location.reload();
             } else {
-                alert('Error updating record: ' + (data.message || 'Unknown error'));
+                showModalMessage('Error updating record: ' + (data.message || 'Unknown error'), 'error');
             }
         })
         .catch(function(error) {
             console.error('Error:', error);
-            alert('Error updating record. Please try again.');
+            showModalMessage('Error updating record. Please try again.', 'error');
         })
         .finally(function() {
             if (submitButton) {

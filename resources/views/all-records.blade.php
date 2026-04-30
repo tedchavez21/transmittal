@@ -731,7 +731,7 @@ function viewRecord(recordId) {
         })
         .catch(error => {
             console.error('Error fetching record:', error);
-            alert('Error loading record details');
+            showModalMessage('Error loading record details', 'error');
         });
 }
 
