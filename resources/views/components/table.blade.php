@@ -81,6 +81,9 @@ tr.bg-green-700 .account-field {
 
 /* Bottom scrollbar sync */
 .table-scroll-sync-bottom {
+    position: sticky;
+    bottom: 0;
+    z-index: 50;
     overflow-x: auto;
     overflow-y: hidden;
     height: 20px;
