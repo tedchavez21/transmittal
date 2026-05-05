@@ -2000,7 +2000,7 @@ Yapara,Dingalan,Aurora`;
         
         <!-- Main table container with proper sticky header support -->
         <div id="table-container">
-            <div id="table-wrapper" class="table-wrapper" style="width: 100%; border-radius: 16px; overflow: hidden; border: 1px solid #e5e7eb; box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);">
+            <div id="table-wrapper" class="table-wrapper-outer" style="width: 100%; border-radius: 16px; border: 1px solid #e5e7eb; box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1); overflow-y: auto; max-height: 500px;">
                 <x-table :records="$records" :showEncoder="true" :showFilters="false" :showAdminTransmittal="true" :allPrograms="$allPrograms" :allLines="$allLines" :allSources="$allSources" :allModes="$allModes" :showCheckbox="true" />
             </div>
         </div>

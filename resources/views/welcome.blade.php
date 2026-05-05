@@ -82,7 +82,7 @@
                         <div class="w-10 h-10 rounded-lg bg-harvest-50 text-harvest-600 flex items-center justify-center border border-harvest-100 shrink-0"><img src="{{ asset('images/email.svg') }}" alt="" width="22" height="22"></div>
                         <div class="flex-1 min-w-0">
                             <div class="font-bold text-gray-900 text-sm">Email</div>
-                            <div class="text-xs text-gray-500 font-medium">Encode from email submissions (approval required).</div>
+                            <div class="text-xs text-gray-500 font-medium">Encode from email submission.</div>
                         </div>
                         <div class="text-gray-300 text-lg group-hover:text-pcic-600 group-hover:translate-x-0.5 transition-all">›</div>
                     </button>
@@ -91,7 +91,7 @@
                         <div class="w-10 h-10 rounded-lg bg-blue-50 text-blue-600 flex items-center justify-center border border-blue-50 shrink-0"><img src="{{ asset('images/facebook.svg') }}" alt="" width="22" height="22"></div>
                         <div class="flex-1 min-w-0">
                             <div class="font-bold text-gray-900 text-sm">Facebook</div>
-                            <div class="text-xs text-gray-500 font-medium">Encode from Facebook submissions (approval required).</div>
+                            <div class="text-xs text-gray-500 font-medium">Encode from Facebook submissions.</div>
                         </div>
                         <div class="text-gray-300 text-lg group-hover:text-pcic-600 group-hover:translate-x-0.5 transition-all">›</div>
                     </button>

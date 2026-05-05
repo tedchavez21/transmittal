@@ -75,11 +75,37 @@
                 <div class="px-5 py-4 flex flex-col gap-3">
                     <div class="filter-container">
                         <form action="{{ route('facebook-handler') }}" method="GET">
-                            <div class="date-received-container border border-gray-200 bg-gray-50 rounded-lg p-3">
-                                <div class="flex flex-col gap-2">
-                                    <label class="text-xs font-bold text-gray-700 mb-1">Date Received</label>
-                                    <div class="flex items-center gap-2">
-                                        <input type="date" name="date_received" value="{{ request('date_received', now()->format('Y-m-d')) }}" class="h-10 px-3 rounded-lg border border-gray-300 focus:border-pcic-500 focus:ring-2 focus:ring-pcic-100 bg-white outline-none text-sm shadow-sm w-full">
+                            <div class="date-filter-container border border-gray-200 bg-gray-50 rounded-lg p-3">
+                                <div class="flex flex-col gap-3">
+                                    <label class="text-xs font-bold text-gray-700 mb-2">Filter Records By Date</label>
+                                    
+                                    <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
+                                        <!-- Date Encoded Filter -->
+                                        <div class="date-encoded-filter">
+                                            <div class="flex items-center gap-2 mb-2">
+                                            <input type="checkbox" id="use_date_encoded" name="use_date_encoded" value="1" {{ request('use_date_encoded') || (!request('use_date_received') && !request('date_received')) ? 'checked' : '' }} class="w-4 h-4 text-pcic-600 focus:ring-pcic-500 border-gray-300 rounded">
+                                            <label for="use_date_encoded" class="text-xs font-medium text-gray-700">Date Encoded (when record was created)</label>
+                                        </div>
+                                            <input type="date" name="date_encoded" value="{{ request('date_encoded', now()->format('Y-m-d')) }}" class="h-10 px-3 rounded-lg border border-gray-300 focus:border-pcic-500 focus:ring-2 focus:ring-pcic-100 bg-white outline-none text-sm shadow-sm w-full">
+                                        </div>
+                                        
+                                        <!-- Date Received Filter -->
+                                        <div class="date-received-filter">
+                                            <div class="flex items-center gap-2 mb-2">
+                                            <input type="checkbox" id="use_date_received" name="use_date_received" value="1" {{ request('use_date_received') ? 'checked' : '' }} class="w-4 h-4 text-pcic-600 focus:ring-pcic-500 border-gray-300 rounded">
+                                            <label for="use_date_received" class="text-xs font-medium text-gray-700">Date Received (when NL was received)</label>
+                                        </div>
+                                            <input type="date" name="date_received" value="{{ request('date_received', now()->format('Y-m-d')) }}" class="h-10 px-3 rounded-lg border border-gray-300 focus:border-pcic-500 focus:ring-2 focus:ring-pcic-100 bg-white outline-none text-sm shadow-sm w-full">
+                                        </div>
+                                    </div>
+                                    
+                                    <!-- Filter Options Help -->
+                                    <div class="text-xs text-gray-500 bg-blue-50 border border-blue-200 rounded p-2 mt-2">
+                                        <strong>How to use:</strong><br>
+                                        • Check one or both date filters<br>
+                                        • <strong>Date Encoded:</strong> Shows records created on specific date<br>
+                                        • <strong>Date Received:</strong> Shows records received on specific date<br>
+                                        • <strong>Both checked:</strong> Shows records matching both criteria
                                     </div>
                                 </div>
                             </div>

@@ -44,16 +44,40 @@ tr.bg-green-700 .account-field {
 /* Table wrapper with scroll */
 .table-wrapper {
     overflow-x: auto;
-    overflow-y: auto;
-    max-height: calc(100vh - 250px);
+    overflow-y: hidden;
     border: none;
 }
 
-.table-wrapper table {
-    border-collapse: separate;
-    border-spacing: 0;
+/* Top scrollbar sync */
+.table-scroll-sync-top {
+    overflow-x: auto;
+    overflow-y: hidden;
+    height: 20px;
+    margin-bottom: 0;
     width: 100%;
-    table-layout: auto;
+    border-bottom: 1px solid #e5e7eb;
+}
+
+.table-scroll-sync-top::-webkit-scrollbar {
+    height: 12px;
+}
+
+.table-scroll-sync-top::-webkit-scrollbar-track {
+    background: #f1f1f1;
+}
+
+.table-scroll-sync-top::-webkit-scrollbar-thumb {
+    background: #888;
+    border-radius: 6px;
+}
+
+.table-scroll-sync-top::-webkit-scrollbar-thumb:hover {
+    background: #555;
+}
+
+.table-scroll-spacer {
+    height: 1px;
+    min-height: 1px;
 }
 
 /* JavaScript-based sticky headers with improved alignment */
@@ -163,7 +187,7 @@ document.addEventListener('DOMContentLoaded', function() {
     // Handle checkbox changes to style account fields
     function updateAccountStyling() {
         const checkboxes = document.querySelectorAll('input[type="checkbox"].record-checkbox, input[type="checkbox"].record-checkbox-transmit');
-        
+
         checkboxes.forEach(checkbox => {
             const row = checkbox.closest('tr');
             if (row) {
@@ -175,10 +199,10 @@ document.addEventListener('DOMContentLoaded', function() {
             }
         });
     }
-    
+
     // Initial styling
     updateAccountStyling();
-    
+
     // Add event listeners to checkboxes
     document.addEventListener('change', function(e) {
         if (e.target.type === 'checkbox' && (e.target.classList.contains('record-checkbox') || e.target.classList.contains('record-checkbox-transmit'))) {
@@ -192,12 +216,75 @@ document.addEventListener('DOMContentLoaded', function() {
             }
         }
     });
-    
+
     // Handle select all checkboxes
     document.addEventListener('change', function(e) {
         if (e.target.id === 'select-all' || e.target.id === 'select-all-transmit') {
             setTimeout(updateAccountStyling, 10);
         }
+    });
+
+    // Sync top and bottom scrollbars for table horizontal scrolling
+    function syncTableScrollbars() {
+        // Find all table scroll sync elements
+        const scrollTops = document.querySelectorAll('.table-scroll-sync-top');
+
+        scrollTops.forEach(function(scrollTop) {
+            const scrollWrapper = scrollTop.nextElementSibling;
+            const scrollSpacer = scrollTop.querySelector('.table-scroll-spacer');
+            const table = scrollWrapper ? scrollWrapper.querySelector('.records-table') : null;
+
+            if (!scrollTop || !scrollWrapper || !scrollSpacer || !table) {
+                return;
+            }
+
+            // Function to update spacer width
+            function updateSpacerWidth() {
+                const tableWidth = table.scrollWidth;
+                scrollSpacer.style.width = tableWidth + 'px';
+            }
+
+            // Set the spacer width to match the table width
+            updateSpacerWidth();
+
+            // Sync scroll from top to bottom
+            scrollTop.addEventListener('scroll', function() {
+                scrollWrapper.scrollLeft = scrollTop.scrollLeft;
+            });
+
+            // Sync scroll from bottom to top
+            scrollWrapper.addEventListener('scroll', function() {
+                scrollTop.scrollLeft = scrollWrapper.scrollLeft;
+            });
+
+            // Update spacer width on window resize
+            window.addEventListener('resize', updateSpacerWidth);
+
+            // Use ResizeObserver to update spacer width when table size changes
+            if (typeof ResizeObserver !== 'undefined') {
+                const resizeObserver = new ResizeObserver(function() {
+                    updateSpacerWidth();
+                });
+                resizeObserver.observe(table);
+            }
+        });
+    }
+
+    // Initialize scrollbar sync with a slight delay to ensure table is rendered
+    setTimeout(syncTableScrollbars, 100);
+
+    // Re-initialize after table updates (for AJAX loaded content)
+    const observer = new MutationObserver(function(mutations) {
+        mutations.forEach(function(mutation) {
+            if (mutation.addedNodes.length > 0) {
+                setTimeout(syncTableScrollbars, 50);
+            }
+        });
+    });
+
+    const tableWrappers = document.querySelectorAll('.table-wrapper');
+    tableWrappers.forEach(function(tableWrapper) {
+        observer.observe(tableWrapper, { childList: true, subtree: true });
     });
 });
 </script>
@@ -383,7 +470,12 @@ function getSortIndicator($column, $currentSort, $currentOrder) {
 </div>
 @endif
 
-<div class="table-wrapper">
+<!-- Top scrollbar for horizontal scrolling -->
+<div class="table-scroll-sync-top" id="table-scroll-top-{{ $showCheckbox ? '1' : '0' }}-{{ $showAdminTransmittal ? '1' : '0' }}">
+    <div class="table-scroll-spacer" id="table-scroll-spacer-{{ $showCheckbox ? '1' : '0' }}-{{ $showAdminTransmittal ? '1' : '0' }}"></div>
+</div>
+
+<div class="table-wrapper" id="table-wrapper-{{ $showCheckbox ? '1' : '0' }}-{{ $showAdminTransmittal ? '1' : '0' }}">
 <table class="records-table" style="width: 100%; border-collapse: separate; border-spacing: 0;">
     <thead>
         <tr>

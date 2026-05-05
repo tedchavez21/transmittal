@@ -938,6 +938,7 @@ Tandoc,Talugtug,Nueva Ecija
 Tibag,Talugtug,Nueva Ecija
 Villa Rosario,Talugtug,Nueva Ecija
 Villa Boado,Talugtug,Nueva Ecija
+Villa Rosenda,Talugtug,Nueva Ecija
 Batitang,Zaragoza,Nueva Ecija
 Carmen,Zaragoza,Nueva Ecija
 Concepcion,Zaragoza,Nueva Ecija

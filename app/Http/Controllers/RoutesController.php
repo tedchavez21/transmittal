@@ -171,19 +171,31 @@ class RoutesController extends Controller
         // Get the logged-in user's encoder ID from session
         $encoderId = $facebookUserId;
 
-        // Use encoder_id for efficient user-specific querying
+        // Show Facebook records filtered by logged-in user's encoder ID
         $query = Record::where('source', 'Facebook');
         
-        // Filter by logged-in user's encoder ID (default behavior)
+        // Filter by logged-in user's encoder ID
         if ($encoderId) {
             $query->where('encoder_id', $encoderId);
         }
 
-        // Apply date received filter - always use the date from request or default to today
-        if ($request->filled('date_received')) {
+        // Apply flexible date filtering based on user selections
+        $useDateEncoded = $request->filled('use_date_encoded');
+        $useDateReceived = $request->filled('use_date_received');
+        
+        // Apply date encoded filter (when record was created)
+        if ($useDateEncoded && $request->filled('date_encoded')) {
+            $query->whereDate('created_at', $request->date_encoded);
+        }
+        
+        // Apply date received filter (when NL was received)
+        if ($useDateReceived && $request->filled('date_received')) {
             $query->whereDate('date_received', $request->date_received);
-        } else {
-            $query->whereDate('date_received', today());
+        }
+        
+        // If no filters are selected, default to today's records (by date encoded)
+        if (!$useDateEncoded && !$useDateReceived) {
+            $query->whereDate('created_at', today());
         }
 
         $records = $query->orderBy('id', 'desc')

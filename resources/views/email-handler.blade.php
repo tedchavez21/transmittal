@@ -205,8 +205,6 @@
             </select>
             <label for="remarks" class="text-xs font-bold text-gray-600 text-right">Remarks - Care of:</label>
             <input type="text" id="remarks" name="remarks" class="h-9 px-3 rounded-lg border border-gray-200 focus:border-pcic-500 focus:ring-2 focus:ring-pcic-100 outline-none text-sm w-full ">
-            <label for="date_received" class="text-xs font-bold text-gray-600 text-right">Date Received:</label>
-            <input type="date" id="date_received" name="date_received" value="{{ now()->format('Y-m-d') }}" class="h-9 px-3 rounded-lg border border-gray-200 focus:border-pcic-500 focus:ring-2 focus:ring-pcic-100 outline-none text-sm w-full bg-white">
             <label for="accounts" class="text-xs font-bold text-gray-600 text-right">Account (email):</label>
             <input type="text" id="accounts" name="accounts" placeholder="Email address or username" class="h-9 px-3 rounded-lg border border-gray-200 focus:border-pcic-500 focus:ring-2 focus:ring-pcic-100 outline-none text-sm w-full ">
             <div></div>
@@ -279,8 +277,6 @@
                 <option value="gcash">GCash</option>
                 <option value="not_indicated">Not indicated</option>
             </select>
-            <label for="date_received" class="text-xs font-bold text-gray-600 text-right">Date Received:</label>
-            <input type="date" id="date_received" name="date_received" class="h-9 px-3 rounded-lg border border-gray-200 focus:border-pcic-500 focus:ring-2 focus:ring-pcic-100 outline-none text-sm w-full bg-white">
             <label for="accounts" class="text-xs font-bold text-gray-600 text-right">Account (email):</label>
             <input type="text" id="accounts" name="accounts" class="h-9 px-3 rounded-lg border border-gray-200 focus:border-pcic-500 focus:ring-2 focus:ring-pcic-100 outline-none text-sm w-full">
             <label for="facebook_page_url" class="text-xs font-bold text-gray-600 text-right">FB link:</label>
