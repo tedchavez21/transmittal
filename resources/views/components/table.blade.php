@@ -43,19 +43,23 @@ tr.bg-green-700 .account-field {
 
 /* Table wrapper with scroll */
 .table-wrapper {
-    overflow-x: auto;
+    overflow-x: hidden;
     overflow-y: hidden;
     border: none;
 }
 
 /* Top scrollbar sync */
 .table-scroll-sync-top {
+    position: sticky;
+    top: 0;
+    z-index: 50;
     overflow-x: auto;
     overflow-y: hidden;
     height: 20px;
     margin-bottom: 0;
     width: 100%;
     border-bottom: 1px solid #e5e7eb;
+    background: white;
 }
 
 .table-scroll-sync-top::-webkit-scrollbar {
@@ -72,6 +76,34 @@ tr.bg-green-700 .account-field {
 }
 
 .table-scroll-sync-top::-webkit-scrollbar-thumb:hover {
+    background: #555;
+}
+
+/* Bottom scrollbar sync */
+.table-scroll-sync-bottom {
+    overflow-x: auto;
+    overflow-y: hidden;
+    height: 20px;
+    margin-top: 0;
+    width: 100%;
+    border-top: 1px solid #e5e7eb;
+    background: white;
+}
+
+.table-scroll-sync-bottom::-webkit-scrollbar {
+    height: 12px;
+}
+
+.table-scroll-sync-bottom::-webkit-scrollbar-track {
+    background: #f1f1f1;
+}
+
+.table-scroll-sync-bottom::-webkit-scrollbar-thumb {
+    background: #888;
+    border-radius: 6px;
+}
+
+.table-scroll-sync-bottom::-webkit-scrollbar-thumb:hover {
     background: #555;
 }
 
@@ -228,13 +260,16 @@ document.addEventListener('DOMContentLoaded', function() {
     function syncTableScrollbars() {
         // Find all table scroll sync elements
         const scrollTops = document.querySelectorAll('.table-scroll-sync-top');
+        const scrollBottoms = document.querySelectorAll('.table-scroll-sync-bottom');
 
         scrollTops.forEach(function(scrollTop) {
             const scrollWrapper = scrollTop.nextElementSibling;
             const scrollSpacer = scrollTop.querySelector('.table-scroll-spacer');
             const table = scrollWrapper ? scrollWrapper.querySelector('.records-table') : null;
+            const scrollBottom = scrollWrapper ? scrollWrapper.nextElementSibling : null;
+            const scrollSpacerBottom = scrollBottom ? scrollBottom.querySelector('.table-scroll-spacer') : null;
 
-            if (!scrollTop || !scrollWrapper || !scrollSpacer || !table) {
+            if (!scrollTop || !scrollWrapper || !scrollSpacer || !table || !scrollBottom || !scrollSpacerBottom) {
                 return;
             }
 
@@ -242,19 +277,28 @@ document.addEventListener('DOMContentLoaded', function() {
             function updateSpacerWidth() {
                 const tableWidth = table.scrollWidth;
                 scrollSpacer.style.width = tableWidth + 'px';
+                scrollSpacerBottom.style.width = tableWidth + 'px';
             }
 
             // Set the spacer width to match the table width
             updateSpacerWidth();
 
-            // Sync scroll from top to bottom
+            // Sync scroll from top to wrapper and bottom
             scrollTop.addEventListener('scroll', function() {
                 scrollWrapper.scrollLeft = scrollTop.scrollLeft;
+                scrollBottom.scrollLeft = scrollTop.scrollLeft;
             });
 
-            // Sync scroll from bottom to top
+            // Sync scroll from wrapper to top and bottom
             scrollWrapper.addEventListener('scroll', function() {
                 scrollTop.scrollLeft = scrollWrapper.scrollLeft;
+                scrollBottom.scrollLeft = scrollWrapper.scrollLeft;
+            });
+
+            // Sync scroll from bottom to wrapper and top
+            scrollBottom.addEventListener('scroll', function() {
+                scrollWrapper.scrollLeft = scrollBottom.scrollLeft;
+                scrollTop.scrollLeft = scrollBottom.scrollLeft;
             });
 
             // Update spacer width on window resize
@@ -809,6 +853,12 @@ function getSortIndicator($column, $currentSort, $currentOrder) {
     </tbody>
 </table>
 </div>
+
+<!-- Bottom scrollbar for horizontal scrolling -->
+<div class="table-scroll-sync-bottom" id="table-scroll-bottom-{{ $showCheckbox ? '1' : '0' }}-{{ $showAdminTransmittal ? '1' : '0' }}">
+    <div class="table-scroll-spacer" id="table-scroll-spacer-bottom-{{ $showCheckbox ? '1' : '0' }}-{{ $showAdminTransmittal ? '1' : '0' }}"></div>
+</div>
+
     @if($records->isEmpty())
 <div class="empty-state" style="display:flex;flex-direction:column;align-items:center;justify-content:center;padding:48px 20px;text-align:center;">
     <svg width="80" height="80" viewBox="0 0 80 80" fill="none" xmlns="http://www.w3.org/2000/svg" style="margin-bottom:16px;opacity:0.5;">
