@@ -2726,6 +2726,10 @@ Yapara,Dingalan,Aurora`;
         const recordCheckboxes = document.querySelectorAll('.record-checkbox');
         const selectAllBox = document.getElementById('select-all');
 
+        // Track selection order of record IDs and sources
+        const selectedIdsOrder = [];
+        const selectedSourcesOrder = [];
+
         // Get selected IDs from URL parameter
         function getSelectedIdsFromUrl() {
             const params = new URLSearchParams(window.location.search);
@@ -2813,14 +2817,40 @@ Yapara,Dingalan,Aurora`;
             cb.addEventListener('change', function() {
                 const selectedIds = getSelectedIdsFromUrl();
                 const checkboxValue = cb.value;
+                const source = cb.dataset.source;
+                
                 if (this.checked) {
                     if (!selectedIds.includes(checkboxValue)) {
                         selectedIds.push(checkboxValue);
+                        // Track selection order
+                        selectedIdsOrder.push(checkboxValue);
+                        // Track source order if this source hasn't been selected yet
+                        if (source && !selectedSourcesOrder.includes(source)) {
+                            selectedSourcesOrder.push(source);
+                        }
                     }
                 } else {
                     const index = selectedIds.indexOf(checkboxValue);
                     if (index > -1) {
                         selectedIds.splice(index, 1);
+                        // Remove from selection order
+                        const orderIndex = selectedIdsOrder.indexOf(checkboxValue);
+                        if (orderIndex > -1) {
+                            selectedIdsOrder.splice(orderIndex, 1);
+                        }
+                        // Check if any records from this source are still selected
+                        if (source) {
+                            const sourceStillSelected = selectedIdsOrder.some(id => {
+                                const checkbox = document.querySelector(`.record-checkbox-transmit[value="${id}"]`);
+                                return checkbox && checkbox.dataset.source === source;
+                            });
+                            if (!sourceStillSelected) {
+                                const sourceIndex = selectedSourcesOrder.indexOf(source);
+                                if (sourceIndex > -1) {
+                                    selectedSourcesOrder.splice(sourceIndex, 1);
+                                }
+                            }
+                        }
                     }
                 }
                 updateUrlWithSelectedIds(selectedIds);
@@ -3141,8 +3171,15 @@ Yapara,Dingalan,Aurora`;
                 // Add all current checkboxes to selection
                 currentCheckboxes.forEach(cb => {
                     cb.checked = true;
+                    const source = cb.dataset.source;
                     if (!selectedIds.includes(cb.value)) {
                         selectedIds.push(cb.value);
+                        // Track selection order
+                        selectedIdsOrder.push(cb.value);
+                        // Track source order if this source hasn't been selected yet
+                        if (source && !selectedSourcesOrder.includes(source)) {
+                            selectedSourcesOrder.push(source);
+                        }
                     }
                 });
             } else {
@@ -3152,8 +3189,15 @@ Yapara,Dingalan,Aurora`;
                     const index = selectedIds.indexOf(cb.value);
                     if (index > -1) {
                         selectedIds.splice(index, 1);
+                        // Remove from selection order
+                        const orderIndex = selectedIdsOrder.indexOf(cb.value);
+                        if (orderIndex > -1) {
+                            selectedIdsOrder.splice(orderIndex, 1);
+                        }
                     }
                 });
+                // Clear source order when all are deselected
+                selectedSourcesOrder.length = 0;
             }
             updateUrlWithSelectedIds(selectedIds);
             updateTransmitButtonState();
@@ -3336,6 +3380,9 @@ Yapara,Dingalan,Aurora`;
                 // Clear both transmit and delete selections
                 clearSelectedTransmitIds();
                 clearSelectedDeleteIds();
+                // Clear selection order arrays
+                selectedIdsOrder.length = 0;
+                selectedSourcesOrder.length = 0;
                 // Update filter form hidden inputs
                 updateFilterFormHiddenInputs();
             });
@@ -3604,14 +3651,40 @@ Yapara,Dingalan,Aurora`;
                 cb.addEventListener('change', function() {
                     const selectedIds = getSelectedIdsFromUrl();
                     const checkboxValue = cb.value;
+                    const source = cb.dataset.source;
+                    
                     if (this.checked) {
                         if (!selectedIds.includes(checkboxValue)) {
                             selectedIds.push(checkboxValue);
+                            // Track selection order
+                            selectedIdsOrder.push(checkboxValue);
+                            // Track source order if this source hasn't been selected yet
+                            if (source && !selectedSourcesOrder.includes(source)) {
+                                selectedSourcesOrder.push(source);
+                            }
                         }
                     } else {
                         const index = selectedIds.indexOf(checkboxValue);
                         if (index > -1) {
                             selectedIds.splice(index, 1);
+                            // Remove from selection order
+                            const orderIndex = selectedIdsOrder.indexOf(checkboxValue);
+                            if (orderIndex > -1) {
+                                selectedIdsOrder.splice(orderIndex, 1);
+                            }
+                            // Check if any records from this source are still selected
+                            if (source) {
+                                const sourceStillSelected = selectedIdsOrder.some(id => {
+                                    const checkbox = document.querySelector(`.record-checkbox-transmit[value="${id}"]`);
+                                    return checkbox && checkbox.dataset.source === source;
+                                });
+                                if (!sourceStillSelected) {
+                                    const sourceIndex = selectedSourcesOrder.indexOf(source);
+                                    if (sourceIndex > -1) {
+                                        selectedSourcesOrder.splice(sourceIndex, 1);
+                                    }
+                                }
+                            }
                         }
                     }
                     updateUrlWithSelectedIds(selectedIds);
@@ -3626,8 +3699,15 @@ Yapara,Dingalan,Aurora`;
                     // Add all current checkboxes to selection
                     newTransmitCheckboxes.forEach(cb => {
                         cb.checked = true;
+                        const source = cb.dataset.source;
                         if (!selectedIds.includes(cb.value)) {
                             selectedIds.push(cb.value);
+                            // Track selection order
+                            selectedIdsOrder.push(cb.value);
+                            // Track source order if this source hasn't been selected yet
+                            if (source && !selectedSourcesOrder.includes(source)) {
+                                selectedSourcesOrder.push(source);
+                            }
                         }
                     });
                 } else {
@@ -3637,8 +3717,15 @@ Yapara,Dingalan,Aurora`;
                         const index = selectedIds.indexOf(cb.value);
                         if (index > -1) {
                             selectedIds.splice(index, 1);
+                            // Remove from selection order
+                            const orderIndex = selectedIdsOrder.indexOf(cb.value);
+                            if (orderIndex > -1) {
+                                selectedIdsOrder.splice(orderIndex, 1);
+                            }
                         }
                     });
+                    // Clear source order when all are deselected
+                    selectedSourcesOrder.length = 0;
                 }
                 updateUrlWithSelectedIds(selectedIds);
                 updateTransmitButtonState();
@@ -3747,7 +3834,7 @@ Yapara,Dingalan,Aurora`;
                 updateUrlWithSelectedIds([]);
 
                 // Open print preview in new tab with IDs as URL parameter
-                const printPreviewUrl = "{{ route('admin.print-preview') }}?ids=" + encodeURIComponent(selectedIds.join(','));
+                const printPreviewUrl = "{{ route('admin.print-preview') }}?ids=" + encodeURIComponent(selectedIds.join(',')) + "&order=" + encodeURIComponent(selectedIdsOrder.join(',')) + "&sources=" + encodeURIComponent(selectedSourcesOrder.join(','));
                 window.open(printPreviewUrl, '_blank');
                 this.style.backgroundColor = '#6c757d'; // Gray out
             } else {

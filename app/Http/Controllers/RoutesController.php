@@ -836,16 +836,69 @@ class RoutesController extends Controller
         }
 
         if (!empty($sessionRecordIds)) {
-            $recordsQuery = Record::whereIn('id', $sessionRecordIds)
-                ->orderBy('id', 'desc');
+            $recordsQuery = Record::whereIn('id', $sessionRecordIds);
+            
+            // Check if selection order is provided
+            if ($request->filled('order') && $request->filled('sources')) {
+                $orderIds = explode(',', $request->input('order'));
+                $orderIds = array_filter(array_map('intval', $orderIds));
+                $sourceOrder = explode(',', $request->input('sources'));
+                $sourceOrder = array_filter(array_map('trim', $sourceOrder));
+                
+                // Get all records first
+                $records = $recordsQuery->get();
+                
+                // Create a map of ID to record for quick lookup
+                $recordsById = $records->keyBy('id');
+                
+                // Create a map of source to records
+                $recordsBySource = [];
+                foreach ($records as $record) {
+                    $source = $record->source ?? 'not_indicated';
+                    if (!isset($recordsBySource[$source])) {
+                        $recordsBySource[$source] = [];
+                    }
+                    $recordsBySource[$source][] = $record;
+                }
+                
+                // Sort records within each source based on selection order
+                foreach ($sourceOrder as $source) {
+                    if (isset($recordsBySource[$source])) {
+                        // Sort records within this source by their position in the selection order
+                        usort($recordsBySource[$source], function($a, $b) use ($orderIds) {
+                            $indexA = array_search($a->id, $orderIds);
+                            $indexB = array_search($b->id, $orderIds);
+                            return $indexA - $indexB;
+                        });
+                    }
+                }
+                
+                // Rebuild records array grouped by source in source order
+                $sortedRecords = [];
+                foreach ($sourceOrder as $source) {
+                    if (isset($recordsBySource[$source])) {
+                        $sortedRecords = array_merge($sortedRecords, $recordsBySource[$source]);
+                    }
+                }
+                
+                // Add any records from sources not in the source order (shouldn't happen but just in case)
+                foreach ($recordsBySource as $source => $sourceRecords) {
+                    if (!in_array($source, $sourceOrder)) {
+                        $sortedRecords = array_merge($sortedRecords, $sourceRecords);
+                    }
+                }
+                
+                $records = collect($sortedRecords);
+            } else {
+                // Fallback to original ordering if no order provided
+                $records = $recordsQuery->orderBy('id', 'desc')->get();
+            }
         } else {
             $query = Record::query();
             $this->applyFilters($request, $query);
             $recordsQuery = $query->orderBy('id', 'desc');
+            $records = $recordsQuery->get();
         }
-
-        // Get all records (not paginated) - will be split in view
-        $records = $recordsQuery->get();
         
         \Log::info('Print Preview - Total Records Found: ' . $records->count());
         $totalRecords = $records->count();

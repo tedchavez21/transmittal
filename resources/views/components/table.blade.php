@@ -716,7 +716,7 @@ function getSortIndicator($column, $currentSort, $currentOrder) {
                 <input type="checkbox" name="record_ids[]" value="{{ $record->id }}" class="record-checkbox">
             </td>
             <td class="no-print col-checkbox-transmit" style="display: none;">
-                <input type="checkbox" name="record_ids_transmit[]" value="{{ $record->id }}" class="record-checkbox-transmit" style="display: none;">
+                <input type="checkbox" name="record_ids_transmit[]" value="{{ $record->id }}" class="record-checkbox-transmit" data-source="{{ $record->source }}" style="display: none;">
             </td>
             <td class="no-print col-edit">
                 <button type="button" class="editButton"
