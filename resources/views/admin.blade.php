@@ -590,8 +590,10 @@
             </div>
         </div>
         @endif
-        <form method="GET" action="{{ route('admin') }}" style="margin: 0;">
+        <form method="GET" action="{{ route('admin') }}" style="margin: 0;" id="filter-form">
             <input type="hidden" name="tab" value="nl-records">
+            <input type="hidden" name="selected_transmit_ids" id="filter-selected-transmit-ids" value="{{ request('selected_transmit_ids') }}">
+            <input type="hidden" name="selected_delete_ids" id="filter-selected-delete-ids" value="{{ request('selected_delete_ids') }}">
             <div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(180px, 1fr)); gap: 16px; align-items: start;">
                 <div style="display: flex; flex-direction: column; gap: 6px;">
                     <label style="font-size: 12px; font-weight: 600; color: #64748b; text-transform: uppercase; letter-spacing: 0.5px;">Search Farmer</label>
@@ -734,8 +736,8 @@
                 </div>
             </div>
             <div style="display: flex; gap: 12px; margin-top: 20px; padding-top: 20px; border-top: 1px solid #e2e8f0;">
-                <button type="submit" style="padding: 12px 24px; background: linear-gradient(135deg, #006c35 0%, #008a43 100%); color: white; border: none; border-radius: 8px; cursor: pointer; font-weight: 600; font-size: 14px; box-shadow: 0 2px 4px rgba(0, 108, 53, 0.2); transition: all 0.2s;">Apply Filters</button>
-                <a href="{{ route('admin') }}" style="padding: 12px 24px; background: #f1f5f9; color: #64748b; text-decoration: none; border-radius: 8px; font-weight: 600; font-size: 14px; display: inline-flex; align-items: center; transition: all 0.2s; border: 1px solid #e2e8f0;">Clear All</a>
+                <button type="button" id="apply-filters-btn" style="padding: 12px 24px; background: linear-gradient(135deg, #006c35 0%, #008a43 100%); color: white; border: none; border-radius: 8px; cursor: pointer; font-weight: 600; font-size: 14px; box-shadow: 0 2px 4px rgba(0, 108, 53, 0.2); transition: all 0.2s;">Apply Filters</button>
+                <a href="{{ route('admin', ['tab' => 'nl-records']) }}" id="clear-filters-btn" style="padding: 12px 24px; background: #f1f5f9; color: #64748b; text-decoration: none; border-radius: 8px; font-weight: 600; font-size: 14px; display: inline-flex; align-items: center; transition: all 0.2s; border: 1px solid #e2e8f0;">Clear Filters</a>
             </div>
         </form>
 
@@ -1988,6 +1990,7 @@ Yapara,Dingalan,Aurora`;
                 <button id="delete-selected" class="btn" disabled style="padding: 10px 16px; background: linear-gradient(135deg, #f59e0b 0%, #fbbf24 100%); color: white; border: none; border-radius: 8px; cursor: not-allowed; font-weight: 600; font-size: 13px; box-shadow: 0 2px 4px rgba(245, 158, 11, 0.2); transition: all 0.2s; opacity: 0.6;">Delete Selected</button>
                 <button type="button" id="select-records-transmit" class="btn" style="padding: 10px 16px; background: linear-gradient(135deg, #0ea5e9 0%, #38bdf8 100%); color: white; border: none; border-radius: 8px; cursor: pointer; font-weight: 600; font-size: 13px; box-shadow: 0 2px 4px rgba(14, 165, 233, 0.2); transition: all 0.2s;">Select for Transmit</button>
                 <button type="button" id="transmit-selected-records" class="btn" disabled style="padding: 10px 16px; background: linear-gradient(135deg, #006c35 0%, #008a43 100%); color: white; border: none; border-radius: 8px; cursor: not-allowed; font-weight: 600; font-size: 13px; box-shadow: 0 2px 4px rgba(0, 108, 53, 0.2); transition: all 0.2s; opacity: 0.6;">Transmit Selected</button>
+                <button type="button" id="clear-selections" class="btn" style="padding: 10px 16px; background: linear-gradient(135deg, #64748b 0%, #94a3b8 100%); color: white; border: none; border-radius: 8px; cursor: pointer; font-weight: 600; font-size: 13px; box-shadow: 0 2px 4px rgba(100, 116, 139, 0.2); transition: all 0.2s;">Clear Selections</button>
                 <span id="bulk-selected-count" style="padding: 8px 12px; background: #f1f5f9; color: #64748b; border-radius: 8px; font-size: 12px; font-weight: 600; border: 1px solid #e2e8f0; min-width: 80px; text-align: center;">0 selected</span>
             </div>
         </div>
@@ -1996,7 +1999,6 @@ Yapara,Dingalan,Aurora`;
         @csrf
         @method('DELETE')
         <input type="hidden" name="record_ids" id="selected-record-ids">
-        <div id="table-loading-indicator" style="display: none; margin-bottom: 10px; color: #1565C0; font-weight: 600;">Loading records...</div>
         
         <!-- Main table container with proper sticky header support -->
         <div id="table-container">
@@ -2233,7 +2235,6 @@ Yapara,Dingalan,Aurora`;
         const dashboardSection = document.getElementById('dashboard-section');
         const nlRecordsSection = document.getElementById('nl-records-section');
         const adminActiveTabKey = 'admin_active_tab';
-        const tableLoadingIndicator = document.getElementById('table-loading-indicator');
 
         function setTabInUrl(tabValue) {
             const params = new URLSearchParams(window.location.search);
@@ -2741,6 +2742,24 @@ Yapara,Dingalan,Aurora`;
                 url.searchParams.delete('selected_transmit_ids');
             }
             window.history.replaceState({}, '', url);
+            // Update filter form hidden inputs
+            updateFilterFormHiddenInputs();
+        }
+
+        // Update filter form hidden inputs with current selections
+        function updateFilterFormHiddenInputs() {
+            const filterTransmitIdsInput = document.getElementById('filter-selected-transmit-ids');
+            const filterDeleteIdsInput = document.getElementById('filter-selected-delete-ids');
+            
+            if (filterTransmitIdsInput) {
+                const transmitIds = getSelectedIdsFromUrl();
+                filterTransmitIdsInput.value = transmitIds.join(',');
+            }
+            
+            if (filterDeleteIdsInput) {
+                const deleteIds = getSelectedDeleteIdsFromUrl();
+                filterDeleteIdsInput.value = deleteIds.join(',');
+            }
         }
 
         // Get selected delete IDs from URL parameter
@@ -2759,23 +2778,35 @@ Yapara,Dingalan,Aurora`;
                 url.searchParams.delete('selected_delete_ids');
             }
             window.history.replaceState({}, '', url);
+            // Update filter form hidden inputs
+            updateFilterFormHiddenInputs();
         }
 
         const updateTransmitButtonState = () => {
             const selectedIds = getSelectedIdsFromUrl();
             const totalSelected = selectedIds.length;
-            if (transmitActionBtn) transmitActionBtn.disabled = totalSelected === 0;
-            if (bulkSelectedCount) {
-                bulkSelectedCount.textContent = totalSelected > 0 ? `${totalSelected} selected` : '';
+            const currentTransmitBtn = document.getElementById('transmit-selected-records');
+            const currentBulkCount = document.getElementById('bulk-selected-count');
+            if (currentTransmitBtn) {
+                currentTransmitBtn.disabled = totalSelected === 0;
+                // Update opacity based on disabled state
+                currentTransmitBtn.style.opacity = totalSelected === 0 ? '0.6' : '1';
+                currentTransmitBtn.style.cursor = totalSelected === 0 ? 'not-allowed' : 'pointer';
+            }
+            if (currentBulkCount) {
+                currentBulkCount.textContent = totalSelected > 0 ? `${totalSelected} selected` : '';
             }
         };
 
         const updateDeleteButtonState = () => {
             const selectedIds = getSelectedDeleteIdsFromUrl();
             const totalSelected = selectedIds.length;
-            if (deleteSelectedBtn) deleteSelectedBtn.disabled = totalSelected === 0;
-            if (bulkSelectedCount) {
-                bulkSelectedCount.textContent = totalSelected > 0 ? `${totalSelected} selected` : '';
+            const currentDeleteBtn = document.getElementById('delete-selected');
+            if (currentDeleteBtn) {
+                currentDeleteBtn.disabled = totalSelected === 0;
+                // Update opacity based on disabled state
+                currentDeleteBtn.style.opacity = totalSelected === 0 ? '0.6' : '1';
+                currentDeleteBtn.style.cursor = totalSelected === 0 ? 'not-allowed' : 'pointer';
             }
         };
         transmitCheckboxes.forEach(cb => {
@@ -2909,9 +2940,7 @@ Yapara,Dingalan,Aurora`;
         const selectedRecordIdsInput = document.getElementById('selected-record-ids');
 
         function showLoadingIndicator() {
-            if (tableLoadingIndicator) {
-                tableLoadingIndicator.style.display = 'block';
-            }
+            // Loading indicator removed - function kept for compatibility
         }
 
         // Auto-apply unassigned filter toggle and preserve current query filters
@@ -2923,8 +2952,112 @@ Yapara,Dingalan,Aurora`;
                 params.delete('unassigned_only');
             }
             params.set('tab', 'nl-records');
+            
+            // Preserve selected IDs
+            const selectedTransmitIds = getSelectedIdsFromUrl();
+            const selectedDeleteIds = getSelectedDeleteIdsFromUrl();
+            if (selectedTransmitIds.length > 0) {
+                params.set('selected_transmit_ids', selectedTransmitIds.join(','));
+            }
+            if (selectedDeleteIds.length > 0) {
+                params.set('selected_delete_ids', selectedDeleteIds.join(','));
+            }
+            
+            const url = `${window.location.pathname}?${params.toString()}`;
             showLoadingIndicator();
-            window.location.href = `${window.location.pathname}?${params.toString()}`;
+            
+            fetch(url, {
+                headers: {
+                    'X-Requested-With': 'XMLHttpRequest'
+                }
+            })
+            .then(response => response.text())
+            .then(html => {
+                // Parse the HTML to extract the new table content
+                const parser = new DOMParser();
+                const doc = parser.parseFromString(html, 'text/html');
+                
+                // Replace table content
+                const newTableWrapper = doc.querySelector('#table-wrapper');
+                const currentTableWrapper = document.getElementById('table-wrapper');
+                if (newTableWrapper && currentTableWrapper) {
+                    currentTableWrapper.innerHTML = newTableWrapper.innerHTML;
+                }
+                
+                // Replace pagination
+                const newPagination = doc.querySelector('#pagination-container');
+                const currentPagination = document.getElementById('pagination-container');
+                if (newPagination && currentPagination) {
+                    currentPagination.innerHTML = newPagination.innerHTML;
+                }
+                
+                // Update URL without reload
+                window.history.pushState({}, '', url);
+                
+                // Re-attach event listeners and restore checkbox state
+                reinitializeTableElements();
+                loadSelectedTransmitIds();
+                loadSelectedDeleteIds();
+                
+                // Update transmit button state to fix styling
+                updateTransmitButtonState();
+                updateDeleteButtonState();
+                
+                // Sync scrollbars after table replacement
+                setTimeout(function() {
+                    if (window.syncTableScrollbars) {
+                        window.syncTableScrollbars();
+                    }
+                }, 100);
+                
+                // Restore checkbox visibility based on toggle button state
+                const toggleBtn = document.getElementById('select-records-transmit');
+                const isCancelSelection = toggleBtn && toggleBtn.textContent.includes('Cancel');
+                
+                if (isCancelSelection) {
+                    const colCheckboxes = document.querySelectorAll('.col-checkbox-transmit');
+                    const recordCheckboxes = document.querySelectorAll('.record-checkbox-transmit');
+                    const selectAllBoxes = document.querySelectorAll('#select-all-transmit');
+                    
+                    colCheckboxes.forEach(el => {
+                        el.style.display = 'table-cell';
+                    });
+                    recordCheckboxes.forEach(cb => {
+                        cb.style.display = 'block';
+                    });
+                    selectAllBoxes.forEach(box => {
+                        box.style.display = 'block';
+                    });
+                }
+                
+                // Restore delete checkbox visibility based on toggle button state
+                const deleteToggleBtn = document.getElementById('delete-multiple');
+                const isCancelDelete = deleteToggleBtn && deleteToggleBtn.textContent.includes('Cancel');
+                
+                if (isCancelDelete) {
+                    const colDeleteCheckboxes = document.querySelectorAll('.col-checkbox');
+                    const deleteRecordCheckboxes = document.querySelectorAll('.record-checkbox');
+                    const selectAllDeleteBoxes = document.querySelectorAll('#select-all');
+                    
+                    colDeleteCheckboxes.forEach(el => {
+                        el.style.display = 'table-cell';
+                    });
+                    deleteRecordCheckboxes.forEach(cb => {
+                        cb.style.display = 'block';
+                    });
+                    selectAllDeleteBoxes.forEach(box => {
+                        box.style.display = 'block';
+                    });
+                }
+                
+                // Re-attach pagination listeners
+                document.querySelectorAll('.pagination-link').forEach(link => {
+                    link.addEventListener('click', arguments.callee);
+                });
+            })
+            .catch(error => {
+                window.location.href = url; // Fallback to regular navigation
+            });
         });
 
         // Toggle checkbox visibility for bulk delete
@@ -3075,6 +3208,265 @@ Yapara,Dingalan,Aurora`;
         // Load saved selections on page load
         loadSelectedTransmitIds();
         loadSelectedDeleteIds();
+        // Initialize filter form hidden inputs
+        updateFilterFormHiddenInputs();
+
+        // Handle Clear Filters button to preserve selected IDs
+        const clearFiltersBtn = document.getElementById('clear-filters-btn');
+        if (clearFiltersBtn) {
+            clearFiltersBtn.addEventListener('click', function(e) {
+                e.preventDefault();
+                const selectedTransmitIds = getSelectedIdsFromUrl();
+                const selectedDeleteIds = getSelectedDeleteIdsFromUrl();
+                let url = this.href;
+                
+                // Add selected IDs to the clear filters URL
+                if (selectedTransmitIds.length > 0) {
+                    const urlObj = new URL(url, window.location.origin);
+                    urlObj.searchParams.set('selected_transmit_ids', selectedTransmitIds.join(','));
+                    url = urlObj.toString();
+                }
+                if (selectedDeleteIds.length > 0) {
+                    const urlObj = new URL(url, window.location.origin);
+                    urlObj.searchParams.set('selected_delete_ids', selectedDeleteIds.join(','));
+                    url = urlObj.toString();
+                }
+                
+                showLoadingIndicator();
+                
+                fetch(url, {
+                    headers: {
+                        'X-Requested-With': 'XMLHttpRequest'
+                    }
+                })
+                .then(response => response.text())
+                .then(html => {
+                    // Parse the HTML to extract the new table content
+                    const parser = new DOMParser();
+                    const doc = parser.parseFromString(html, 'text/html');
+                    
+                    // Replace table content
+                    const newTableWrapper = doc.querySelector('#table-wrapper');
+                    const currentTableWrapper = document.getElementById('table-wrapper');
+                    if (newTableWrapper && currentTableWrapper) {
+                        currentTableWrapper.innerHTML = newTableWrapper.innerHTML;
+                    }
+                    
+                    // Replace pagination
+                    const newPagination = doc.querySelector('#pagination-container');
+                    const currentPagination = document.getElementById('pagination-container');
+                    if (newPagination && currentPagination) {
+                        currentPagination.innerHTML = newPagination.innerHTML;
+                    }
+                    
+                    // Update URL without reload
+                    window.history.pushState({}, '', url);
+                    
+                    // Re-attach event listeners and restore checkbox state
+                    reinitializeTableElements();
+                    loadSelectedTransmitIds();
+                    loadSelectedDeleteIds();
+                    
+                    // Update transmit button state to fix styling
+                    updateTransmitButtonState();
+                    updateDeleteButtonState();
+                    
+                    // Sync scrollbars after table replacement
+                    setTimeout(function() {
+                        if (window.syncTableScrollbars) {
+                            window.syncTableScrollbars();
+                        }
+                    }, 100);
+                    
+                    // Restore checkbox visibility based on toggle button state
+                    const toggleBtn = document.getElementById('select-records-transmit');
+                    const isCancelSelection = toggleBtn && toggleBtn.textContent.includes('Cancel');
+                    
+                    if (isCancelSelection) {
+                        const colCheckboxes = document.querySelectorAll('.col-checkbox-transmit');
+                        const recordCheckboxes = document.querySelectorAll('.record-checkbox-transmit');
+                        const selectAllBoxes = document.querySelectorAll('#select-all-transmit');
+                        
+                        colCheckboxes.forEach(el => {
+                            el.style.display = 'table-cell';
+                        });
+                        recordCheckboxes.forEach(cb => {
+                            cb.style.display = 'block';
+                        });
+                        selectAllBoxes.forEach(box => {
+                            box.style.display = 'block';
+                        });
+                    }
+                    
+                    // Restore delete checkbox visibility based on toggle button state
+                    const deleteToggleBtn = document.getElementById('delete-multiple');
+                    const isCancelDelete = deleteToggleBtn && deleteToggleBtn.textContent.includes('Cancel');
+                    
+                    if (isCancelDelete) {
+                        const colDeleteCheckboxes = document.querySelectorAll('.col-checkbox');
+                        const deleteRecordCheckboxes = document.querySelectorAll('.record-checkbox');
+                        const selectAllDeleteBoxes = document.querySelectorAll('#select-all');
+                        
+                        colDeleteCheckboxes.forEach(el => {
+                            el.style.display = 'table-cell';
+                        });
+                        deleteRecordCheckboxes.forEach(cb => {
+                            cb.style.display = 'block';
+                        });
+                        selectAllDeleteBoxes.forEach(box => {
+                            box.style.display = 'block';
+                        });
+                    }
+                    
+                    // Re-attach pagination listeners
+                    document.querySelectorAll('.pagination-link').forEach(link => {
+                        link.addEventListener('click', arguments.callee);
+                    });
+                })
+                .catch(error => {
+                    window.location.href = url; // Fallback to regular navigation
+                });
+            });
+        }
+
+        // Handle Clear Selections button
+        const clearSelectionsBtn = document.getElementById('clear-selections');
+        if (clearSelectionsBtn) {
+            clearSelectionsBtn.addEventListener('click', function() {
+                // Clear both transmit and delete selections
+                clearSelectedTransmitIds();
+                clearSelectedDeleteIds();
+                // Update filter form hidden inputs
+                updateFilterFormHiddenInputs();
+            });
+        }
+
+        // Handle filter form submission with AJAX
+        const filterForm = document.getElementById('filter-form');
+        const applyFiltersBtn = document.getElementById('apply-filters-btn');
+        
+        function submitFilterForm() {
+            if (!filterForm) return;
+            
+            // Get form data
+            const formData = new FormData(filterForm);
+            const params = new URLSearchParams(formData);
+            
+            // Add selected IDs to preserve selections
+            const selectedTransmitIds = getSelectedIdsFromUrl();
+            const selectedDeleteIds = getSelectedDeleteIdsFromUrl();
+            if (selectedTransmitIds.length > 0) {
+                params.set('selected_transmit_ids', selectedTransmitIds.join(','));
+            }
+            if (selectedDeleteIds.length > 0) {
+                params.set('selected_delete_ids', selectedDeleteIds.join(','));
+            }
+            
+            const url = `${filterForm.action}?${params.toString()}`;
+            showLoadingIndicator();
+            
+            fetch(url, {
+                headers: {
+                    'X-Requested-With': 'XMLHttpRequest'
+                }
+            })
+            .then(response => response.text())
+            .then(html => {
+                // Parse the HTML to extract the new table content
+                const parser = new DOMParser();
+                const doc = parser.parseFromString(html, 'text/html');
+                
+                // Replace table content
+                const newTableWrapper = doc.querySelector('#table-wrapper');
+                const currentTableWrapper = document.getElementById('table-wrapper');
+                if (newTableWrapper && currentTableWrapper) {
+                    currentTableWrapper.innerHTML = newTableWrapper.innerHTML;
+                }
+                
+                // Replace pagination
+                const newPagination = doc.querySelector('#pagination-container');
+                const currentPagination = document.getElementById('pagination-container');
+                if (newPagination && currentPagination) {
+                    currentPagination.innerHTML = newPagination.innerHTML;
+                }
+                
+                // Update URL without reload
+                window.history.pushState({}, '', url);
+                
+                // Re-attach event listeners and restore checkbox state
+                reinitializeTableElements();
+                loadSelectedTransmitIds();
+                loadSelectedDeleteIds();
+                
+                // Update transmit button state to fix styling
+                updateTransmitButtonState();
+                updateDeleteButtonState();
+                
+                // Sync scrollbars after table replacement
+                setTimeout(function() {
+                    if (window.syncTableScrollbars) {
+                        window.syncTableScrollbars();
+                    }
+                }, 100);
+                
+                // Restore checkbox visibility based on toggle button state
+                const toggleBtn = document.getElementById('select-records-transmit');
+                const isCancelSelection = toggleBtn && toggleBtn.textContent.includes('Cancel');
+                
+                if (isCancelSelection) {
+                    const colCheckboxes = document.querySelectorAll('.col-checkbox-transmit');
+                    const recordCheckboxes = document.querySelectorAll('.record-checkbox-transmit');
+                    const selectAllBoxes = document.querySelectorAll('#select-all-transmit');
+                    
+                    colCheckboxes.forEach(el => {
+                        el.style.display = 'table-cell';
+                    });
+                    recordCheckboxes.forEach(cb => {
+                        cb.style.display = 'block';
+                    });
+                    selectAllBoxes.forEach(box => {
+                        box.style.display = 'block';
+                    });
+                }
+                
+                // Restore delete checkbox visibility based on toggle button state
+                const deleteToggleBtn = document.getElementById('delete-multiple');
+                const isCancelDelete = deleteToggleBtn && deleteToggleBtn.textContent.includes('Cancel');
+                
+                if (isCancelDelete) {
+                    const colDeleteCheckboxes = document.querySelectorAll('.col-checkbox');
+                    const deleteRecordCheckboxes = document.querySelectorAll('.record-checkbox');
+                    const selectAllDeleteBoxes = document.querySelectorAll('#select-all');
+                    
+                    colDeleteCheckboxes.forEach(el => {
+                        el.style.display = 'table-cell';
+                    });
+                    deleteRecordCheckboxes.forEach(cb => {
+                        cb.style.display = 'block';
+                    });
+                    selectAllDeleteBoxes.forEach(box => {
+                        box.style.display = 'block';
+                    });
+                }
+                
+                // Re-attach pagination listeners
+                document.querySelectorAll('.pagination-link').forEach(link => {
+                    link.addEventListener('click', arguments.callee);
+                });
+            })
+            .catch(error => {
+                // Fallback to regular navigation
+                window.location.href = url;
+            });
+        }
+        
+        // Handle button click event
+        if (applyFiltersBtn) {
+            applyFiltersBtn.addEventListener('click', function(e) {
+                e.preventDefault();
+                submitFilterForm();
+            });
+        }
 
         // AJAX Pagination - prevent page refresh
         const paginationLinks = document.querySelectorAll('.pagination-link');
@@ -3131,6 +3523,17 @@ Yapara,Dingalan,Aurora`;
                     reinitializeTableElements();
                     loadSelectedTransmitIds();
                     loadSelectedDeleteIds();
+                    
+                    // Update transmit button state to fix styling
+                    updateTransmitButtonState();
+                    updateDeleteButtonState();
+                    
+                    // Sync scrollbars after table replacement
+                    setTimeout(function() {
+                        if (window.syncTableScrollbars) {
+                            window.syncTableScrollbars();
+                        }
+                    }, 100);
 
                     // Restore checkbox visibility based on toggle button state
                     const toggleBtn = document.getElementById('select-records-transmit');
@@ -3317,6 +3720,9 @@ Yapara,Dingalan,Aurora`;
                     if (newBulkSelectedCount) newBulkSelectedCount.textContent = '';
                 }
             });
+
+            // Update filter form hidden inputs after reinitialization
+            updateFilterFormHiddenInputs();
         }
 
         // Clear selections when canceling
@@ -3413,9 +3819,11 @@ Yapara,Dingalan,Aurora`;
             bulkDeleteDialog?.close();
         });
 
-        // Show inline loading state for table-related submit actions
+        // Show inline loading state for table-related submit actions (exclude filter form)
         document.querySelectorAll('form[action="{{ route('admin') }}"], #bulk-form').forEach(formEl => {
-            formEl.addEventListener('submit', showLoadingIndicator);
+            if (formEl.id !== 'filter-form') {
+                formEl.addEventListener('submit', showLoadingIndicator);
+            }
         });
 
         // Quality-of-life shortcuts: D (dashboard), N (NL), / (focus farmer search)

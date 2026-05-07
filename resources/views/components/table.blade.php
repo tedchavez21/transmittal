@@ -260,7 +260,7 @@ document.addEventListener('DOMContentLoaded', function() {
     });
 
     // Sync top and bottom scrollbars for table horizontal scrolling
-    function syncTableScrollbars() {
+    window.syncTableScrollbars = function() {
         // Find all table scroll sync elements
         const scrollTops = document.querySelectorAll('.table-scroll-sync-top');
         const scrollBottoms = document.querySelectorAll('.table-scroll-sync-bottom');
