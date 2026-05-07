@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 use App\Models\Officer;
 use App\Models\Admin;
 use App\Models\Record;
+use App\Models\Session as ActiveSession;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
@@ -113,16 +114,20 @@ class RoutesController extends Controller
 
     public function logoutEmail(Request $request)
     {
+        $sessionId = $request->session()->getId();
         $request->session()->forget('email_logged_in');
         $request->session()->forget('email_user_name');
         $request->session()->forget('email_user_id');
         $request->session()->forget('email_last_activity');
+        // Remove from active_sessions
+        ActiveSession::where('session_id', $sessionId)->where('channel', 'Email')->delete();
 
         return redirect()->route('welcome');
     }
 
     public function logoutOfficer(Request $request)
     {
+        $sessionId = $request->session()->getId();
         $officerName = $request->session()->get('officer_name');
         if ($officerName) {
             // Update officer status in database
@@ -131,20 +136,25 @@ class RoutesController extends Controller
                 'last_activity' => now()
             ]);
         }
-        
+
         $request->session()->forget('officer_logged_in');
         $request->session()->forget('officer_name');
         $request->session()->forget('officer_id');
         $request->session()->forget('officer_last_activity');
+        // Remove from active_sessions
+        ActiveSession::where('session_id', $sessionId)->where('channel', 'OD')->delete();
         return redirect()->route('welcome');
     }
 
     public function logoutFacebook(Request $request)
     {
+        $sessionId = $request->session()->getId();
         $request->session()->forget('facebook_logged_in');
         $request->session()->forget('facebook_user');
         $request->session()->forget('facebook_user_id');
         $request->session()->forget('facebook_last_activity');
+        // Remove from active_sessions
+        ActiveSession::where('session_id', $sessionId)->where('channel', 'Facebook')->delete();
 
         return redirect()->route('welcome');
     }
@@ -354,6 +364,11 @@ class RoutesController extends Controller
             ->header('Content-Disposition', 'attachment; filename="facebook-records-' . date('Y-m-d') . '.csv"');
     }
 
+    public function showAdminLogin()
+    {
+        return view('admin-login');
+    }
+
     public function loginAdmin(Request $request)
     {
         $request->validate([
@@ -385,12 +400,29 @@ class RoutesController extends Controller
                 'active' => true,
                 'last_activity' => now()
             ]);
-            
+
             $request->session()->put('admin_logged_in', true);
             $request->session()->put('admin_username', $admin->username);
             $request->session()->put('admin_last_activity', now());
             $request->session()->save(); // Force save session
-            
+
+            $sessionId = $request->session()->getId();
+
+            // Track in active_sessions table
+            ActiveSession::updateOrCreate(
+                [
+                    'session_id' => $sessionId,
+                    'channel' => 'Admin',
+                ],
+                [
+                    'user_name' => $admin->username,
+                    'last_activity' => now(),
+                    'is_away' => false,
+                    'ip_address' => $request->ip(),
+                    'user_agent' => $request->userAgent(),
+                ]
+            );
+
             // Debug: Log session data
             \Log::info('Admin login successful', [
                 'username' => $admin->username,
@@ -399,7 +431,7 @@ class RoutesController extends Controller
                 'admin_username' => session()->get('admin_username'),
                 'all_session_data' => $request->session()->all()
             ]);
-            
+
             return redirect()->route('admin')->with('success', 'Admin login successful');
         }
 
@@ -414,6 +446,7 @@ class RoutesController extends Controller
 
     public function logoutAdmin(Request $request)
     {
+        $sessionId = $request->session()->getId();
         $adminUsername = $request->session()->get('admin_username');
         if ($adminUsername) {
             // Update admin status in database
@@ -422,10 +455,12 @@ class RoutesController extends Controller
                 'last_activity' => now()
             ]);
         }
-        
+
         $request->session()->forget('admin_logged_in');
         $request->session()->forget('admin_username');
         $request->session()->forget('admin_last_activity');
+        // Remove from active_sessions
+        ActiveSession::where('session_id', $sessionId)->where('channel', 'Admin')->delete();
         return redirect()->route('welcome');
     }
 
@@ -1393,95 +1428,39 @@ class RoutesController extends Controller
             $now = Carbon::now();
             $seenUsers = []; // Track users to prevent duplicates
 
-            // Get admin user (if logged in via session)
-            if ($request->session()->has('admin_logged_in') && $request->session()->get('admin_logged_in')) {
-                $adminUsername = $request->session()->get('admin_username');
-                if ($adminUsername) {
-                    $lastActivity = $request->session()->get('admin_last_activity', $now);
-                    $isAway = $request->session()->get('admin_last_activity_away', false);
-                    $status = $this->getUserStatus($lastActivity, $now, $isAway);
-                    
-                    $userKey = $adminUsername . '_admin';
-                    if (!isset($seenUsers[$userKey])) {
-                        $activeUsers[] = [
-                            'id' => 'admin_session',
-                            'name' => $adminUsername,
-                            'email' => $adminUsername . '@admin.com',
-                            'channel' => 'Admin',
-                            'last_activity' => $lastActivity,
-                            'status' => $status
-                        ];
-                        $seenUsers[$userKey] = true;
-                    }
-                }
-            }
+            // Get all active sessions from the database (active within last 5 minutes)
+            $sessions = ActiveSession::active()->get();
 
-            // Get Facebook user (if logged in via session)
-            if ($request->session()->has('facebook_logged_in') && $request->session()->get('facebook_logged_in')) {
-                $facebookUserName = $request->session()->get('facebook_user');
-                if ($facebookUserName) {
-                    $lastActivity = $request->session()->get('facebook_last_activity', $now);
-                    $isAway = $request->session()->get('facebook_last_activity_away', false);
-                    $status = $this->getUserStatus($lastActivity, $now, $isAway);
-                    
-                    $userKey = $facebookUserName . '_facebook';
-                    if (!isset($seenUsers[$userKey])) {
-                        $activeUsers[] = [
-                            'id' => 'facebook_session',
-                            'name' => $facebookUserName,
-                            'email' => 'facebook@handler.com',
-                            'channel' => 'Facebook',
-                            'last_activity' => $lastActivity,
-                            'status' => $status
-                        ];
-                        $seenUsers[$userKey] = true;
-                    }
-                }
-            }
+            foreach ($sessions as $session) {
+                $userKey = $session->user_name . '_' . $session->channel;
+                if (!isset($seenUsers[$userKey])) {
+                    $status = $this->getUserStatus($session->last_activity, $now, $session->is_away);
 
-            // Get Email user (if logged in via session)
-            if ($request->session()->has('email_logged_in') && $request->session()->get('email_logged_in')) {
-                $emailUserName = $request->session()->get('email_user_name');
-                if ($emailUserName) {
-                    $lastActivity = $request->session()->get('email_last_activity', $now);
-                    $isAway = $request->session()->get('email_last_activity_away', false);
-                    $status = $this->getUserStatus($lastActivity, $now, $isAway);
-                    
-                    $userKey = $emailUserName . '_email';
-                    if (!isset($seenUsers[$userKey])) {
-                        $activeUsers[] = [
-                            'id' => 'email_session',
-                            'name' => $emailUserName,
-                            'email' => 'email@handler.com',
-                            'channel' => 'Email',
-                            'last_activity' => $lastActivity,
-                            'status' => $status
-                        ];
-                        $seenUsers[$userKey] = true;
-                    }
-                }
-            }
+                    $channelDisplay = match($session->channel) {
+                        'OD' => 'Officer of the Day',
+                        'Admin' => 'Admin',
+                        'Email' => 'Email',
+                        'Facebook' => 'Facebook',
+                        default => $session->channel,
+                    };
 
-            // Get Officer user (if logged in via session)
-            if ($request->session()->has('officer_logged_in') && $request->session()->get('officer_logged_in')) {
-                $officerName = $request->session()->get('officer_name');
-                if ($officerName) {
-                    $lastActivity = $request->session()->get('officer_last_activity', $now);
-                    $isAway = $request->session()->get('officer_last_activity_away', false);
-                    $status = $this->getUserStatus($lastActivity, $now, $isAway);
-                    
-                    $userKey = $officerName . '_officer';
-                    if (!isset($seenUsers[$userKey])) {
-                        $activeUsers[] = [
-                            'id' => 'officer_session',
-                            'name' => $officerName,
-                            'email' => 'officer@handler.com',
-                            'channel' => 'Officer of the Day',
-                            'last_activity' => $lastActivity,
-                            'status' => $status
-                        ];
-                        $seenUsers[$userKey] = true;
-                    }
+                    $emailDisplay = match($session->channel) {
+                        'OD' => 'officer@handler.com',
+                        'Admin' => $session->user_name . '@admin.com',
+                        'Email' => 'email@handler.com',
+                        'Facebook' => 'facebook@handler.com',
+                        default => $session->user_name . '@handler.com',
+                    };
+
+                    $activeUsers[] = [
+                        'id' => $session->id,
+                        'name' => $session->user_name,
+                        'email' => $emailDisplay,
+                        'channel' => $channelDisplay,
+                        'last_activity' => $session->last_activity,
+                        'status' => $status
+                    ];
+                    $seenUsers[$userKey] = true;
                 }
             }
 
@@ -1512,7 +1491,8 @@ class RoutesController extends Controller
     {
         try {
             $channel = $request->input('channel', 'unknown');
-            
+            $sessionId = $request->session()->getId();
+
             // Perform logout based on channel
             switch ($channel) {
                 case 'OD':
@@ -1521,16 +1501,22 @@ class RoutesController extends Controller
                         Officer::where('name', $officerName)->update(['active' => false]);
                     }
                     $request->session()->forget(['officer_name', 'officer_id', 'officer_logged_in', 'officer_last_activity']);
+                    // Remove from active_sessions
+                    ActiveSession::where('session_id', $sessionId)->where('channel', 'OD')->delete();
                     break;
                 case 'Email':
                     $emailUserName = $request->session()->get('email_user_name');
                     if ($emailUserName) {
-                        EmailHandler::where('name', $emailUserName)->update(['active' => false]);
+                        Officer::where('name', $emailUserName)->update(['active' => false]);
                     }
                     $request->session()->forget(['email_user_name', 'email_logged_in', 'email_last_activity']);
+                    // Remove from active_sessions
+                    ActiveSession::where('session_id', $sessionId)->where('channel', 'Email')->delete();
                     break;
                 case 'Facebook':
                     $request->session()->forget(['facebook_logged_in', 'facebook_user', 'facebook_last_activity']);
+                    // Remove from active_sessions
+                    ActiveSession::where('session_id', $sessionId)->where('channel', 'Facebook')->delete();
                     break;
                 case 'admin':
                     $adminUsername = $request->session()->get('admin_username');
@@ -1538,6 +1524,8 @@ class RoutesController extends Controller
                         Admin::where('username', $adminUsername)->update(['active' => false]);
                     }
                     $request->session()->forget(['admin_logged_in', 'admin_username', 'admin_last_activity']);
+                    // Remove from active_sessions
+                    ActiveSession::where('session_id', $sessionId)->where('channel', 'Admin')->delete();
                     break;
             }
 
@@ -1556,7 +1544,7 @@ class RoutesController extends Controller
         try {
             $channel = $request->input('channel', 'unknown');
             $isAway = $request->boolean('away', false);
-            
+
             // Update last activity or mark as away
             $activityKey = '';
             switch ($channel) {
@@ -1572,6 +1560,13 @@ class RoutesController extends Controller
                             ]);
                         }
                     }
+                    // Update active_sessions table
+                    ActiveSession::where('session_id', $request->session()->getId())
+                        ->where('channel', 'OD')
+                        ->update([
+                            'last_activity' => Carbon::now(),
+                            'is_away' => $isAway,
+                        ]);
                     break;
                 case 'Email':
                     $activityKey = 'email_last_activity';
@@ -1585,9 +1580,23 @@ class RoutesController extends Controller
                             ]);
                         }
                     }
+                    // Update active_sessions table
+                    ActiveSession::where('session_id', $request->session()->getId())
+                        ->where('channel', 'Email')
+                        ->update([
+                            'last_activity' => Carbon::now(),
+                            'is_away' => $isAway,
+                        ]);
                     break;
                 case 'Facebook':
                     $activityKey = 'facebook_last_activity';
+                    // Update active_sessions table
+                    ActiveSession::where('session_id', $request->session()->getId())
+                        ->where('channel', 'Facebook')
+                        ->update([
+                            'last_activity' => Carbon::now(),
+                            'is_away' => $isAway,
+                        ]);
                     break;
                 case 'admin':
                     $activityKey = 'admin_last_activity';
@@ -1601,6 +1610,13 @@ class RoutesController extends Controller
                             ]);
                         }
                     }
+                    // Update active_sessions table
+                    ActiveSession::where('session_id', $request->session()->getId())
+                        ->where('channel', 'Admin')
+                        ->update([
+                            'last_activity' => Carbon::now(),
+                            'is_away' => $isAway,
+                        ]);
                     break;
             }
 

@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\Officer;
 use App\Models\Admin;
+use App\Models\Session as ActiveSession;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Session;
@@ -57,6 +58,21 @@ class AuthController extends Controller
         $request->session()->put('officer_logged_in', true);
         $request->session()->put('officer_last_activity', now());
 
+        // Track in active_sessions table
+        ActiveSession::updateOrCreate(
+            [
+                'session_id' => session()->getId(),
+                'channel' => 'OD',
+            ],
+            [
+                'user_name' => $officer->name,
+                'last_activity' => now(),
+                'is_away' => false,
+                'ip_address' => $request->ip(),
+                'user_agent' => $request->userAgent(),
+            ]
+        );
+
         return redirect()->route('officer-of-the-day')->with('success', 'Login successful');
     }
 
@@ -84,7 +100,52 @@ class AuthController extends Controller
         $request->session()->put('email_logged_in', true);
         $request->session()->put('email_last_activity', now());
 
+        // Track in active_sessions table
+        ActiveSession::updateOrCreate(
+            [
+                'session_id' => session()->getId(),
+                'channel' => 'Email',
+            ],
+            [
+                'user_name' => $officer->name,
+                'last_activity' => now(),
+                'is_away' => false,
+                'ip_address' => $request->ip(),
+                'user_agent' => $request->userAgent(),
+            ]
+        );
+
         return redirect()->route('email-handler')->with('success', 'Login successful');
+    }
+
+    public function logout(Request $request)
+    {
+        $channel = $request->input('channel') ?? 'unknown';
+        $sessionId = $request->session()->getId();
+
+        switch ($channel) {
+            case 'OD':
+                $officerName = $request->session()->get('officer_name');
+                if ($officerName) {
+                    Officer::where('name', $officerName)->update(['active' => false]);
+                }
+                $request->session()->forget(['officer_name', 'officer_id', 'officer_logged_in', 'officer_last_activity']);
+                // Remove from active_sessions
+                ActiveSession::where('session_id', $sessionId)->where('channel', 'OD')->delete();
+                break;
+            case 'Email':
+                $request->session()->forget(['email_user_name', 'email_user_id', 'email_logged_in', 'email_last_activity']);
+                // Remove from active_sessions
+                ActiveSession::where('session_id', $sessionId)->where('channel', 'Email')->delete();
+                break;
+            case 'Facebook':
+                $request->session()->forget(['facebook_logged_in', 'facebook_user', 'facebook_user_id', 'facebook_last_activity']);
+                // Remove from active_sessions
+                ActiveSession::where('session_id', $sessionId)->where('channel', 'Facebook')->delete();
+                break;
+        }
+
+        return redirect()->route('welcome');
     }
 
     private function loginFacebook(Request $request, $username, $password)
@@ -111,29 +172,21 @@ class AuthController extends Controller
         $request->session()->put('facebook_logged_in', true);
         $request->session()->put('facebook_last_activity', now());
 
+        // Track in active_sessions table
+        ActiveSession::updateOrCreate(
+            [
+                'session_id' => session()->getId(),
+                'channel' => 'Facebook',
+            ],
+            [
+                'user_name' => $officer->name,
+                'last_activity' => now(),
+                'is_away' => false,
+                'ip_address' => $request->ip(),
+                'user_agent' => $request->userAgent(),
+            ]
+        );
+
         return redirect()->route('facebook-handler')->with('success', 'Login successful');
-    }
-
-    public function logout(Request $request)
-    {
-        $channel = $request->input('channel') ?? 'unknown';
-
-        switch ($channel) {
-            case 'OD':
-                $officerName = $request->session()->get('officer_name');
-                if ($officerName) {
-                    Officer::where('name', $officerName)->update(['active' => false]);
-                }
-                $request->session()->forget(['officer_name', 'officer_id', 'officer_logged_in', 'officer_last_activity']);
-                break;
-            case 'Email':
-                $request->session()->forget(['email_user_name', 'email_user_id', 'email_logged_in', 'email_last_activity']);
-                break;
-            case 'Facebook':
-                $request->session()->forget(['facebook_logged_in', 'facebook_user', 'facebook_user_id', 'facebook_last_activity']);
-                break;
-        }
-
-        return redirect()->route('welcome');
     }
 }

@@ -26,7 +26,8 @@ Route::post('/officer/logout', [RoutesController::class, 'logoutOfficer'])->name
 Route::get('/all-records', [RoutesController::class, 'showAllRecords'])->name('all-records');
 Route::get('/api/records/{id}', [RoutesController::class, 'getRecordDetails'])->name('api.records.show');
 Route::get('/admin', [RoutesController::class, 'showAdmin'])->name('admin');
-Route::post('/admin/login', [RoutesController::class, 'loginAdmin'])->name('admin.login');
+Route::get('/admin/login', [RoutesController::class, 'showAdminLogin'])->name('admin.login');
+Route::post('/admin/login', [RoutesController::class, 'loginAdmin'])->name('admin.login.submit');
 
 Route::post('/admin/logout', [RoutesController::class, 'logoutAdmin'])->name('admin.logout');
 Route::get('/admin/logout', [RoutesController::class, 'logoutAdmin']); // Fallback for accidental GET requests

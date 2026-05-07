@@ -100,7 +100,7 @@
                         <div class="px-3 py-2.5 rounded-lg bg-amber-50 border border-amber-200 text-amber-800 text-xs font-semibold">Your login is pending admin approval. You cannot add records until it is approved.</div>
                     @endif
 
-                    @if($officerApproved && $records->count() > 0)
+                    @if($records->count() > 0)
                             <form id="submitTransmittalForm" action="{{ route('records.submit-transmittal') }}" method="POST" style="display: inline;">
                                 @csrf
                                 <input type="hidden" name="source" value="OD">

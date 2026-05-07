@@ -13,6 +13,46 @@
 
         .print-preview-topbar {
             margin-bottom: 14px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 16px;
+            background: rgba(255, 255, 255, 0.95);
+            border: 1px solid rgba(15, 23, 42, 0.1);
+            border-radius: 16px;
+            padding: 16px 20px;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
+        }
+
+        .admin-topbar.print-preview-topbar.no-print {
+            border-radius: 16px;
+            padding: 16px 20px;
+        }
+
+        .admin-topbar {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 16px;
+        }
+
+        .print-preview-topbar .heading h1 {
+            margin: 0;
+            font-size: 18px;
+            font-weight: 700;
+            color: #0f172a;
+        }
+
+        .print-preview-topbar .heading p {
+            margin: 2px 0 0 0;
+            font-size: 13px;
+            color: rgba(15, 23, 42, 0.6);
+        }
+
+        .print-preview-topbar .actions {
+            display: flex;
+            align-items: center;
+            gap: 8px;
         }
 
         .print-preview-card {
@@ -30,7 +70,7 @@
             flex-wrap: wrap;
             justify-content: space-between;
             border-bottom: 1px solid rgba(0,0,0,0.06);
-            background: linear-gradient(180deg, rgba(0, 108, 53, 0.08), rgba(255, 255, 255, 0));
+            background: linear-gradient(180deg, rgba(25, 118, 210, 0.08), rgba(255, 255, 255, 0));
             font-weight: 700;
             color: rgba(15, 23, 42, 0.86);
             font-size: 12px;
@@ -51,15 +91,15 @@
             max-width: none;
             border-collapse: separate;
             border-spacing: 0;
-            border: 2px solid rgba(0, 108, 53, 0.25);
+            border: 2px solid rgba(25, 118, 210, 0.25);
             border-radius: 8px;
             overflow: hidden;
         }
 
         .print-preview-table th {
             padding: 8px 10px;
-            background: #006c35;
-            border-bottom: 2px solid #005428;
+            background: #1976D2;
+            border-bottom: 2px solid #1565C0;
             font-weight: 700;
             color: #fff;
             text-align: left;
@@ -81,7 +121,7 @@
 
         /* Alternating row colors for screen */
         .print-preview-table tbody tr:nth-child(even) {
-            background-color: rgba(240, 253, 244, 0.6);
+            background-color: rgba(227, 242, 253, 0.6);
         }
 
         .print-preview-table tbody tr:nth-child(odd) {
@@ -89,7 +129,7 @@
         }
 
         .print-preview-table tbody tr:hover {
-            background-color: rgba(0, 108, 53, 0.06);
+            background-color: rgba(25, 118, 210, 0.06);
         }
 
         .print-preview-table .address-cell {
@@ -165,8 +205,8 @@
             }
 
             .print-preview-card .meta {
-                background: #006c35 !important;
-                border-bottom: 2px solid #005428 !important;
+                background: #1976D2 !important;
+                border-bottom: 2px solid #1565C0 !important;
                 color: #fff !important;
                 padding: 2px 6px !important;
                 font-weight: 700 !important;
@@ -284,7 +324,7 @@
             .print-preview-table th {
                 padding: 2px 3px !important;
                 border: 1px solid #000 !important;
-                background-color: #006c35 !important;
+                background-color: #1976D2 !important;
                 font-weight: 700 !important;
                 text-align: left !important;
                 font-size: 10px !important;
@@ -326,7 +366,7 @@
 
             /* Alternating row colors - match screen */
             .print-preview-table tbody tr:nth-child(even) {
-                background-color: rgba(240, 253, 244, 0.6) !important;
+                background-color: rgba(227, 242, 253, 0.6) !important;
                 -webkit-print-color-adjust: exact !important;
                 print-color-adjust: exact !important;
             }
