@@ -3031,6 +3031,11 @@ Yapara,Dingalan,Aurora`;
                 const currentTableWrapper = document.getElementById('table-wrapper');
                 if (newTableWrapper && currentTableWrapper) {
                     currentTableWrapper.innerHTML = newTableWrapper.innerHTML;
+                    
+                    // Re-initialize row click highlighting for new table content
+                    setTimeout(function() {
+                        initializeRowClickHighlighting();
+                    }, 100);
                 }
                 
                 // Replace pagination
@@ -3614,6 +3619,11 @@ Yapara,Dingalan,Aurora`;
                 const currentTableWrapper = document.getElementById('table-wrapper');
                 if (newTableWrapper && currentTableWrapper) {
                     currentTableWrapper.innerHTML = newTableWrapper.innerHTML;
+                    
+                    // Re-initialize row click highlighting for new table content
+                    setTimeout(function() {
+                        initializeRowClickHighlighting();
+                    }, 100);
                 }
                 
                 // Replace pagination
@@ -3752,9 +3762,99 @@ Yapara,Dingalan,Aurora`;
             }
         }
 
+        // Function to initialize row click highlighting
+        function initializeRowClickHighlighting() {
+            const tableRows = document.querySelectorAll('.records-table tbody tr.record-row');
+            console.log('Initializing row highlighting for', tableRows.length, 'rows');
+            
+            // Use event delegation instead of individual listeners
+            const tableBody = document.querySelector('.records-table tbody');
+            if (tableBody) {
+                // Remove existing event listener if any
+                tableBody.removeEventListener('click', handleTableClick);
+                
+                // Add new event listener with event delegation
+                tableBody.addEventListener('click', handleTableClick);
+                console.log('Added event delegation listener to table body');
+            }
+        }
+        
+        // Handle table clicks with event delegation
+        function handleTableClick(e) {
+            const row = e.target.closest('tr.record-row');
+            if (!row) {
+                console.log('Click not on a record row');
+                return;
+            }
+            
+            // Don't highlight if clicking on buttons, checkboxes, or links
+            if (e.target.closest('button') || e.target.closest('input') || e.target.closest('a')) {
+                console.log('Click on interactive element, skipping highlight');
+                return;
+            }
+            
+            console.log('Row clicked via delegation');
+            
+            // Check if this row is already highlighted
+            const isHighlighted = row.style.backgroundColor === '#006c35';
+            
+            if (isHighlighted) {
+                console.log('Unhighlighting row');
+                
+                // Unhighlight this row
+                row.style.backgroundColor = '';
+                row.style.color = '';
+                
+                // Reset text color for all cells in this row
+                const cells = row.querySelectorAll('td');
+                cells.forEach(cell => {
+                    cell.style.color = '';
+                    const accountField = cell.querySelector('.account-field');
+                    if (accountField) {
+                        accountField.style.color = '#0066CC';
+                    }
+                });
+            } else {
+                console.log('Highlighting row');
+                
+                // Remove highlight from all other rows
+                const allRows = document.querySelectorAll('.records-table tbody tr.record-row');
+                allRows.forEach(r => {
+                    r.style.backgroundColor = '';
+                    r.style.color = '';
+                    // Reset text color for all cells
+                    const cells = r.querySelectorAll('td');
+                    cells.forEach(cell => {
+                        cell.style.color = '';
+                        const accountField = cell.querySelector('.account-field');
+                        if (accountField) {
+                            accountField.style.color = '#0066CC';
+                        }
+                    });
+                });
+                
+                // Highlight current row
+                row.style.backgroundColor = '#006c35';
+                row.style.color = 'white';
+                
+                // Update text color for all cells in the highlighted row
+                const cells = row.querySelectorAll('td');
+                cells.forEach(cell => {
+                    cell.style.color = 'white';
+                    
+                    // Handle account field color specifically
+                    const accountField = cell.querySelector('.account-field');
+                    if (accountField) {
+                        accountField.style.color = 'white';
+                    }
+                });
+            }
+        }
+        
         // Initialize active filters display on page load
         document.addEventListener('DOMContentLoaded', function() {
             updateActiveFiltersDisplay();
+            initializeRowClickHighlighting();
         });
 
         // Handle button click event
