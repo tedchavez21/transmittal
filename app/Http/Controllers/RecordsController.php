@@ -235,8 +235,22 @@ class RecordsController extends Controller
             'request_url' => $request->fullUrl()
         ]);
         
-        $record = Record::findOrFail($id);
-        Log::info('Record found', ['id' => $id, 'current_admin_transmittal' => $record->admin_transmittal_number]);
+        try {
+            $record = Record::findOrFail($id);
+            Log::info('Record found', ['id' => $id, 'current_admin_transmittal' => $record->admin_transmittal_number]);
+        } catch (\Illuminate\Database\Eloquent\ModelNotFoundException $e) {
+            Log::error('Record not found for update', ['id' => $id, 'error' => $e->getMessage()]);
+            
+            // Return JSON response for AJAX requests
+            if ($request->ajax() || $request->wantsJson()) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Record not found. It may have been deleted by another user. Please refresh the page and try again.'
+                ], 404);
+            }
+            
+            return redirect()->back()->with('error', 'Record not found. It may have been deleted by another user. Please refresh the page and try again.');
+        }
 
         // Validate the incoming request data
         $validatedData = $request->validate([

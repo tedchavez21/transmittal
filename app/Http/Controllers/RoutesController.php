@@ -1786,6 +1786,7 @@ class RoutesController extends Controller
             'modeOfPayment' => $record->modeOfPayment,
             'accounts' => $record->accounts,
             'remarks' => $record->remarks,
+            'causeOfDamage' => $record->causeOfDamage,
             'date_received' => $record->date_received ? \Carbon\Carbon::parse($record->date_received)->format('M d, Y') : null,
             'date_of_occurrence' => $record->date_occurrence ? (function($date) { try { return \Carbon\Carbon::parse($date)->format('M d, Y'); } catch (\Exception $e) { return $date; } })($record->date_occurrence) : null,
             'created_at' => $record->created_at->format('M d, Y h:i A'),

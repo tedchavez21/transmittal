@@ -1409,8 +1409,16 @@ document.addEventListener('DOMContentLoaded', function() {
                             <span style="font-size: 14px; color: #1e293b; font-weight: 500;">${data.encoderName}</span>
                         </div>
                         <div style="display: flex; justify-content: space-between; align-items: center; padding-bottom: 8px; border-bottom: 1px solid #fbbf24;">
+                            <span style="font-size: 12px; font-weight: 600; color: #92400e; text-transform: uppercase;">SOURCE</span>
+                            <span style="font-size: 14px; color: #1e293b; font-weight: 500;">${data.source}</span>
+                        </div>
+                        <div style="display: flex; justify-content: space-between; align-items: center; padding-bottom: 8px; border-bottom: 1px solid #fbbf24;">
                             <span style="font-size: 12px; font-weight: 600; color: #92400e; text-transform: uppercase;">CONTROL NUMBER</span>
                             <span style="font-size: 14px; color: #1e293b; font-weight: 500;">${data.transmittalNumber}</span>
+                        </div>
+                        <div style="display: flex; justify-content: space-between; align-items: center; padding-bottom: 8px; border-bottom: 1px solid #fbbf24;">
+                            <span style="font-size: 12px; font-weight: 600; color: #92400e; text-transform: uppercase;">CAUSE OF DAMAGE</span>
+                            <span style="font-size: 14px; color: #1e293b; font-weight: 500;">${data.causeOfDamage}</span>
                         </div>
                         <div style="display: flex; justify-content: space-between; align-items: center; padding-bottom: 8px; border-bottom: 1px solid #fbbf24;">
                             <span style="font-size: 12px; font-weight: 600; color: #92400e; text-transform: uppercase;">RECORD ID</span>

@@ -594,6 +594,8 @@ table input[type="checkbox"] {
                     <th>Date Encoded</th>
                     <th>Date of Occurrence</th>
                     <th>TRANSMITTAL #</th>
+                    <th>Remarks</th>
+                    <th>Cause of Loss</th>
                     <th>Actions</th>
                 </tr>
             </thead>
@@ -608,13 +610,15 @@ table input[type="checkbox"] {
                         <td>{{ $record->created_at->format('M d, Y') }}</td>
                         <td>{{ $record->date_occurrence ? (function($date) { try { return \Carbon\Carbon::parse($date)->format('M d, Y'); } catch (\Exception $e) { return $date; } })($record->date_occurrence) : 'N/A' }}</td>
                         <td>{{ $record->admin_transmittal_number ?? 'N/A' }}</td>
+                        <td>{{ $record->remarks ?? 'N/A' }}</td>
+                        <td>{{ $record->causeOfDamage ?? 'N/A' }}</td>
                         <td>
                             <button class="view-btn" onclick="viewRecord({{ $record->id }})">View</button>
                         </td>
                     </tr>
                 @empty
                     <tr>
-                        <td colspan="9" style="text-align: center; padding: 40px; color: #64748b; font-weight: 500;">
+                        <td colspan="11" style="text-align: center; padding: 40px; color: #64748b; font-weight: 500;">
                             No records found matching your filters.
                         </td>
                     </tr>
@@ -711,6 +715,10 @@ function viewRecord(recordId) {
                 <div class="record-detail">
                     <div class="detail-label">Remarks:</div>
                     <div class="detail-value">${data.remarks || 'N/A'}</div>
+                </div>
+                <div class="record-detail">
+                    <div class="detail-label">Cause of Loss:</div>
+                    <div class="detail-value">${data.causeOfDamage || 'N/A'}</div>
                 </div>
                 <div class="record-detail">
                     <div class="detail-label">Line:</div>

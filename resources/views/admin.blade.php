@@ -290,7 +290,16 @@
                 @php
                     $chartMax = max($recordsByProgram->max() ?? 1, $recordsByLine->max() ?? 1, $recordsByMunicipality->max() ?? 1, 1);
                     $sourceTotal = $recordsBySource->sum();
-                    $sourceColors = ['OD' => '#006c35', 'Email' => '#638c08', 'Facebook' => '#008a43'];
+                    $sourceColors = ['OD' => '#50a3a4', 'Email' => '#fcaf38', 'Facebook' => '#f95335'];
+                    $lineColors = [
+                        '#ae3c60',
+                        '#df473c',
+                        '#f3c33c',
+                        '#255e79',
+                        '#267778',
+                        '#82b4bb',
+                        '#036534'
+                    ];
                     $sourceConicParts = [];
                     $sourceOffset = 0;
                     foreach (['OD', 'Email', 'Facebook'] as $src) {
@@ -312,14 +321,16 @@
                         </div>
                     </div>
                     <div class="card-body dash3-chart-body">
+                        @php $lineIndex = 0; @endphp
                         @foreach($recordsByLine as $line => $count)
                         <div class="dash3-chart-bar-row">
                             <span class="dash3-chart-label">{{ $line }}</span>
                             <div class="dash3-chart-bar-track">
-                                <div class="dash3-chart-bar-fill" style="width: {{ $chartMax > 0 ? round($count / $chartMax * 100) : 0 }}%"></div>
+                                <div class="dash3-chart-bar-fill" style="width: {{ $chartMax > 0 ? round($count / $chartMax * 100) : 0 }}%; background: {{ $lineColors[$lineIndex % count($lineColors)] }};"></div>
                             </div>
                             <span class="dash3-chart-value">{{ number_format($count) }}</span>
                         </div>
+                        @php $lineIndex++; @endphp
                         @endforeach
                         @if($recordsByLine->isEmpty())
                             <div class="dash3-empty">No data</div>
@@ -3264,6 +3275,23 @@ Yapara,Dingalan,Aurora`;
                 const selectedDeleteIds = getSelectedDeleteIdsFromUrl();
                 let url = this.href;
                 
+                // Reset unassigned toggle when clearing filters
+                const unassignedToggle = document.getElementById('unassigned-toggle');
+                if (unassignedToggle) {
+                    unassignedToggle.checked = false;
+                    // Update toggle visual state
+                    const bg = document.getElementById('unassigned-toggle-bg');
+                    const dot = document.getElementById('unassigned-toggle-dot');
+                    if (bg && dot) {
+                        bg.style.backgroundColor = '#cbd5e1';
+                        dot.style.transform = 'translateX(0)';
+                    }
+                    // Remove unassigned_only parameter from URL
+                    const urlObj = new URL(url, window.location.origin);
+                    urlObj.searchParams.delete('unassigned_only');
+                    url = urlObj.toString();
+                }
+                
                 // Add selected IDs to the clear filters URL
                 if (selectedTransmitIds.length > 0) {
                     const urlObj = new URL(url, window.location.origin);
@@ -3274,6 +3302,58 @@ Yapara,Dingalan,Aurora`;
                     const urlObj = new URL(url, window.location.origin);
                     urlObj.searchParams.set('selected_delete_ids', selectedDeleteIds.join(','));
                     url = urlObj.toString();
+                }
+                
+                // Clear all filter form inputs
+                const filterForm = document.getElementById('filter-form');
+                if (filterForm) {
+                    // Clear text inputs
+                    const textInputs = filterForm.querySelectorAll('input[type="text"], input[type="date"]');
+                    textInputs.forEach(input => {
+                        input.value = '';
+                    });
+                    
+                    // Reset select dropdowns to first option
+                    const selects = filterForm.querySelectorAll('select');
+                    selects.forEach(select => {
+                        select.selectedIndex = 0;
+                    });
+                    
+                    // Reset date received type and hide conditional fields
+                    const dateReceivedType = document.getElementById('tableDateReceivedType');
+                    if (dateReceivedType) {
+                        dateReceivedType.value = '';
+                        const singleWrap = document.getElementById('tableDateReceivedSingleWrap');
+                        const fromWrap = document.getElementById('tableDateReceivedFromWrap');
+                        const toWrap = document.getElementById('tableDateReceivedToWrap');
+                        
+                        if (singleWrap) singleWrap.style.display = 'none';
+                        if (fromWrap) fromWrap.style.display = 'none';
+                        if (toWrap) toWrap.style.display = 'none';
+                        
+                        // Disable the date inputs
+                        const singleInput = singleWrap?.querySelector('input');
+                        const fromInput = fromWrap?.querySelector('input');
+                        const toInput = toWrap?.querySelector('input');
+                        if (singleInput) singleInput.disabled = true;
+                        if (fromInput) fromInput.disabled = true;
+                        if (toInput) toInput.disabled = true;
+                    }
+                    
+                    // Reset cascading location dropdowns
+                    const provinceSelect = document.getElementById('tableProvince');
+                    const municipalitySelect = document.getElementById('tableMunicipality');
+                    const barangaySelect = document.getElementById('tableBarangay');
+                    
+                    if (provinceSelect) provinceSelect.value = '';
+                    if (municipalitySelect) {
+                        municipalitySelect.value = '';
+                        municipalitySelect.innerHTML = '<option value="">All Municipalities</option>';
+                    }
+                    if (barangaySelect) {
+                        barangaySelect.value = '';
+                        barangaySelect.innerHTML = '<option value="">All Barangays</option>';
+                    }
                 }
                 
                 showLoadingIndicator();
@@ -3399,6 +3479,16 @@ Yapara,Dingalan,Aurora`;
             const formData = new FormData(filterForm);
             const params = new URLSearchParams(formData);
             
+            // Preserve unassigned toggle state
+            const unassignedToggle = document.getElementById('unassigned-toggle');
+            if (unassignedToggle) {
+                if (unassignedToggle.checked) {
+                    params.set('unassigned_only', '1');
+                } else {
+                    params.delete('unassigned_only');
+                }
+            }
+            
             // Add selected IDs to preserve selections
             const selectedTransmitIds = getSelectedIdsFromUrl();
             const selectedDeleteIds = getSelectedDeleteIdsFromUrl();
@@ -3522,6 +3612,19 @@ Yapara,Dingalan,Aurora`;
             link.addEventListener('click', function(e) {
                 e.preventDefault();
                 let url = this.href;
+                
+                // Preserve unassigned toggle state
+                const unassignedToggle = document.getElementById('unassigned-toggle');
+                if (unassignedToggle) {
+                    const urlObj = new URL(url, window.location.origin);
+                    if (unassignedToggle.checked) {
+                        urlObj.searchParams.set('unassigned_only', '1');
+                    } else {
+                        urlObj.searchParams.delete('unassigned_only');
+                    }
+                    url = urlObj.toString();
+                }
+                
                 // Preserve selected transmit IDs in URL
                 const selectedIds = getSelectedIdsFromUrl();
                 if (selectedIds.length > 0) {
@@ -3946,6 +4049,12 @@ Yapara,Dingalan,Aurora`;
 
                 try {
                     const recordId = button.getAttribute('data-id');
+                    
+                    // Verify record exists before opening edit dialog
+                    if (!recordId || recordId === 'null' || recordId === '') {
+                        showModalMessage('Invalid record ID. Please refresh the page and try again.', 'error');
+                        return;
+                    }
                     const farmerName = button.getAttribute('data-farmer-name');
                     const province = button.getAttribute('data-province');
                     const municipality = button.getAttribute('data-municipality');
@@ -4072,12 +4181,21 @@ Yapara,Dingalan,Aurora`;
                     body: formData,
                     headers: {
                         'X-Requested-With': 'XMLHttpRequest',
+                        'X-CSRF-TOKEN': '{{ csrf_token() }}',
                         'Accept': 'application/json'
                     }
                 })
                 .then(function(response) {
                     console.log('Response status:', response.status);
                     console.log('Response ok:', response.ok);
+                    
+                    // Handle 404 (record not found) specifically
+                    if (response.status === 404) {
+                        return response.json().then(function(data) {
+                            throw new Error(data.message || 'Record not found. Please refresh the page and try again.');
+                        });
+                    }
+                    
                     return response.text().then(function(text) {
                         console.log('Response text:', text);
                         try {
@@ -4101,7 +4219,26 @@ Yapara,Dingalan,Aurora`;
                 })
                 .catch(function(error) {
                     console.error('Error:', error);
-                    showModalMessage('Error updating record. Please try again.', 'error');
+                    
+                    // Check if this is a record not found error
+                    if (error.message && error.message.includes('Record not found')) {
+                        showModalMessage(error.message, 'error');
+                        
+                        // Refresh the table after a short delay to show updated data
+                        setTimeout(function() {
+                            const filterForm = document.getElementById('filter-form');
+                            if (filterForm) {
+                                // Trigger a filter refresh to reload the table
+                                const event = new Event('submit');
+                                filterForm.dispatchEvent(event);
+                            } else {
+                                // Fallback to page reload
+                                window.location.reload();
+                            }
+                        }, 2000);
+                    } else {
+                        showModalMessage('Error updating record. Please try again.', 'error');
+                    }
                 })
                 .finally(function() {
                     // Reset button state
