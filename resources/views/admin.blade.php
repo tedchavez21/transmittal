@@ -747,7 +747,8 @@
                 </div>
             </div>
             <div style="display: flex; gap: 12px; margin-top: 20px; padding-top: 20px; border-top: 1px solid #e2e8f0;">
-                <button type="button" id="apply-filters-btn" style="padding: 12px 24px; background: linear-gradient(135deg, #006c35 0%, #008a43 100%); color: white; border: none; border-radius: 8px; cursor: pointer; font-weight: 600; font-size: 14px; box-shadow: 0 2px 4px rgba(0, 108, 53, 0.2); transition: all 0.2s;">Apply Filters</button>
+                <button type="button" id="apply-filters-btn" style="padding: 12px 24px; background: linear-gradient(135deg, #006c35 0%, #008a43 100%); color: white; border: none; border-radius: 8px; cursor: pointer; font-weight: 600; font-size: 14px; box-shadow: 0 2px 4px rgba(0, 108, 53, 0.2); transition: all 0.2s;">Apply Filters (Enter)</button>
+                <button type="button" id="clear-filters-shortcut-btn" style="padding: 12px 24px; background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%); color: white; border: none; border-radius: 8px; cursor: pointer; font-weight: 600; font-size: 14px; box-shadow: 0 2px 4px rgba(220, 38, 38, 0.2); transition: all 0.2s;">Clear Filters (Esc)</button>
                 <a href="{{ route('admin', ['tab' => 'nl-records']) }}" id="clear-filters-btn" style="padding: 12px 24px; background: #f1f5f9; color: #64748b; text-decoration: none; border-radius: 8px; font-weight: 600; font-size: 14px; display: inline-flex; align-items: center; transition: all 0.2s; border: 1px solid #e2e8f0;">Clear Filters</a>
             </div>
         </form>
@@ -3597,6 +3598,52 @@ Yapara,Dingalan,Aurora`;
             });
         }
         
+        // Handle Enter key press on filter form inputs
+        if (filterForm) {
+            const filterInputs = filterForm.querySelectorAll('input, select');
+            filterInputs.forEach(input => {
+                input.addEventListener('keydown', function(e) {
+                    if (e.key === 'Enter') {
+                        e.preventDefault();
+                        submitFilterForm();
+                    }
+                });
+            });
+        }
+
+        // Handle Escape key shortcut for clearing filters
+        document.addEventListener('keydown', function(e) {
+            if (e.key === 'Escape') {
+                // Only trigger Escape key shortcut when focus is within filter form or its inputs
+                const activeElement = document.activeElement;
+                const isInFilterForm = filterForm && filterForm.contains(activeElement);
+                const isFilterInput = activeElement && (
+                    activeElement.id === 'filter-form' || 
+                    activeElement.closest('#filter-form')
+                );
+                
+                if (isInFilterForm || isFilterInput) {
+                    e.preventDefault();
+                    const clearFiltersShortcutBtn = document.getElementById('clear-filters-shortcut-btn');
+                    if (clearFiltersShortcutBtn) {
+                        clearFiltersShortcutBtn.click();
+                    }
+                }
+            }
+        });
+
+        // Handle clear filters shortcut button click
+        const clearFiltersShortcutBtn = document.getElementById('clear-filters-shortcut-btn');
+        if (clearFiltersShortcutBtn) {
+            clearFiltersShortcutBtn.addEventListener('click', function(e) {
+                e.preventDefault();
+                const clearFiltersBtn = document.getElementById('clear-filters-btn');
+                if (clearFiltersBtn) {
+                    clearFiltersBtn.click();
+                }
+            });
+        }
+
         // Handle button click event
         if (applyFiltersBtn) {
             applyFiltersBtn.addEventListener('click', function(e) {
