@@ -560,6 +560,14 @@
             </div>
             <h3 style="margin: 0; font-size: 16px; font-weight: 700; color: #1e293b;">Table Filters</h3>
         </div>
+        
+        <!-- Active Filters Display -->
+        <div id="active-filters-display" style="margin-bottom: 16px; padding: 12px 16px; background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 8px; min-height: 40px; display: flex; align-items: center; gap: 8px; flex-wrap: wrap;">
+            <span style="font-size: 12px; font-weight: 600; color: #64748b; text-transform: uppercase; letter-spacing: 0.5px;">Active Filters:</span>
+            <div id="active-filters-list" style="display: flex; align-items: center; gap: 8px; flex-wrap: wrap;">
+                <span id="no-filters-message" style="font-size: 13px; color: #94a3b8; font-style: italic;">No filters applied</span>
+            </div>
+        </div>
 
         @php
             $activeFilters = [];
@@ -747,9 +755,8 @@
                 </div>
             </div>
             <div style="display: flex; gap: 12px; margin-top: 20px; padding-top: 20px; border-top: 1px solid #e2e8f0;">
-                <button type="button" id="apply-filters-btn" style="padding: 12px 24px; background: linear-gradient(135deg, #006c35 0%, #008a43 100%); color: white; border: none; border-radius: 8px; cursor: pointer; font-weight: 600; font-size: 14px; box-shadow: 0 2px 4px rgba(0, 108, 53, 0.2); transition: all 0.2s;">Apply Filters (Enter)</button>
-                <button type="button" id="clear-filters-shortcut-btn" style="padding: 12px 24px; background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%); color: white; border: none; border-radius: 8px; cursor: pointer; font-weight: 600; font-size: 14px; box-shadow: 0 2px 4px rgba(220, 38, 38, 0.2); transition: all 0.2s;">Clear Filters (Esc)</button>
-                <a href="{{ route('admin', ['tab' => 'nl-records']) }}" id="clear-filters-btn" style="padding: 12px 24px; background: #f1f5f9; color: #64748b; text-decoration: none; border-radius: 8px; font-weight: 600; font-size: 14px; display: inline-flex; align-items: center; transition: all 0.2s; border: 1px solid #e2e8f0;">Clear Filters</a>
+                <button type="button" id="apply-filters-btn" style="padding: 12px 24px; background: linear-gradient(135deg, #006c35 0%, #008a43 100%); color: white; border: none; border-radius: 8px; cursor: pointer; font-weight: 600; font-size: 14px; box-shadow: 0 2px 4px rgba(0, 108, 53, 0.2); transition: all 0.2s;">Apply Filters</button>
+                <button type="button" id="clear-filters-shortcut-btn" style="padding: 12px 24px; background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%); color: white; border: none; border-radius: 8px; cursor: pointer; font-weight: 600; font-size: 14px; box-shadow: 0 2px 4px rgba(220, 38, 38, 0.2); transition: all 0.2s;">Clear Filters</button>
             </div>
         </form>
 
@@ -3310,15 +3317,18 @@ Yapara,Dingalan,Aurora`;
                 if (filterForm) {
                     // Clear text inputs
                     const textInputs = filterForm.querySelectorAll('input[type="text"], input[type="date"]');
-                    textInputs.forEach(input => {
-                        input.value = '';
-                    });
+                    textInputs.forEach(input => input.value = '');
                     
-                    // Reset select dropdowns to first option
-                    const selects = filterForm.querySelectorAll('select');
-                    selects.forEach(select => {
+                    // Clear select dropdowns
+                    const selectInputs = filterForm.querySelectorAll('select');
+                    selectInputs.forEach(select => {
                         select.selectedIndex = 0;
                     });
+                    
+                    // Update active filters display to show no filters
+                    setTimeout(function() {
+                        updateActiveFiltersDisplay();
+                    }, 100);
                     
                     // Reset date received type and hide conditional fields
                     const dateReceivedType = document.getElementById('tableDateReceivedType');
@@ -3472,6 +3482,91 @@ Yapara,Dingalan,Aurora`;
         // Handle filter form submission with AJAX
         const filterForm = document.getElementById('filter-form');
         const applyFiltersBtn = document.getElementById('apply-filters-btn');
+        
+        // Function to update active filters display
+        function updateActiveFiltersDisplay() {
+            const activeFiltersList = document.getElementById('active-filters-list');
+            const noFiltersMessage = document.getElementById('no-filters-message');
+            
+            if (!activeFiltersList || !filterForm) return;
+            
+            const filters = [];
+            
+            // Get all filter values
+            const formData = new FormData(filterForm);
+            
+            // Text and select filters
+            if (formData.get('farmerName')) {
+                filters.push(`<span style="background: #dbeafe; color: #1e40af; padding: 4px 8px; border-radius: 4px; font-size: 12px; font-weight: 500;">Farmer: ${formData.get('farmerName')}</span>`);
+            }
+            if (formData.get('encoderName')) {
+                filters.push(`<span style="background: #dcfce7; color: #166534; padding: 4px 8px; border-radius: 4px; font-size: 12px; font-weight: 500;">Encoder: ${formData.get('encoderName')}</span>`);
+            }
+            if (formData.get('program')) {
+                filters.push(`<span style="background: #fef3c7; color: #92400e; padding: 4px 8px; border-radius: 4px; font-size: 12px; font-weight: 500;">Program: ${formData.get('program')}</span>`);
+            }
+            if (formData.get('line')) {
+                filters.push(`<span style="background: #fce7f3; color: #9f1239; padding: 4px 8px; border-radius: 4px; font-size: 12px; font-weight: 500;">Line: ${formData.get('line')}</span>`);
+            }
+            if (formData.get('province')) {
+                filters.push(`<span style="background: #e0e7ff; color: #3730a3; padding: 4px 8px; border-radius: 4px; font-size: 12px; font-weight: 500;">Province: ${formData.get('province')}</span>`);
+            }
+            if (formData.get('municipality')) {
+                filters.push(`<span style="background: #f3e8ff; color: #6b21a8; padding: 4px 8px; border-radius: 4px; font-size: 12px; font-weight: 500;">Municipality: ${formData.get('municipality')}</span>`);
+            }
+            if (formData.get('barangay')) {
+                filters.push(`<span style="background: #ecfdf5; color: #065f46; padding: 4px 8px; border-radius: 4px; font-size: 12px; font-weight: 500;">Barangay: ${formData.get('barangay')}</span>`);
+            }
+            if (formData.get('source')) {
+                filters.push(`<span style="background: #fef2f2; color: #991b1b; padding: 4px 8px; border-radius: 4px; font-size: 12px; font-weight: 500;">Source: ${formData.get('source')}</span>`);
+            }
+            if (formData.get('modeOfPayment')) {
+                filters.push(`<span style="background: #f0fdf4; color: #166534; padding: 4px 8px; border-radius: 4px; font-size: 12px; font-weight: 500;">Payment: ${formData.get('modeOfPayment')}</span>`);
+            }
+            if (formData.get('accounts')) {
+                filters.push(`<span style="background: #f8fafc; color: #475569; padding: 4px 8px; border-radius: 4px; font-size: 12px; font-weight: 500;">Account: ${formData.get('accounts')}</span>`);
+            }
+            if (formData.get('transmittal_number')) {
+                filters.push(`<span style="background: #f0f9ff; color: #075985; padding: 4px 8px; border-radius: 4px; font-size: 12px; font-weight: 500;">Transmittal #: ${formData.get('transmittal_number')}</span>`);
+            }
+            if (formData.get('admin_transmittal_number')) {
+                filters.push(`<span style="background: #fdf4ff; color: #7c3aed; padding: 4px 8px; border-radius: 4px; font-size: 12px; font-weight: 500;">Admin Transmittal #: ${formData.get('admin_transmittal_number')}</span>`);
+            }
+            
+            // Date filters
+            if (formData.get('date_received_type') === 'single' && formData.get('date_received_single')) {
+                filters.push(`<span style="background: #fff7ed; color: #9a3412; padding: 4px 8px; border-radius: 4px; font-size: 12px; font-weight: 500;">Date: ${formData.get('date_received_single')}</span>`);
+            } else if (formData.get('date_received_type') === 'range') {
+                const dateFrom = formData.get('date_received_from');
+                const dateTo = formData.get('date_received_to');
+                let dateFilter = 'Date Range: ';
+                if (dateFrom) dateFilter += `From ${dateFrom}`;
+                if (dateFrom && dateTo) dateFilter += ' ';
+                if (dateTo) dateFilter += `To ${dateTo}`;
+                if (dateFrom || dateTo) {
+                    filters.push(`<span style="background: #fff7ed; color: #9a3412; padding: 4px 8px; border-radius: 4px; font-size: 12px; font-weight: 500;">${dateFilter}</span>`);
+                }
+            }
+            
+            // Unassigned toggle
+            const unassignedToggle = document.getElementById('unassigned-toggle');
+            if (unassignedToggle && unassignedToggle.checked) {
+                filters.push(`<span style="background: #fef2f2; color: #dc2626; padding: 4px 8px; border-radius: 4px; font-size: 12px; font-weight: 500;">Show Only Unassigned</span>`);
+            }
+            
+            // Update display
+            if (filters.length > 0) {
+                if (noFiltersMessage) {
+                    noFiltersMessage.style.display = 'none';
+                }
+                activeFiltersList.innerHTML = filters.join(' ');
+            } else {
+                if (noFiltersMessage) {
+                    noFiltersMessage.style.display = 'inline';
+                }
+                activeFiltersList.innerHTML = '<span id="no-filters-message" style="font-size: 13px; color: #94a3b8; font-style: italic;">No filters applied</span>';
+            }
+        }
         
         function submitFilterForm() {
             if (!filterForm) return;
@@ -3637,12 +3732,30 @@ Yapara,Dingalan,Aurora`;
         if (clearFiltersShortcutBtn) {
             clearFiltersShortcutBtn.addEventListener('click', function(e) {
                 e.preventDefault();
-                const clearFiltersBtn = document.getElementById('clear-filters-btn');
-                if (clearFiltersBtn) {
-                    clearFiltersBtn.click();
-                }
+                // Navigate to admin page with nl-records tab to clear all filters
+                window.location.href = "{{ route('admin', ['tab' => 'nl-records']) }}";
             });
         }
+
+        // Add event listeners to update active filters display when inputs change
+        if (filterForm) {
+            const filterInputs = filterForm.querySelectorAll('input, select');
+            filterInputs.forEach(input => {
+                input.addEventListener('input', updateActiveFiltersDisplay);
+                input.addEventListener('change', updateActiveFiltersDisplay);
+            });
+            
+            // Also listen for unassigned toggle changes
+            const unassignedToggle = document.getElementById('unassigned-toggle');
+            if (unassignedToggle) {
+                unassignedToggle.addEventListener('change', updateActiveFiltersDisplay);
+            }
+        }
+
+        // Initialize active filters display on page load
+        document.addEventListener('DOMContentLoaded', function() {
+            updateActiveFiltersDisplay();
+        });
 
         // Handle button click event
         if (applyFiltersBtn) {
