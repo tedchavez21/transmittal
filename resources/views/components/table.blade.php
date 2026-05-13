@@ -738,6 +738,7 @@ function getSortIndicator($column, $currentSort, $currentOrder) {
                 data-source="{{ e($record->source) }}"
                 data-transmittal-number="{{ e($record->transmittal_number) }}"
                 data-admin-transmittal-number="{{ e($record->admin_transmittal_number) }}"
+                data-admin-transmittal-assigned-at="{{ $record->admin_transmittal_assigned_at ? e(is_string($record->admin_transmittal_assigned_at) ? date('M d, Y', strtotime($record->admin_transmittal_assigned_at)) : $record->admin_transmittal_assigned_at->format('M d, Y')) : 'N/A' }}"
                 >edit</button>
             </td>
             @if($showDelete)
@@ -1310,6 +1311,7 @@ document.addEventListener('DOMContentLoaded', function() {
             dateReceived: editBtn.getAttribute('data-date-received') || 'N/A',
             remarks: editBtn.getAttribute('data-remarks') || '',
             source: editBtn.getAttribute('data-source') || 'N/A',
+            adminTransmittalNumber: editBtn.getAttribute('data-admin-transmittal-number') || 'N/A',
             encoderName: editBtn.getAttribute('data-encoder-name') || 'N/A'
         };
 
@@ -1322,10 +1324,12 @@ document.addEventListener('DOMContentLoaded', function() {
         }
 
         // Get transmittal number from table cell
+        const adminTransmittalAssignedAt = editBtn.getAttribute('data-admin-transmittal-assigned-at');
         const transmittalCell = row.querySelector('.col-control-number');
         if (transmittalCell) {
             data.transmittalNumber = transmittalCell.textContent.trim() || 'N/A';
         }
+        data.adminTransmittalAssignedAt = adminTransmittalAssignedAt || 'N/A';
 
         return data;
     }
@@ -1415,6 +1419,14 @@ document.addEventListener('DOMContentLoaded', function() {
                         <div style="display: flex; justify-content: space-between; align-items: center; padding-bottom: 8px; border-bottom: 1px solid #fbbf24;">
                             <span style="font-size: 12px; font-weight: 600; color: #92400e; text-transform: uppercase;">CONTROL NUMBER</span>
                             <span style="font-size: 14px; color: #1e293b; font-weight: 500;">${data.transmittalNumber}</span>
+                        </div>
+                        <div style="display: flex; justify-content: space-between; align-items: center; padding-bottom: 8px; border-bottom: 1px solid #fbbf24;">
+                            <span style="font-size: 12px; font-weight: 600; color: #92400e; text-transform: uppercase;">ADMIN TRANSMITTAL #</span>
+                            <span style="font-size: 14px; color: #1e293b; font-weight: 500;">${data.adminTransmittalNumber || 'N/A'}</span>
+                        </div>
+                        <div style="display: flex; justify-content: space-between; align-items: center; padding-bottom: 8px; border-bottom: 1px solid #fbbf24;">
+                            <span style="font-size: 12px; font-weight: 600; color: #92400e; text-transform: uppercase;">ADMIN TRANSMITTAL ASSIGNED</span>
+                            <span style="font-size: 14px; color: #1e293b; font-weight: 500;">${data.adminTransmittalAssignedAt || 'N/A'}</span>
                         </div>
                         <div style="display: flex; justify-content: space-between; align-items: center; padding-bottom: 8px; border-bottom: 1px solid #fbbf24;">
                             <span style="font-size: 12px; font-weight: 600; color: #92400e; text-transform: uppercase;">CAUSE OF DAMAGE</span>
